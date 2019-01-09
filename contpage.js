@@ -41,18 +41,19 @@ function handleRanksList(rankslist)
     gRanksParams.set(rankslist[co].id, prm);
   }
   
+  //window.addEventListener("load", onCompletePageLoad, false);
   document.onreadystatechange = function () {
-    
-    console.log("ANY STATE: " + document.readyState);
-    
-    if(document.readyState === "complete")
-    {
-      console.log("NUM RANKS on complete: " + gRanksParams.size);
-      reqpr = requestForStatuses();
-      reqpr.then(result => {
-	obs.observe(document.body, config);
-      });
-    }
+    onCompletePageLoad();
+  }
+}
+
+function onCompletePageLoad() {
+  if(document.readyState === "complete")
+  {
+    reqpr = requestForStatuses();
+    reqpr.then(result => {
+      obs.observe(document.body, config);
+    });
   }
 }
 
@@ -77,8 +78,10 @@ function requestForStatuses()
       error => { statushandleError(error); });
 }
 
-function handleStatusList(sts)
+function handleStatusList(spreadedmap)
 {
+  let sts = new Map(spreadedmap);
+  
   for( var k of sts.keys())
   {
     gUsersCache.set(k, sts.get(k));
@@ -176,7 +179,7 @@ function addMenuToCurrentItem(item)
   
   var itm1, itm_uname;
   itm_uname = document.createElement('a');
-  itm_uname.innerHTML = curname;
+  itm_uname.textContent = curname;
   itm_uname.href = '#';
   itm_uname.style.background = "#FFFFDD";
   //itm_uname.addEventListener("click", );
@@ -191,7 +194,7 @@ function addMenuToCurrentItem(item)
   for(let[ckey, cvalue] of gRanksParams.entries())
   {
     itm1 = document.createElement('a');
-    itm1.innerHTML = cvalue.rank;
+    itm1.textContent = cvalue.rank;
     itm1.href = '#' + ckey;
     itm1.style.background = cvalue.bgcolor;
     itm1.style.color = cvalue.fontcolor;

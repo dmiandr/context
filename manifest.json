@@ -41,7 +41,7 @@
     "https://*/*",
     "<all_urls>"
   ],
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+  "content_security_policy": "script-src 'self'; object-src 'self'",
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true

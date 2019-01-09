@@ -91,7 +91,7 @@ function onContentMessage(msg, sender, handleResponse)
   
       if(reqs.request == "statuses")
       {
-        var stsmap = new Map();
+	var stsmap = new Map();
 	let numusrs = msg.length;
 	var usrscopy = [];
 	
@@ -122,7 +122,7 @@ function onContentMessage(msg, sender, handleResponse)
 	  }
 	  else
 	  {
-	    resolve(stsmap);
+	    resolve([...stsmap]);
 	  }
 	}
       }
