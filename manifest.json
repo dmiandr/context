@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "CONT.ws user management extension",
   "short_name": "CONText",
-  "version": "0.1",
+  "version": "0.1.1",
   "description": "Расширение позволяет присваивать статусы пользователям cont.ws и далее отображать их измененным цветом.",
 
   "developer": {
@@ -15,7 +15,8 @@
 
   "applications": {
     "gecko": {
-      "id": "dmiandich@yandex.ru"
+      "id": "dmiandich@yandex.ru",
+      "update_url": "https://github.com/dmiandr/context/raw/master/updates.json"
     }
   },
   "icons": {
@@ -23,23 +24,22 @@
   },
 
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["browser-polyfill.js", "background.js"]
   },
 
   "content_scripts": [
     {
       "matches": ["*://*.cont.ws/*"],
       "css": ["ddmenu.css"],
-      "js": ["contpage.js"]
+      "js": ["browser-polyfill.js", "contpage.js"]
     }
   ],
   "incognito": "spanning",
   "permissions": [
+   "storage",
    "activeTab",
-    "tabs",
-    "http://*/*",
-    "https://*/*",
-    "<all_urls>"
+   "tabs",
+   "*://*.cont.ws/*"
   ],
   "content_security_policy": "script-src 'self'; object-src 'self'",
   "options_ui": {

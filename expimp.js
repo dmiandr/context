@@ -1,53 +1,57 @@
-	
-//const users = [{user:"Sta22lin", rankid:8}];
 const markfields = [{table:"ranks", markfield:"rank"}, {table:"users", markfield:"rankid"}];
 
-
 var stsmap = new Map();
-
 var rankspossible = [];
 var users = [];
-var rankstoload = [];
-var userstoload = [];
 var usersfields;
 var ranksfields;
-
 var alldata = [];
 
-function setExport() {
 var expbtn = document.getElementById("expbtn");
+expbtn.onclick = function() { setExport();};
 document.getElementById("impbtn").addEventListener('change', handleSelectImport, false);
+document.getElementById("markinfeed").addEventListener('change', handleMarkMode, false);
+document.getElementById("erasebeforeimport").checked = false;
 
+var mrk = localStorage.getItem('markinfeed');
+if(mrk === null || mrk === false)
+{
+  document.getElementById("markinfeed").checked = false;
+}
+else
+{
+  document.getElementById("markinfeed").checked = true;
+}
+
+
+function setExport() {
   var req = indexedDB.open("contest", 1);
   req.onsuccess = function(event)
   {
     var dbn = this.result;
+    rankspossible = [];
+    users = [];
     getAllFromTable(dbn, "ranks", rankspossible).then(getAllFromTable(dbn, "users", users)).then(function(){
-     
-      
       ranksfields = Object.keys(rankspossible[0]);
-      //console.log("Readed fields: " + ranksfields);
+      console.log("Readed fields: " + ranksfields);
       
       if(users.length > 0)
       {
         usersfields = Object.keys(users[0]);
       }
       else usersfields = "";
-      //console.log("USER: " + usersfields);
-      
+      console.log("USER: " + usersfields);
+      alldata = [];
       
       alldata.push(rankspossible);  
       alldata.push(users);
-      var str = JSON.stringify(alldata);
-      var dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(str);
-      expbtn.href = dataUri;
-      expbtn.downlad = "file.json";    
+      var str = JSON.stringify(alldata,undefined,2);
+      var blobtosave = new Blob([str], {type: 'application/json', name: "file.json"});
+      saveAs(blobtosave, 'file.json');
     });
     dbn.close();	
   }
 }
-
-setTimeout(setExport(), 500);
 
 function getAllFromTable(db, tabname, basket)
 {
@@ -65,7 +69,6 @@ function getAllFromTable(db, tabname, basket)
       if(cur)
       {
 	var newcur = cur.value;
-	//console.log("IMMEDIATE: " + cur.key);
 	basket.push(cur.value);
 	cur.continue();
       }
@@ -75,11 +78,6 @@ function getAllFromTable(db, tabname, basket)
 
 function handleSelectImport(evt) {
   var files = evt.target.files; 
-  for (var i = 0; i < files.length; i++)
-  {
-    //console.log("File name: " + files[i].name);
-  } 
-
   ff = files[0];
   fr = new FileReader();
   fr.onload = handleImportedData;
@@ -87,17 +85,38 @@ function handleSelectImport(evt) {
 
   function handleImportedData(e) {
     let lines = e.target.result;
-    var allLoaded = JSON.parse(lines);
+    try{
+      var allLoaded = JSON.parse(lines);
+    }
+    catch(e)
+    {
+      alert(e);
+      return;
+    }
 
-    var impfields = [];
+    if(document.getElementById("erasebeforeimport").checked == true)
+    {
+      var erarr = new Array();
+      erarr.push({request: "eraseall"});
+      var senderase = browser.runtime.sendMessage(erarr);
+      senderase.then(
+        result => { importParcedData(allLoaded); return;},
+        error => { alert("Ошибка при удалении данных: " + error); return; });
+    }
+    importParcedData(allLoaded);
+  }
+}
+
+function importParcedData(datparced)
+{
     let curfldslst = [];
     var curar;
     var sing;
-    var ranksload; // перечень загружаемых статусов. Загружается в первую очередь, но перед загрузкой сверяется - на случай если такой статус уже есть (а оно почти всегда так).
+    var numranks, numusers;
     
-    for(var ar = 0; ar < allLoaded.length; ar++)
+    for(var ar = 0; ar < datparced.length; ar++)
     {
-      curar = allLoaded[ar];
+      curar = datparced[ar];
       sing = curar[0];
       curfldslst.length = 0; // clear array
       for(var fld in sing)
@@ -105,10 +124,10 @@ function handleSelectImport(evt) {
 	curfldslst.push(fld);
       }
       var curtable = identifyTable(curfldslst);
-      //console.log(ar + " ## " + curfldslst + ": TAB= " + curtable);
       
       if(curtable == "ranks")
       {
+	numranks = curar.length;
 	for(k = 0; k < curar.length; k++)
 	{
 	  sing = curar[k];
@@ -117,13 +136,12 @@ function handleSelectImport(evt) {
 	  setarr.push({request: "addrank"});
 	  
 	  var sendonaddingrank = browser.runtime.sendMessage(setarr);
-	  sendonaddingrank.then(
-	    result => { console.log("Added = " + sing);},
-	    error => { console.log("Added = " + error); });
+	  sendonaddingrank.catch(err => { alert("Ошибка загрузки статусов: " + err); return; });
 	}
       }
       if(curtable == "users")
       {
+        numusers = curar.length;
 	for(k = 0; k < curar.length; k++)
 	{
 	  sing = curar[k];
@@ -134,23 +152,18 @@ function handleSelectImport(evt) {
 	  usrarr.push(userprms);
 	  usrarr.push({request: "setstatus"});
 	  
-	  //console.log("USER: " + usrarr.length);
-	  
 	  var sendonrankchange = browser.runtime.sendMessage(usrarr);
-	  sendonrankchange.then(
-	    result => { console.log("User added: " + sing.user);},
-	    error => { console.log(" User not added: " + sing.user); });
+	  sendonrankchange.catch(err => { alert("Ошибка загрузки пользователей: " + err); return; });
 	}
       }
     }
     var eventbkgrnd = document.getElementById("dataimported");
     eventbkgrnd.style.display = "block";
+    document.getElementById("eventmessage").innerHTML = "Осуществлен импорт данных CONText.<br>" + "Загружено:<br>" + numranks + " статусов,<br>" + numusers + " пользователей.";
     
     var closebtn = document.getElementsByClassName("close")[0];
     closebtn.onclick = function() {  eventbkgrnd.style.display = "none"; }
     window.onclick = function(event) {  if (event.target == eventbkgrnd) {    eventbkgrnd.style.display = "none";  }} 
-    
-  }
 }
 
 /*! identifyTable - идентификация таблицы
@@ -170,3 +183,14 @@ function identifyTable(fieldslist)
   return "";  
 }
 
+function handleMarkMode()
+{
+  if(this.checked)
+  {
+    localStorage.setItem('markinfeed', true);
+  }
+  else
+  {
+    localStorage.setItem('markinfeed', false);
+  }
+}

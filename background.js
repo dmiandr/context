@@ -1,12 +1,14 @@
 
 const defaultranks = [
-{id: 0, rank: "Игнор", descript: "Не комментировать", bgcolor: "#FF0000", fontcolor: "#000000", bold: false, italic: false},
-{id: 1, rank: "Хам",  descript: "Может сорваться на хамство без видимого повода", bgcolor: "#d3d52b", fontcolor: "#000000", bold: false, italic: false },
-{id: 2, rank: "Обидчивый",  descript: "Оскорбляется на любую нейтральную реплику, в которой ему чудится несогласие", bgcolor: "#9587ff", fontcolor: "#000000", bold: false, italic: false },
-{id: 3, rank: "Религиозный",  descript: "Тему религии не поднимать", bgcolor: "#a6a6a6", fontcolor: "#000000", bold: false, italic: false },
-{id: 4, rank: "Упертый",  descript: "Излагать мысли краткими фразами, без отступлений, не давать возможности заболтать", bgcolor: "#290cff", fontcolor: "#fffffff", bold: false, italic: false },
-{id: 5, rank: "Не закончен разговор",  descript: "Не начинать новых дискуссий пока не выполнены обещания по старым", bgcolor: "#29ffff", fontcolor: "#000000", bold: false, italic: false },
-{id: 6, rank: "Хороший собеседник",  descript: "Не значит, что он со мной согласен, значит что он умеет беседовать содержательно, без демагогии", bgcolor: "#29ff1b", fontcolor: "#000000", bold: false, italic: false }
+{id: 0, rank: "Не читать", descript: "", bgcolor: "#FF0000", fontcolor: "#000000", bold: false, italic: false},
+{id: 1, rank: "Не комментировать", descript: "", bgcolor: "#FFB6B6", fontcolor: "#000000", bold: false, italic: false},
+{id: 2, rank: "Хам",  descript: "Может сорваться на хамство без видимого повода", bgcolor: "#d3d52b", fontcolor: "#000000", bold: false, italic: false },
+{id: 3, rank: "Обидчивый",  descript: "Оскорбляется на любую нейтральную реплику, в которой ему чудится несогласие", bgcolor: "#9587ff", fontcolor: "#000000", bold: false, italic: false },
+{id: 4, rank: "Религиозный",  descript: "Тему религии не поднимать", bgcolor: "#a6a6a6", fontcolor: "#000000", bold: false, italic: false },
+{id: 5, rank: "Упертый",  descript: "Излагать мысли краткими фразами, без отступлений, не давать возможности заболтать", bgcolor: "#290cff", fontcolor: "#ffffff", bold: false, italic: false },
+{id: 6, rank: "Не закончен разговор",  descript: "Не начинать новых дискуссий пока не выполнены обещания по старым", bgcolor: "#29ffff", fontcolor: "#000000", bold: false, italic: false },
+{id: 7, rank: "Хороший собеседник",  descript: "Не значит, что он со мной согласен, значит что он умеет беседовать содержательно, без демагогии", bgcolor: "#29ff1b", fontcolor: "#000000", bold: false, italic: false },
+{id: 8, rank: "Читать",  descript: "", bgcolor: "#17760f", fontcolor: "#ffffff", bold: false, italic: false }
 ];
 
 var rankspossible = [];
@@ -84,6 +86,7 @@ function onContentMessage(msg, sender, handleResponse)
 	  }
 	  else
 	  {
+	    rankspossible.push(localStorage.getItem('markinfeed'));
 	    resolve(rankspossible);
 	  }
         }
@@ -178,14 +181,30 @@ function onContentMessage(msg, sender, handleResponse)
 	newrank.fontcolor = addrnkprms.fontcolor;
 	newrank.bold = addrnkprms.bold;
 	newrank.italic = addrnkprms.italic;
-	reqprms = objset.put(newrank);
-	reqprms.onsuccess = function(event)
+	reqadd = objset.put(newrank);
+	reqadd.onsuccess = function(event)
 	{
 	  resolve("");
 	}
-	reqprms.onerror = function(event)
+	reqadd.onerror = function(event)
 	{
 	  resolve("ERROR");
+	}
+      }
+      if(reqs.request == "eraseall")
+      {
+	var reqallkeys, reqdel;
+        var tr = db.transaction(["ranks", "users"], "readwrite");
+	var objr = tr.objectStore("ranks");
+	var rankclr = objr.clear();
+	rankclr.onsuccess = function(evr)
+	{
+	  var obju = tr.objectStore("users");
+	  var usrclr = obju.clear();
+	  usrclr.onsuccess = function(evu)
+	  {
+	    resolve("");	    
+	  }
 	}
       }
     }

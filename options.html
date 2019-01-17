@@ -1,6 +1,8 @@
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Параметры расшрения CONText</title>
+<script defer="" type="text/javascript" src="browser-polyfill.js"></script>
+<script defer="" type="text/javascript" src="FileSaver.js"></script>
 <script defer="" type="text/javascript" src="expimp.js"></script>
 <link rel="stylesheet" type="text/css" href="ddmenu.css">
 
@@ -9,13 +11,14 @@
 <div id="dataimported" class="darkbackground">
   <div class="eventwindow">
     <span class="close">&times;</span>
-    <p id="eventmessage">Осуществлен импорт данных CONText</p>
+    <p id="eventmessage"></p>
   </div>
 </div>
-
-
 Параметры расширения CONText.
 <br>
-<a href="#" id="expbtn"><button>Экспорт</button></a><br><br>Импорт:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт">
+<a href="#" id="expbtn"><button>Экспорт</button></a><br><br>Импорт:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт"><label><input type="checkbox" id="erasebeforeimport"/>Удалить данные перед импортом новых</label>
+
+<hr>
+<label><input type="checkbox" id="markinfeed"/>Размечать цветом пользователей в ленте</label>
 </body>
 </html>

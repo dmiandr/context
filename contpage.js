@@ -4,6 +4,7 @@ var gUsersCache = new Map();  // карта используемых на дан
 var gUserItems = new Map(); // карта видимых в рамках последнего изменения упоминаний пользователей.
 var config = { attributes: false, childList: true, subtree: true }; // Конфигурация MutationObserver
 var userelems;
+var MarkFeed;
 
 var rnkarr = new Array();
 rnkarr.push({request: "ranks"});
@@ -35,16 +36,21 @@ function handleRanksList(rankslist)
   if(gRanksParams > 0)
     return; // Запросы могут быть посланы одновременно с нескольких вкладок - но если хотя-бы один уже обработан, остальные обрабатывать уже бессмысленно
   var prm;
+  var mark = rankslist.pop();
+  if(mark === null) MarkFeed = false;
+  else
+  {
+    MarkFeed = mark;
+  }
+
   for(var co = 0; co < rankslist.length; co++)
   {
     prm = createrank(rankslist[co].rank, rankslist[co].bgcolor, rankslist[co].fontcolor);
     gRanksParams.set(rankslist[co].id, prm);
   }
   
-  //window.addEventListener("load", onCompletePageLoad, false);
-  document.onreadystatechange = function () {
-    onCompletePageLoad();
-  }
+  window.addEventListener("load", onCompletePageLoad, false);
+  onCompletePageLoad();
 }
 
 function onCompletePageLoad() {
@@ -172,7 +178,7 @@ function addMenuToCurrentItem(item)
  
   var astr = document.createElement('span');
   astr.className = 'dropdownusr';
-  item.parentNode.insertBefore(astr, item.nextSibling);
+  item.parentNode.insertBefore(astr, item);
   var ddown = document.createElement('div');
   ddown.className = 'dropdownusr-content';
   astr.appendChild(ddown);
@@ -182,7 +188,6 @@ function addMenuToCurrentItem(item)
   itm_uname.textContent = curname;
   itm_uname.href = '#';
   itm_uname.style.background = "#FFFFDD";
-  //itm_uname.addEventListener("click", );
   ddown.appendChild(itm_uname);
   itm_uname = document.createElement('a');
   itm_uname.innerHTML = "Убрать статус";
@@ -241,11 +246,6 @@ function handleChangedRank(resuname)
   }
 }
 
-function colorAllUserInstances(nam, rank)
-{
-  
-}
-
 function colorAll()
 {
   for( var k of userelems.keys())
@@ -254,7 +254,6 @@ function colorAll()
     var rankid = gUsersCache.get(userid);
     if(typeof rankid !== 'undefined')
     {
-      console.log("GOING TO COLOR: " + userid);
       colorItem(k, rankid);
     }
   }
@@ -264,14 +263,12 @@ function colorItem(itm, rankid)
 {
   if(rankid == -1)
   {
-    console.log("DECOLORIZING " + rankid);
     itm.style.backgroundColor = "white";
     itm.style.color = "black";
     itm.title = "";  
   }
   else
   {
-    console.log("COLORED " + rankid);
     var styl = gRanksParams.get(rankid);
     itm.style.backgroundColor = styl.bgcolor;
     itm.style.color = styl.fontcolor;
@@ -279,26 +276,30 @@ function colorItem(itm, rankid)
   }
 }
 
-function discolorAllUserInstances(nam)
-{
-  
-}
-
 function getAllUserItems(where)
 {
   let itmsmap = new Map();
-  allelems = where.querySelectorAll('a[href*="cont.ws"]');
-  console.log("Total Items: " + allelems.length);
+  if(MarkFeed)
+  {
+    allelems = where.querySelectorAll('a[href*="cont.ws"],[class="new_m_author"],[class="post_jr"]');
+  }
+  else
+  {
+    allelems = where.querySelectorAll('a[href*="cont.ws"]');
+  }
 
   for(var co = 0; co < allelems.length; co++)
   {
     var itm = allelems[co];
     var username = extractUsername(itm);
+
     if(username == null || gExeptionsNames.indexOf(username) > -1)
       continue;
-    else
-      {
-	if(itm.hasChildNodes())
+
+    if(itm.innerText === "")
+     continue;
+
+    if(itm.hasChildNodes())
 	{
 	var chlst = itm.childNodes;
 	var avatar = false;
@@ -310,14 +311,13 @@ function getAllUserItems(where)
 	    break;
 	  }
 	}
-	if(avatar == true)
-	  continue;
-	else
-	  {
-            itmsmap.set(itm, username);
-          }
+	if(MarkFeed || avatar === false)
+	{
+	  itmsmap.set(itm, username);
 	}
-      }
+	else
+	  continue;
+	}
   }
   return itmsmap;  
 }
