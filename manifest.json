@@ -31,7 +31,7 @@
     {
       "matches": ["*://*.cont.ws/*"],
       "css": ["ddmenu.css"],
-      "js": ["browser-polyfill.js", "contpage.js"]
+      "js": ["browser-polyfill.js", "contextlib.js", "contpage.js"]
     }
   ],
   "incognito": "spanning",
@@ -45,5 +45,6 @@
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
-  }
+  },
+  "web_accessible_resources": ["addhistorydialog.html", "icons/historymark.gif", "userhistory.html", "contextlib.js"]
 }

@@ -18,7 +18,7 @@ function onInstallInit(details) {
   
   if(details.reason == "install")
   {
-    var req = indexedDB.open("contest", 1);
+    var req = indexedDB.open("contest", 2);
     var db;
 
     req.onerror = function(event)
@@ -28,13 +28,16 @@ function onInstallInit(details) {
     
     req.onupgradeneeded = function(event)
     {
-      console.log("Upgrading to version " + event.newVersion);
+      console.log("Upgrading to version " + event.newVersion + " from version " + event.oldVersion);
       var db = event.target.result;
-      if(event.newVersion == 1)
+      if(event.oldVersion < 1)
       {
 	db.createObjectStore("ranks", {keyPath: "id" });
 	db.createObjectStore("users", {keyPath: "user" });
-	console.log("Tables created");
+      }
+      if(event.oldVersion < 2)
+      {
+	db.createObjectStore("history", {keyPath: "url"});
       }
     };
 
@@ -64,7 +67,7 @@ function onContentMessage(msg, sender, handleResponse)
 {
   return new Promise(resolve => {
     var reqs = msg.pop();
-    var req = indexedDB.open("contest", 1);
+    var req = indexedDB.open("contest", 2);
     req.onsuccess = function(event)
     {
       db = this.result;
@@ -127,6 +130,98 @@ function onContentMessage(msg, sender, handleResponse)
 	  {
 	    resolve([...stsmap]);
 	  }
+	}
+      }
+
+      if(reqs.request == "histatuses")
+      {
+	var stsmap = new Map();
+	var tmpmap = new Map();
+	var rnkmap = new Map();
+	var lstevents = new Array();
+	var evcounter = new Map();
+	let numusrs = msg.length;
+	var usrscopy = [];
+	
+	for(var i = 0; i < numusrs; i++)
+	{
+	  var r = msg.pop();
+	  usrscopy.push(r);
+	}
+
+	db = this.result;
+	
+	var tr = db.transaction(["users", "history"]);
+	var objh = tr.objectStore("history");
+	var oc = objh.openCursor();
+	oc.onsuccess = function(event)
+	{
+	  var cur = event.target.result;
+	  if(cur)
+	  {
+	    console.log("histevent = " + cur.value.username);
+	    lstevents.push(cur.value.url);
+	    var t = evcounter.get(cur.value.username);
+	    if(t != undefined)
+	    {
+	      var count = t;
+	      evcounter.set(cur.value.username, count+1);
+	    }
+	    else
+	      evcounter.set(cur.value.username, 1);
+	    
+	    cur.continue();
+	  }
+	  else
+	  {
+	    var obju = tr.objectStore("users");
+	    var ocu = obju.openCursor();
+	    ocu.onsuccess = function(event)
+	    {
+	      var cur = event.target.result;
+	      if(cur)
+	      {
+		var hu = cur.value.user;
+		var hrnk = cur.value.rankid;
+		rnkmap.set(hu, hrnk);
+		cur.continue();
+	      }
+	      else
+	      {
+		for(var co = 0; co < usrscopy.length; co++)
+		{
+		  var optstoadd = {};
+		  var curitm = usrscopy[co];
+		  var curusr = curitm.username;
+		  var cururl = curitm.url;
+		  optstoadd['username'] = curusr;
+		  optstoadd['isevent'] = lstevents.includes(cururl);
+		  var numev = evcounter.get(curusr);
+		  if(numev == undefined)
+		    numev = 0;
+		  optstoadd['numevents'] = numev;
+		  var r = rnkmap.get(curusr);
+		  if(r == undefined)
+		    optstoadd['rankid'] = -1;
+		  else
+		    optstoadd['rankid'] = r;
+		    
+		  console.log("rankid = " +  optstoadd['rankid'] + ", isevent = " + optstoadd['isevent'] + ", Number Events = " + numev);
+		  
+		  if(cururl != undefined)
+		  {
+		    if(r != undefined || optstoadd['isevent'] != false || numev != 0)
+		      stsmap.set(cururl, optstoadd);
+		  }
+		}
+		resolve([...stsmap]);
+	      }
+	    }
+	  }
+	}
+	oc.onerror = function(err)
+	{
+	  console.log("histatuses error"); 
 	}
       }
     
@@ -194,7 +289,7 @@ function onContentMessage(msg, sender, handleResponse)
       if(reqs.request == "eraseall")
       {
 	var reqallkeys, reqdel;
-        var tr = db.transaction(["ranks", "users"], "readwrite");
+           var tr = db.transaction(["ranks", "users", "history"], "readwrite");
 	var objr = tr.objectStore("ranks");
 	var rankclr = objr.clear();
 	rankclr.onsuccess = function(evr)
@@ -203,8 +298,140 @@ function onContentMessage(msg, sender, handleResponse)
 	  var usrclr = obju.clear();
 	  usrclr.onsuccess = function(evu)
 	  {
-	    resolve("");	    
+	    var objh = tr.objectStore("history");
+	    var histclr = objh.clear();
+	    histclr.onsuccess = function(evh)
+	    {
+	      resolve("");
+	    }
 	  }
+	}
+      }
+      if(reqs.request == "injecthistorydialog")
+      {
+        var src = browser.runtime.getURL('addhistorydialog.html');
+        var reqhtml = new XMLHttpRequest();
+        reqhtml.open("GET", src, true);
+        reqhtml.send(null);
+        reqhtml.onreadystatechange = function() {
+	if (reqhtml.readyState == 4)
+	  resolve(reqhtml.responseText); };
+      }
+      if(reqs.request == "addhistoryevent")
+      {
+	var reqadded;
+	var reqprms = msg.pop();
+	var objadd = db.transaction("history", "readwrite").objectStore("history");
+	reqadded = objadd.put(reqprms);        
+      }
+      if(reqs.request == "removehistoryevent")
+      {
+        var reqremoved;
+        var reqprms = msg.pop();
+        var objremoved = db.transaction("history", "readwrite").objectStore("history");
+        reqremoved = objremoved.delete(reqprms);
+      }
+      if(reqs.request == "getuserhistorysummary")
+      {
+        var ovmap = new Map();
+        var urleventfound = false;
+        var numinhist = 0;
+        var reqprms = msg.pop();
+
+        db = this.result;
+	var objh = db.transaction("history").objectStore("history");
+	var oc = objh.openCursor();
+	oc.onsuccess = function(event) 
+	{
+	  var cur = event.target.result;
+	  if(cur)
+	  {
+	    var cururl = cur.value.url;
+	    var curusr = cur.value.username;
+	    if(curusr === reqprms.username)
+	      numinhist++;
+	    if(cururl === reqprms.url)
+	      urleventfound=true;
+
+	    cur.continue();
+	  }
+	  else
+	  {
+	    ovmap.set("number", numinhist);
+	    ovmap.set("current",urleventfound);
+	    resolve([...ovmap]);
+	  }
+	}
+	oc.onerror = function(err)
+	{
+	  console.log("getuserhistorysummary error"); 
+	}
+      }
+      if(reqs.request == "getuserhistory")
+      {
+        var histmap = new Map();
+	var reqprms = msg.pop();
+        db = this.result;
+	var objh = db.transaction("history").objectStore("history");
+	var oc = objh.openCursor();
+	oc.onsuccess = function(event) 
+	{
+	  var cur = event.target.result;
+	  if(cur)
+	  {
+	    var curusr = cur.value.username;
+	    if(curusr === reqprms.username)
+	    {
+	      var itmap = new Map();
+	      itmap.set("time", cur.value.time);
+	      itmap.set("title", cur.value.title);
+	      itmap.set("type", cur.value.type);
+	      itmap.set("alias", cur.value.alias);
+	      itmap.set("descript", cur.value.descript);
+	      itmap.set("repost", cur.value.repost);
+	      histmap.set(cur.value.url, itmap);
+	    }
+	    cur.continue();
+	  }
+	  else
+	  {
+	    resolve([...histmap]);
+	  }
+	}
+	oc.onerror = function(err)
+	{
+	  console.log("getuserhistory error"); 
+	}
+      }
+
+      if(reqs.request == "gethistoryitem")
+      {
+        var url = msg.pop();
+        db = this.result;
+        var objh = db.transaction("history").objectStore("history");
+        var geth = objh.get(url);
+        geth.onsuccess = function(event)
+        {
+	  
+          var d = geth.result;
+          if(d === undefined)
+	  {
+	    console.log("gethistoryitem undefined before resolve");
+            resolve("");
+	  }
+	  console.log("itmap = " + d.title + "; url = " + url);
+          var itmap = new Map();
+          itmap.set("time", d.time);
+          itmap.set("title", d.title);
+          itmap.set("type", d.type);
+          itmap.set("alias", d.alias);
+          itmap.set("descript", d.descript);
+          itmap.set("repost", d.repost);
+	  resolve([...itmap]);
+        }
+        geth.onerror = function(err)
+	{
+	  console.log("gethistoryitem error: " + err); 
 	}
       }
     }

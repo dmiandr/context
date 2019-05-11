@@ -1,0 +1,29 @@
+<div id="histbackground" class="darkbackground">
+  <div id="histdialog" class="eventwindow">
+    <div class="firstline">
+      <span style="width: 25%; color: #FFF; padding: 10px">СОБЫТИЕ:</span>
+      <select name="eventype" class="contselector" id="eventypeselector" disabled="disabled"><option value="post">Запись</option><option value="comment">Комментарий</option><option value="unknown">Неизвестное</option></select>
+      <label id="repostmark" style="color: #FFF;"><input type="checkbox"/>репост</label>
+    </div>
+    <div class="firstline">
+      <span class="dialogfield" id="fldname" style="width: 25%">
+      </span>
+      <span class="dialogfield" id="fldalias" style="width: 25%">
+      </span>
+      <span class="dialogfield" id="fldtime" style="width: 37%">
+      </span>
+    </div>
+    <span class="dialogfield" id="fldlink" style="width: 94%">
+    </span>
+    <input class="dialogfieldedit" id="fldtitle" placeholder="Заголовок события" style="width: 95%"></input>
+    <textarea class="dialogfieldedit" id="fldmain" placeholder="Описание события и цитаты пользователя" style="width: 95%; height: 100px; resize: none; opacity: 1;"></textarea>
+    <div class="firstline" id="buttonsline">
+    <span class="continvbutton" id="cancelbtn" style="align: left">
+    Отмена
+    </span>
+    <span class="continvbutton" id="okbtn"  style="float: right">
+    Добавить
+    </span>
+    </div>
+  </div>
+</div>

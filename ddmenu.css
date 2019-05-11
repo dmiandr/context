@@ -10,6 +10,7 @@
   border-right: 4px solid transparent;
   border-left: 4px solid transparent;
   margin-top: 0px;
+  cursor: pointer;
   z-index: 2147483646;
 }
 
@@ -19,7 +20,8 @@
     background-color: #f9f9f9;
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 2147483647;
+    cursor: pointer;
+    z-index: 0;
 }
 
 .dropdownusr-content a {
@@ -27,46 +29,48 @@
     padding: 2px 6px;
     text-decoration: none;
     display: block;
+    cursor: pointer;
+    z-index: 2147483647;
 }
 
-.dropdownusr-content a:hover {background-color: #f1f1f1}
+.dropdownusr-content a:hover {
+    background-color: #f1f1f1;
+   text-decoration: bold;
+    
+}
 
 .dropdownusr:hover .dropdownusr-content {
     display: block;
 }
 
 .darkbackground {
-    background: rgba(102, 102, 102, 0.5);
+    background: rgba(102, 102, 102, 0.2);
     width: 100%;
     height: 100%;
     position: fixed;
     z-index: 1;
-    top: 0;
-    left: 0;
+    top: 0px;
+    left: 0px;
     display: none;
-    overflow: auto;
+    overflow: hidden;
 }
 .eventwindow {
-    width: 300px;
-    height: 120px;
-    text-align: center;
     padding: 15px;
-    border: 3px solid #0000cc;
-    border-radius: 10px;
+    border: 0px solid #1a4870;
+    border-radius: 4px;
     color: #0000cc;
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    position: absolute;
     margin: auto;
-    background: #fff;
+    background: #326891;
+    z-index: 3
+    overflow: scroll;
 }
 .close {
-    color: #aaa;
+    color: #E11;
     float: right;
     font-size: 28px;
     font-weight: bold;
+    position: relative;
 }
 
 .close:hover,
@@ -76,3 +80,108 @@
   cursor: pointer;
 }
 #darkbackground:target {display: block;}
+
+
+.dialogfield {
+    color: #326891;
+    background: #a1a1a1;
+    border: 0px solid #1a4870;
+    border-radius: 4px;
+    position: relative;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin: 5px;
+    display: inline-block;
+}
+
+.dialogfieldedit {
+    color: #326891;
+    background: #ffffff;
+    border: 0px solid #1a4870;
+    border-radius: 4px;
+    position: relative;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin: 5px;
+    display: inline-block;
+}
+
+
+.continvbutton {
+    color: #326891;
+    background: #ffffff;
+    border: 0px solid #1a4870;
+    border-radius: 4px;
+    position: relative;
+    top: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.continvbutton:hover,
+.continvbutton:focus {
+  color: #aa0000;
+  border: 0px solid #1a4870;
+  cursor: pointer;
+}
+
+.firstline {
+    align: justify;
+    border: 0px solid #FFF;
+    width: 100%;
+}
+
+.hide-overlay .overlay {
+    left: -100%;
+}
+
+.background-content {
+    height: 100%;
+    overflow: auto;
+}
+
+.history {
+    background-image:url('icons/historymark.gif');
+    background-repeat:no-repeat;
+    background-position:right top;
+}
+
+table.histable {
+    border-collapse: collapse;
+    border: 1px solid #326891;
+    width: 100%;
+}
+
+table.histable th {
+    border: 1px solid #326891;
+    padding: 3px 7px 2px 7px;
+    text-align: center;
+    padding: 5px;
+    background-color: #326891;
+    color: #fff;
+}
+
+table.histable tr:nth-child(odd) {
+    border: 1px solid #326891;
+    background-color: #487ca4;
+}
+
+table.histable tr:nth-child(even) {
+    border: 1px solid #326891;
+    background-color: #bdd9e7;
+}
+
+
+table.histable td {
+    border: 1px solid #326891;
+    padding: 3px 7px 2px 7px;
+}
+
+.contselector {
+    background-color: #fff;
+    color: #326891;
+}
+
+.contselector:disabled{
+   opacity: 0.6;
+}

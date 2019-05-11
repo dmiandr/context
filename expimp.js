@@ -1,14 +1,17 @@
-const markfields = [{table:"ranks", markfield:"rank"}, {table:"users", markfield:"rankid"}];
+const markfields = [{table:"ranks", markfield:"rank"}, {table:"users", markfield:"rankid"}, {table:"history", markfield:"url"}];
 
 var stsmap = new Map();
 var rankspossible = [];
 var users = [];
+var hist = []; //! history is a keyword in javascript, can't be redefined
 var usersfields;
 var ranksfields;
 var alldata = [];
 
 var expbtn = document.getElementById("expbtn");
-expbtn.onclick = function() { setExport();};
+expbtn.onclick = function() { 
+  setExport();
+};
 document.getElementById("impbtn").addEventListener('change', handleSelectImport, false);
 document.getElementById("markinfeed").addEventListener('change', handleMarkMode, false);
 document.getElementById("erasebeforeimport").checked = false;
@@ -25,13 +28,14 @@ else
 
 
 function setExport() {
-  var req = indexedDB.open("contest", 1);
+  var req = indexedDB.open("contest", 2);
   req.onsuccess = function(event)
   {
     var dbn = this.result;
     rankspossible = [];
     users = [];
-    getAllFromTable(dbn, "ranks", rankspossible).then(getAllFromTable(dbn, "users", users)).then(function(){
+    hist = [];
+    getAllFromTable(dbn, "ranks", rankspossible).then(getAllFromTable(dbn, "users", users)).then(getAllFromTable(dbn, "history", hist)).then(function(){
       ranksfields = Object.keys(rankspossible[0]);
       console.log("Readed fields: " + ranksfields);
       
@@ -42,15 +46,20 @@ function setExport() {
       else usersfields = "";
       console.log("USER: " + usersfields);
       alldata = [];
-      
       alldata.push(rankspossible);  
       alldata.push(users);
+      alldata.push(hist);
       var str = JSON.stringify(alldata,undefined,2);
       var blobtosave = new Blob([str], {type: 'application/json', name: "file.json"});
       saveAs(blobtosave, 'file.json');
     });
     dbn.close();	
   }
+
+  req.onerror = function(ev) {
+    alert("Ошибка открытия БД для экспорта: " + ev.text);
+  }
+
 }
 
 function getAllFromTable(db, tabname, basket)
@@ -154,6 +163,30 @@ function importParcedData(datparced)
 	  
 	  var sendonrankchange = browser.runtime.sendMessage(usrarr);
 	  sendonrankchange.catch(err => { alert("Ошибка загрузки пользователей: " + err); return; });
+	}
+      }
+      if(curtable == "history")
+      {
+        numusers = curar.length;
+	for(k = 0; k < curar.length; k++)
+	{
+	  sing = curar[k];
+	  var histarr = new Array();
+	  var histprms = {};
+	  histprms['username'] = sing.username;
+	  histprms['alias'] = sing.alias;
+	  histprms['time'] = sing.time;
+	  histprms['url'] = sing.url;
+	  histprms['title'] = sing.title;
+	  histprms['descript'] = sing.descript;
+	  histprms['type'] = sing.type;
+	  histprms['repost'] = sing.repost;
+	  histprms['recipient'] = sing.recipient;
+	  histarr.push(histprms);
+	  histarr.push({request: "addhistoryevent"});
+
+	  var sendonhistadd = browser.runtime.sendMessage(histarr);
+	  sendonhistadd.catch(err => { alert("Ошибка загрузки истории: " + err); return; });
 	}
       }
     }
