@@ -14,7 +14,8 @@ expbtn.onclick = function() {
 };
 document.getElementById("impbtn").addEventListener('change', handleSelectImport, false);
 document.getElementById("markinfeed").addEventListener('change', handleMarkMode, false);
-document.getElementById("erasebeforeimport").checked = false;
+//document.getElementById("erasebeforeimport").checked = false;
+//document.getElementById("clearhistory").addEventListener('click', clearHistory, false);
 
 var mrk = localStorage.getItem('markinfeed');
 if(mrk === null || mrk === false)
@@ -50,7 +51,8 @@ function setExport() {
       alldata.push(users);
       alldata.push(hist);
       var str = JSON.stringify(alldata,undefined,2);
-      var blobtosave = new Blob([str], {type: 'application/json', name: "file.json"});
+      //window.open( "data:text/json;charset=utf-8," + str);
+      var blobtosave = new Blob([str], {type: 'text/json', name: "file.json"});
       saveAs(blobtosave, 'file.json');
     });
     dbn.close();	
@@ -114,6 +116,17 @@ function handleSelectImport(evt) {
     }
     importParcedData(allLoaded);
   }
+}
+
+function clearHistory()
+{
+  var erarr = new Array();
+  erarr.push({request: "eraseall"});
+  erarr.push(true);
+  var senderase = browser.runtime.sendMessage(erarr);
+      senderase.then(
+        result => { alert("История очищена. " + result);},
+        error => { alert("Ошибка при удалении данных: " + error); return; });
 }
 
 function importParcedData(datparced)

@@ -95,44 +95,6 @@ function onContentMessage(msg, sender, handleResponse)
         }
       }
   
-      if(reqs.request == "statuses")
-      {
-	var stsmap = new Map();
-	let numusrs = msg.length;
-	var usrscopy = [];
-	
-	for(var i = 0; i < numusrs; i++)
-	{
-	  var r = msg.pop();
-	  usrscopy.push(r);
-	}
-
-	db = this.result;
-	var tr = db.transaction("users");	
-	var objstore = tr.objectStore("users");
-	objstore.openCursor().onsuccess = function(event) 
-	{
-	  var cur = event.target.result;
-	  if(cur)
-	  {
-	    var rankid = cur.value.rankid;
-	    var uuser = cur.value.user;
-	    for(var co = 0; co < usrscopy.length; co++)
-	    {
-	      if(uuser == usrscopy[co])
-	      {
-		stsmap.set(uuser, rankid);
-	      }
-	    }
-	    cur.continue();
-	  }
-	  else
-	  {
-	    resolve([...stsmap]);
-	  }
-	}
-      }
-
       if(reqs.request == "histatuses")
       {
 	var stsmap = new Map();
@@ -159,16 +121,17 @@ function onContentMessage(msg, sender, handleResponse)
 	  var cur = event.target.result;
 	  if(cur)
 	  {
-	    console.log("histevent = " + cur.value.username);
+	    var u = cur.value.username.toLowerCase();
+	    console.log("histevent = " + u);
 	    lstevents.push(cur.value.url);
-	    var t = evcounter.get(cur.value.username);
+	    var t = evcounter.get(u);
 	    if(t != undefined)
 	    {
 	      var count = t;
-	      evcounter.set(cur.value.username, count+1);
+	      evcounter.set(u, count+1);
 	    }
 	    else
-	      evcounter.set(cur.value.username, 1);
+	      evcounter.set(u, 1);
 	    
 	    cur.continue();
 	  }
@@ -181,7 +144,7 @@ function onContentMessage(msg, sender, handleResponse)
 	      var cur = event.target.result;
 	      if(cur)
 	      {
-		var hu = cur.value.user;
+		var hu = cur.value.user.toLowerCase();
 		var hrnk = cur.value.rankid;
 		rnkmap.set(hu, hrnk);
 		cur.continue();
@@ -192,7 +155,7 @@ function onContentMessage(msg, sender, handleResponse)
 		{
 		  var optstoadd = {};
 		  var curitm = usrscopy[co];
-		  var curusr = curitm.username;
+		  var curusr = curitm.username.toLowerCase();
 		  var cururl = curitm.url;
 		  optstoadd['username'] = curusr;
 		  optstoadd['isevent'] = lstevents.includes(cururl);
@@ -208,11 +171,11 @@ function onContentMessage(msg, sender, handleResponse)
 		    
 		  console.log("rankid = " +  optstoadd['rankid'] + ", isevent = " + optstoadd['isevent'] + ", Number Events = " + numev);
 		  
-		  if(cururl != undefined)
-		  {
+		  //if(cururl != undefined)
+		  //{
 		    if(r != undefined || optstoadd['isevent'] != false || numev != 0)
 		      stsmap.set(cururl, optstoadd);
-		  }
+		  //}
 		}
 		resolve([...stsmap]);
 	      }
@@ -228,6 +191,7 @@ function onContentMessage(msg, sender, handleResponse)
       if(reqs.request == "setstatus")
       {
 	var reqprms = msg.pop();
+	var u = reqprms.username.toLowerCase();
 	db = this.result;
 	var objset = db.transaction("users", "readwrite").objectStore("users");
 	objset.openCursor().onsuccess = function(event) 
@@ -235,10 +199,10 @@ function onContentMessage(msg, sender, handleResponse)
 	  if(reqprms.userrank == -1)
 	  {
 	    var reqdel;
-	    reqdel = objset.delete(reqprms.username);
+	    reqdel = objset.delete(u);
 	    reqdel.onsuccess = function(event)
 	    {
-	      resolve(reqprms.username);
+	      resolve(u);
 	    }
 	    reqdel.onerror = function(event)
 	    {
@@ -249,12 +213,12 @@ function onContentMessage(msg, sender, handleResponse)
 	  {
 	    var reqput;
 	    var data = {user: '', rankid:0};
-	    data.user = reqprms.username; // \todo А зачем они называются по-разному? Может, если поля в пришедшем массиве назвать так-же, то и грузить можно будет непосредственно reqprms?
+	    data.user = u; // \todo А зачем они называются по-разному? Может, если поля в пришедшем массиве назвать так-же, то и грузить можно будет непосредственно reqprms?
 	    data.rankid = reqprms.userrank;
 	    reqput = objset.put(data);
 	    reqput.onsuccess = function(event)
 	    {
-	      resolve(reqprms.username);
+	      resolve(u);
 	    }
 	    reqput.onerror = function(event)
 	    {
@@ -288,9 +252,10 @@ function onContentMessage(msg, sender, handleResponse)
       }
       if(reqs.request == "eraseall")
       {
+	var exclranks = msg.pop();
 	var reqallkeys, reqdel;
-           var tr = db.transaction(["ranks", "users", "history"], "readwrite");
-	var objr = tr.objectStore("ranks");
+	var tr = db.transaction(["ranks", "users", "history"], "readwrite");
+	var objr = tr.objectStore("history");
 	var rankclr = objr.clear();
 	rankclr.onsuccess = function(evr)
 	{
@@ -298,11 +263,16 @@ function onContentMessage(msg, sender, handleResponse)
 	  var usrclr = obju.clear();
 	  usrclr.onsuccess = function(evu)
 	  {
-	    var objh = tr.objectStore("history");
-	    var histclr = objh.clear();
-	    histclr.onsuccess = function(evh)
+	    if(exclranks)
+	      resolve("перечень статусов сохранен");
+	    else
 	    {
-	      resolve("");
+	      var objh = tr.objectStore("ranks");
+	      var histclr = objh.clear();
+	      histclr.onsuccess = function(evh)
+	      {
+		resolve("");
+	      }
 	    }
 	  }
 	}
@@ -331,42 +301,7 @@ function onContentMessage(msg, sender, handleResponse)
         var objremoved = db.transaction("history", "readwrite").objectStore("history");
         reqremoved = objremoved.delete(reqprms);
       }
-      if(reqs.request == "getuserhistorysummary")
-      {
-        var ovmap = new Map();
-        var urleventfound = false;
-        var numinhist = 0;
-        var reqprms = msg.pop();
 
-        db = this.result;
-	var objh = db.transaction("history").objectStore("history");
-	var oc = objh.openCursor();
-	oc.onsuccess = function(event) 
-	{
-	  var cur = event.target.result;
-	  if(cur)
-	  {
-	    var cururl = cur.value.url;
-	    var curusr = cur.value.username;
-	    if(curusr === reqprms.username)
-	      numinhist++;
-	    if(cururl === reqprms.url)
-	      urleventfound=true;
-
-	    cur.continue();
-	  }
-	  else
-	  {
-	    ovmap.set("number", numinhist);
-	    ovmap.set("current",urleventfound);
-	    resolve([...ovmap]);
-	  }
-	}
-	oc.onerror = function(err)
-	{
-	  console.log("getuserhistorysummary error"); 
-	}
-      }
       if(reqs.request == "getuserhistory")
       {
         var histmap = new Map();
@@ -379,8 +314,8 @@ function onContentMessage(msg, sender, handleResponse)
 	  var cur = event.target.result;
 	  if(cur)
 	  {
-	    var curusr = cur.value.username;
-	    if(curusr === reqprms.username)
+	    var curusr = cur.value.username.toLowerCase();
+	    if(curusr === reqprms.username.toLowerCase())
 	    {
 	      var itmap = new Map();
 	      itmap.set("time", cur.value.time);
@@ -432,6 +367,65 @@ function onContentMessage(msg, sender, handleResponse)
         geth.onerror = function(err)
 	{
 	  console.log("gethistoryitem error: " + err); 
+	  resolve("");
+	}
+      }
+      if(reqs.request == "getbrieflist")
+      {
+	db = this.result;
+	var umap = new Map();
+        var tr = db.transaction(["users", "history"]);
+	var objh = tr.objectStore("history");
+	var oc = objh.openCursor();
+	oc.onsuccess = function(event) 
+	{
+	  var cur = event.target.result;
+	  if(cur)
+	  {
+	    var uopts = {};
+	    var newopts = {};
+	    var curusr = cur.value.username.toLowerCase();
+	    uopts = umap.get(curusr);
+	    
+	    if(uopts === undefined)
+	    {
+	      newopts['numevents'] = 1;
+	    }
+	    else
+	    {
+	      newopts['numevents'] = uopts['numevents'] + 1;
+	    }
+	    newopts['alias'] = cur.value.alias;
+	    umap.set(curusr, newopts);
+	    cur.continue();
+	  }
+	  else
+	  {
+	    var obju = tr.objectStore("users");
+	    var uc = obju.openCursor();
+	    uc.onsuccess = function(ev)
+	    {
+	      var opts = {};
+	      var c = ev.target.result;
+	      if(c)
+	      {
+		var un = c.value.user.toLowerCase();
+		var r = c.value.rankid;
+		var o = umap.get(un); 
+		if(o != undefined)
+		{
+		  //var oo = {};
+		  o['rankid'] = r;
+		  umap.set(un, o);
+		}
+		c.continue();
+	      }
+	      else
+	      {
+		resolve([...umap]);
+	      }
+	    }    
+	  }
 	}
       }
     }

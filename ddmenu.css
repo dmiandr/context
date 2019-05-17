@@ -149,7 +149,6 @@
 table.histable {
     border-collapse: collapse;
     border: 1px solid #326891;
-    width: 100%;
 }
 
 table.histable th {

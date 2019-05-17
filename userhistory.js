@@ -29,25 +29,6 @@ function onCompletePageLoad() {
 		  console.log("History overview: " + error); 
 		 });
 
-function injectHistoryDialog(res)
-{
-  var backgrnd = document.getElementById('histbackground');
-  if(backgrnd == null)
-  {
-    tst = document.createElement('iframe');
-    tst.style.setProperty('height', '0px');
-    tst.style.setProperty('width', '0px');
-    document.body.appendChild(tst);
-    var win = tst.contentWindow;
-    var frmrange = win.document.createRange();
-    frmrange.selectNode(win.document.firstChild);
-    var frg = frmrange.createContextualFragment(res);
-    document.body.appendChild(frg);
-    backgrnd = document.getElementById('histbackground');
-    backgrnd.style.setProperty('display', "none");
-  }
-}
-
 function buildTable(historymap)
 {
   var htable = document.getElementById("historytabid");
@@ -61,7 +42,7 @@ function buildTable(historymap)
   var evtype_name;
 
 
-  for(var h of data.keys())
+  for(let h of data.keys())
   {
     var rowmap = data.get(h);
     var rowcount = htable.rows.length;
@@ -81,7 +62,6 @@ function buildTable(historymap)
     curcell = row.insertCell(1);
     newelem = document.createElement('a');
     newelem.href = "#";
-    newelem.addEventListener("click", function(evt){
       let cnam = uname; 
       let calias = rowmap.get('alias');
       let ctime = rowmap.get('time');
@@ -89,6 +69,7 @@ function buildTable(historymap)
       let ctitle = rowmap.get('title');
       let cdescr = rowmap.get('descript');
       let crepost = rowmap.get('repost');
+    newelem.addEventListener("click", function(evt){
       drawHistoryEventDlg(evt, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, true);
     });
     newelem.innerText = rowmap.get('title');

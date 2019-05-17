@@ -16,9 +16,17 @@
 </div>
 Параметры расширения CONText.
 <br>
-<a href="#" id="expbtn"><button>Экспорт</button></a><br><br>Импорт:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт"><label><input type="checkbox" id="erasebeforeimport"/>Удалить данные перед импортом новых</label>
-
+<a href="#" id="expbtn" download="file.json"><button>Экспорт</button></a><br><br>Импорт:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт"><label><input type="checkbox" id="erasebeforeimport"/>Удалить данные перед импортом новых</label>
+<br>
 <hr>
-<label><input type="checkbox" id="markinfeed"/>Размечать цветом пользователей в ленте</label>
+<br>
+Перечень пользователей:<br>
+<table class="histable" id="overalltabid" width="50%">
+<th>Имя</th>
+<th>Псевдоним</th>
+<th>Количество событий</th>
+</table>
+<script defer="" type="text/javascript" src="contextlib.js"></script>
+<script defer="" type="text/javascript" src="datasummary.js"></script>
 </body>
 </html>

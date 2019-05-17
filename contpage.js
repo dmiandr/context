@@ -5,19 +5,14 @@ var gUserItems = new Map(); // карта видимых в рамках пос�
 var config = { attributes: false, childList: true, subtree: true }; // Конфигурация MutationObserver
 var userelems;
 var MarkFeed;
-var gBkgrdFader;
 
 var rnkarr = new Array();
 rnkarr.push({request: "ranks"});
 
 if(gRanksParams.size == 0)
 {
-  gBkgrdFader = document.createElement('div');
- 
-  
-var sendonranks = browser.runtime.sendMessage(rnkarr);
-
-sendonranks.then(
+  var sendonranks = browser.runtime.sendMessage(rnkarr);
+  sendonranks.then(
     result => {	handleRanksList(result); },
     error => { handleError(error); });
 }
@@ -157,11 +152,19 @@ function handleItemsStatuses(itmsmap)
   for(var u of userelems.keys())
   {
     uopts = userelems.get(u);
-        if(uopts.rankid != -1)
+    if(uopts.rankid != -1)
       gUsersCache.set(uopts.username, uopts.rankid);
 
-    if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR)
-      addMenuToCurrentItem(u, uopts.type);    
+    //if(MarkFeed == true)
+    //{
+      if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR)
+	addMenuToCurrentItem(u, uopts.type);
+   /* }
+    else
+    {
+      if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR && uopts.type != UserContextTypes.FEED)
+	addMenuToCurrentItem(u, uopts.type);
+    }*/
   }
   colorAll();
 }
@@ -200,7 +203,7 @@ var mutationCallback = function(mutlst, observer) {
 
 var obs = new MutationObserver(mutationCallback);
 
-
+/*! \brief \~russian Выделение имени пользователя из ссылки на его профиль */
 function extractUsername(h)
 {
     var href = h.toString();
@@ -223,7 +226,7 @@ function extractUsername(h)
 	if(matches == null)
 	    return null;
 	if(matches.length > 0)
-	    return matches[1];
+	    return matches[1].toLowerCase();
     }
 
     var retwo = /cont.ws\/@([-a-zA-Z0-9_.]+)\/*$/i;	/**/
@@ -232,20 +235,10 @@ function extractUsername(h)
     if(matchesnext == null)
 	return null;
     if(matchesnext.length > 0)
-	return matchesnext[1];
+	return matchesnext[1].toLowerCase();
 
     return null;
 }
-
-function createrank(rank, bgcolor, fontcolor){
-  let rnk = new Object();
-  	rnk.rank = rank;
-	rnk.bgcolor = bgcolor;
-	rnk.fontcolor = fontcolor;
-	rnk.bold = false;
-	rnk.italic = false;
-  return rnk;
-};
 
 function addMenuToCurrentItem(item, type)
 {
@@ -358,7 +351,7 @@ function handleChangedRank(resuname)
     var v = userelems.get(k);
     var userid = v.username;
     if(userid == resuname)
-      colorItem(k, newrank);
+      colorItem(gRanksParams, k, newrank);
   }
 }
 
@@ -371,25 +364,8 @@ function colorAll()
     var rankid = gUsersCache.get(userid);
     if(typeof rankid !== 'undefined')
     {
-      colorItem(k, rankid);
+      colorItem(gRanksParams, k, rankid);
     }
-  }
-}
-
-function colorItem(itm, rankid)
-{
-  if(rankid == -1)
-  {
-    itm.style.backgroundColor = "white";
-    itm.style.color = "black";
-    itm.title = "";  
-  }
-  else
-  {
-    var styl = gRanksParams.get(rankid);
-    itm.style.backgroundColor = styl.bgcolor;
-    itm.style.color = styl.fontcolor;
-    itm.title = styl.rank;  
   }
 }
 
@@ -419,6 +395,10 @@ function getAllUserItems(where)
     complkey['isevent'] = false;
     complkey['rankid'] = -1;
     complkey['url'] = null;
+    
+    if(username == 'doctordragon')
+      complkey['url'] = null;
+      
 
     if(isParentElementBelobgsToClass(itm, "new_author_bar"))
       complkey['type'] = UserContextTypes.FEED;
@@ -428,8 +408,8 @@ function getAllUserItems(where)
       complkey['type'] = UserContextTypes.FEED;
     else if(isParentElementBelobgsToClass(itm, "comment-body"))
       complkey['type'] = UserContextTypes.COMMENTREPLY;
-    else if(isParentElementBelobgsToClass(itm, "post_prv"))
-      complkey['type'] = UserContextTypes.TOOLBAR;
+    //else if(isParentElementBelobgsToClass(itm, "post_prv"))
+      //complkey['type'] = UserContextTypes.TOOLBAR;
     else if(itm.classList.contains("m_author"))
       complkey['type'] = UserContextTypes.POSTAUTHOR;
     else if(itm.classList.contains("user-card__login"))
@@ -480,9 +460,6 @@ function isDuplicates(array)
   }
   return numdups;
 }
-
-
-
 
 function onHistoryEvent(loaddb, cname, mouseevent, commentitem, type, url)
 {
@@ -535,10 +512,10 @@ function fillHistoryDialogFromPage(cname, mouseevent, commentitem, type)
     evtitle = document.title.split('|')[0];
     evmain = document.title.split('|')[0];
   }
-  //else     evtitle = '\xa0';
+  else evtitle = "";
 
   var dlgres = drawHistoryEventDlg(mouseevent, cname, ualias, evtime, clearurl, evtitle, evmain, type, false, false);
-  dlgres.then(
+  return dlgres.then(
     result => {
       addEventMark(clearurl, cname);
     });
@@ -572,9 +549,10 @@ function addEventMark(url, uname)
     v = userelems.get(k);
     var mencont;
     var m0;
+    var u = true;
     
     if(v.type != UserContextTypes.COMMENT && v.type != UserContextTypes.POSTAUTHOR)
-      continue;
+      u = false;
     
     if(v.url == url)
     {
@@ -586,8 +564,8 @@ function addEventMark(url, uname)
       {
 	v.isevent = true;
 	k.classList.add('history');
-	mencont.childNodes[1].textContent = "Изменить событие";
-	mencont.childNodes[1].addEventListener("click", function(evt){let cnam = uname; let e = evt; let itm = k; let t = v.type; let u = url; onHistoryEvent(true, cnam, e, itm, t, u);});
+	if(u) mencont.childNodes[1].textContent = "Изменить событие";
+	if(u) mencont.childNodes[1].addEventListener("click", function(evt){let cnam = uname; let e = evt; let itm = k; let t = v.type; let u = url; onHistoryEvent(true, cnam, e, itm, t, u);});
       }
       if(v.numevents == 0)
       {
@@ -886,19 +864,20 @@ function getCommentURL(item)
 function isParentElementBelobgsToClass(item, classname)
 {
   var p = item.parentElement;
+  if(p == null)
+    return false;
   if('classList' in p)
   {
     if(p.classList.contains(classname))
       return true;
-  }
-  else
-  {
-    if(p !== null)
+    else
     {
       return isParentElementBelobgsToClass(p, classname);
     }
-    else
-      return false;
+  }
+  else
+  {
+    return isParentElementBelobgsToClass(p, classname);
   }
 }
 
@@ -913,20 +892,4 @@ function getParentItemWithAttribute(item, attr)
   }
     else
       return null;
-}
-
-
-function popupHistoryWindow(cnam)
-{
-  var histurl = browser.extension.getURL("userhistory.html");
-  histurl += "?username=";
-  histurl += cnam;
-  
-  var popup = window.open(histurl, "TEST POPUP", 'height=400,width=750');
-
-//  var titlelem = popup.getElementById("popuptitle");
-  //titlelem = documents.getElementById("popuptitle");
-//  titlelem.innerHTML = cnam;
-
-  popup.focus();
 }
