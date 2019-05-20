@@ -5,12 +5,34 @@
 <link rel="stylesheet" type="text/css" href="ddmenu.css">
 </head>
 <body>
-<h1 id="popuptitle">username</h1>
+<h2 id="popuptitle">username</h1>
+<textarea class="dialogfieldedit" id="useroverall" placeholder="Общая характеристика автора" style="width: 85%; height: 70px; resize: none; opacity: 1;"></textarea>
 <table class="histable" id="historytabid">
+<thead>
+<tr>
 <th>Время</th>
 <th>Заголовок</th>
 <th>Событие</th>
+</tr>
+</thead>
+<tbody id="tablebody">
+</tbody>
 </table>
+<div style="position: fixed; top: 0; right: 0">
+<span class="contbutton" id="closebtn" style="align: right">
+Закрыть
+</span>
+<br>
+<span class="contbutton" id="updatelbtn" style="align: right">
+Обновить
+</span>
+<br>
+<br>
+<span class="contbutton" id="savebtn" style="align: right">
+Сохранить
+</span>
+</div>
+<script defer="" type="text/javascript" src="browser-polyfill.js"></script>
 <script defer="" type="text/javascript" src="contextlib.js"></script>
 <script defer="" type="text/javascript" src="userhistory.js"></script>
 </body>

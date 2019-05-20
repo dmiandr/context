@@ -3,6 +3,18 @@ var searchstr = document.location.search;
 var uname = searchstr.split("=")[1];
 titlelem.innerHTML = uname;
 window.addEventListener("load", onCompletePageLoad, false);
+var closebtnelem = document.getElementById("closebtn");
+closebtnelem.addEventListener("click", function(evt)
+{ 
+  window.opener=null;
+  window.close(); 
+  return false;
+});
+var updatelbtnelem = document.getElementById("updatelbtn");
+updatelbtnelem.addEventListener("click", function(evt){ updateContent(); });
+
+var saveuserdescript = document.getElementById("savebtn");
+saveuserdescript.addEventListener("click", function(evt){ saveUserDescription(); });
 
 function onCompletePageLoad() {
   if(document.readyState === "complete")
@@ -10,10 +22,32 @@ function onCompletePageLoad() {
     var nmarr = new Array();
     nmarr.push({request: "injecthistorydialog"});
   var sendhtmlinject = browser.runtime.sendMessage(nmarr);
-  sendhtmlinject.then(result => { injectHistoryDialog(result); }, error => {});
+  sendhtmlinject.then(result => 
+    { 
+      injectHistoryDialog(result); 
+    }, error => {});
   }
 }
 
+var gRankId;
+var arr = new Array();
+arr.push(uname);
+arr.push({request: "getstatus"});
+var sentondescript = browser.runtime.sendMessage(arr);
+sentondescript.then(result => 
+    { 
+      var descr = result.description;
+      if(result.rankid == undefined)
+       gRankId = -1;
+      else
+        gRankId = result.rankid;
+      document.getElementById("useroverall").textContent = descr;
+      updateContent(); 
+    }, error => {});
+
+
+function updateContent()
+{
   var bhistarr = new Array();
   var userprms = {};
   userprms['username'] = uname;
@@ -28,10 +62,18 @@ function onCompletePageLoad() {
 		error => { 
 		  console.log("History overview: " + error); 
 		 });
+}
 
 function buildTable(historymap)
 {
   var htable = document.getElementById("historytabid");
+
+  var rowcount = htable.rows.length;
+  for (var i = rowcount - 1; i > 0; i--)
+  {
+    htable.deleteRow(i);
+  }
+  
   let data = new Map(historymap);
   var numcell;
   var curcell;
@@ -47,32 +89,32 @@ function buildTable(historymap)
     var rowmap = data.get(h);
     var rowcount = htable.rows.length;
     var row = htable.insertRow(-1);
-    var curtitle = rowmap.get('title');
+    var curtitle = rowmap.title;
 
-    evtype = rowmap.get('type');
+    evtype = rowmap.type;
     if(evtype == 1 || evtype == 2)
       evtype_name = "Комментарий";
     if(evtype == 4)
       evtype_name = "Запись";
 
     curcell = row.insertCell(0);
-    newtext = document.createTextNode(rowmap.get('time'));
+    newtext = document.createTextNode(rowmap.time);
     curcell.appendChild(newtext);
 
     curcell = row.insertCell(1);
     newelem = document.createElement('a');
     newelem.href = "#";
       let cnam = uname; 
-      let calias = rowmap.get('alias');
-      let ctime = rowmap.get('time');
+      let calias = rowmap.alias;
+      let ctime = rowmap.time;
       let curl = h;
-      let ctitle = rowmap.get('title');
-      let cdescr = rowmap.get('descript');
-      let crepost = rowmap.get('repost');
+      let ctitle = rowmap.title;
+      let cdescr = rowmap.descript;
+      let crepost = rowmap.repost;
     newelem.addEventListener("click", function(evt){
       drawHistoryEventDlg(evt, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, true);
     });
-    newelem.innerText = rowmap.get('title');
+    newelem.innerText = rowmap.title;
     curcell.appendChild(newelem);
 
     curcell = row.insertCell(2);
@@ -81,12 +123,21 @@ function buildTable(historymap)
     newelem.addEventListener("click", function(evt){parent.window.open(h)});
     newelem.innerText = evtype_name;
     curcell.appendChild(newelem);
+    var lastalias = rowmap.alias;
   }
+  titlelem.innerText= lastalias + " (" + uname + ")";
 }
 
-function loadHistoryEvent(url)
+function saveUserDescription()
 {
-
-
+  var descript = useroverall.value;
+  var nmarr = new Array();
+  var userprms = {};
+  userprms['username'] = uname;
+  userprms['userrank'] = gRankId;
+  userprms['description'] = descript;
+  nmarr.push(userprms);  
+  nmarr.push({request: "setstatus"});
+  var sendonrankchange = browser.runtime.sendMessage(nmarr);
 }
 

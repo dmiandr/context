@@ -97,7 +97,7 @@
 .dialogfieldedit {
     color: #326891;
     background: #ffffff;
-    border: 0px solid #1a4870;
+    border: 1px solid #1a4870;
     border-radius: 4px;
     position: relative;
     padding-left: 5px;
@@ -125,6 +125,24 @@
   cursor: pointer;
 }
 
+.contbutton {
+    color: #ffffff;
+    background: #326891;
+    border: 0px solid #1a4870;
+    border-radius: 4px;
+    position: relative;
+    top: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.contbutton:hover,
+.contbutton:focus {
+  color: #aa0000;
+  border: 0px solid #1a4870;
+  cursor: pointer;
+}
+
 .firstline {
     align: justify;
     border: 0px solid #FFF;
@@ -140,11 +158,7 @@
     overflow: auto;
 }
 
-.history {
-    background-image:url('icons/historymark.gif');
-    background-repeat:no-repeat;
-    background-position:right top;
-}
+.history { -webkit-animation: blink2 1s linear infinite; animation: blink2 1s linear infinite; } @-webkit-keyframes blink2 { 100% { color: rgba(34, 34, 34, 0); } } @keyframes blink2 { 100% { color: rgba(34, 34, 34, 0); } }
 
 table.histable {
     border-collapse: collapse;

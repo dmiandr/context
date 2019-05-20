@@ -10,25 +10,16 @@ var alldata = [];
 
 var expbtn = document.getElementById("expbtn");
 expbtn.onclick = function() { 
-  setExport();
+  setExport("new");
 };
+var expbackw = document.getElementById("expbackw");
+expbackw.onclick = function() { 
+  setExport("old");
+};
+
 document.getElementById("impbtn").addEventListener('change', handleSelectImport, false);
-document.getElementById("markinfeed").addEventListener('change', handleMarkMode, false);
-//document.getElementById("erasebeforeimport").checked = false;
-//document.getElementById("clearhistory").addEventListener('click', clearHistory, false);
 
-var mrk = localStorage.getItem('markinfeed');
-if(mrk === null || mrk === false)
-{
-  document.getElementById("markinfeed").checked = false;
-}
-else
-{
-  document.getElementById("markinfeed").checked = true;
-}
-
-
-function setExport() {
+function setExport(ver) {
   var req = indexedDB.open("contest", 2);
   req.onsuccess = function(event)
   {
@@ -51,9 +42,16 @@ function setExport() {
       alldata.push(users);
       alldata.push(hist);
       var str = JSON.stringify(alldata,undefined,2);
-      //window.open( "data:text/json;charset=utf-8," + str);
-      var blobtosave = new Blob([str], {type: 'text/json', name: "file.json"});
-      saveAs(blobtosave, 'file.json');
+      if(ver == "new")
+      {
+	var blobtosave = new Blob([str], {type: "application/json", name: "file.json"});
+	saveAs(blobtosave, 'context.json');
+      }
+      if(ver == "old")
+      {
+	var blobtosave = new Blob([str], {type: "application/octet-stream", name: "file.json"});
+	saveAs(blobtosave, 'context.json');
+      }
     });
     dbn.close();	
   }
@@ -228,7 +226,7 @@ function identifyTable(fieldslist)
   }
   return "";  
 }
-
+/*
 function handleMarkMode()
 {
   if(this.checked)
@@ -240,3 +238,4 @@ function handleMarkMode()
     localStorage.setItem('markinfeed', false);
   }
 }
+*/

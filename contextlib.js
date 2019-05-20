@@ -69,7 +69,8 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
   cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };
 
   var repostchkbox = document.getElementById('repostmark');
-  repostchkbox.style.display = "none";
+  var repostlbl = document.getElementById('repostlbl');
+  repostlbl.style.display = "none";
   var evselector = document.getElementById('eventypeselector');
   if(type == UserContextTypes.COMMENT)
   {
@@ -77,7 +78,7 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
   }
   else if(type == UserContextTypes.POSTAUTHOR)
   {
-    repostchkbox.style.display = "inline";
+    repostlbl.style.display = "inline";
     evselector.value = "post";
   }
   else
@@ -257,7 +258,7 @@ function addHistoryEvent(cname, alias, timestamp, url, title, descript, type, re
   var sendonrankchange = browser.runtime.sendMessage(setarr); 
   
   sendonrankchange.then(
-		result => { historyEventAdded(result); },
+		result => { /*historyEventAdded(result); */},
 		error => { alert("addHistoryEvent: " + error); });
 }
 
@@ -297,9 +298,12 @@ function colorItem(ranks, itm, rankid)
   else
   {
     var styl = ranks.get(rankid);
-    itm.style.backgroundColor = styl.bgcolor;
-    itm.style.color = styl.fontcolor;
-    itm.title = styl.rank;  
+    if(styl != undefined)
+    {
+      itm.style.backgroundColor = styl.bgcolor;
+      itm.style.color = styl.fontcolor;
+      itm.title = styl.rank;  
+    }
   }
 }
 

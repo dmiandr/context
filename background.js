@@ -196,7 +196,7 @@ function onContentMessage(msg, sender, handleResponse)
 	var objset = db.transaction("users", "readwrite").objectStore("users");
 	objset.openCursor().onsuccess = function(event) 
 	{
-	  if(reqprms.userrank == -1)
+	  if(reqprms.userrank == -1 && reqprms.description == "")
 	  {
 	    var reqdel;
 	    reqdel = objset.delete(u);
@@ -212,9 +212,10 @@ function onContentMessage(msg, sender, handleResponse)
 	  else
 	  {
 	    var reqput;
-	    var data = {user: '', rankid:0};
+	    var data = {user: '', rankid:0, description: ''};
 	    data.user = u; // \todo А зачем они называются по-разному? Может, если поля в пришедшем массиве назвать так-же, то и грузить можно будет непосредственно reqprms?
 	    data.rankid = reqprms.userrank;
+	    data.description = reqprms.description;
 	    reqput = objset.put(data);
 	    reqput.onsuccess = function(event)
 	    {
@@ -225,6 +226,32 @@ function onContentMessage(msg, sender, handleResponse)
 	      resolve("");
 	    }
 	  }	    
+	}
+      }
+      if(reqs.request == "getstatus")
+      {
+	var reqprms = msg.pop();
+	var u = reqprms.toLowerCase();
+	db = this.result;
+	var objset = db.transaction("users").objectStore("users");
+	var reqsta = objset.get(u);
+	reqsta.onsuccess = function(e)
+	{
+	  var d = reqsta.result;
+	  if(d == undefined)
+	    resolve("");
+	  else
+	  {
+	    var res = {};
+	    res['user'] = d.user;
+	    res['rankid'] = d.rankid;
+	    res['description'] = d.description;
+	    resolve(res);
+	  }
+	}
+	reqsta.onerror = function(event)
+	{
+	  resolve("");
 	}
       }
       if(reqs.request == "addrank")
@@ -293,6 +320,10 @@ function onContentMessage(msg, sender, handleResponse)
 	var reqprms = msg.pop();
 	var objadd = db.transaction("history", "readwrite").objectStore("history");
 	reqadded = objadd.put(reqprms);        
+	reqadded.onsuccess = function() 
+	{
+	  resolve("");
+	}
       }
       if(reqs.request == "removehistoryevent")
       {
@@ -300,8 +331,11 @@ function onContentMessage(msg, sender, handleResponse)
         var reqprms = msg.pop();
         var objremoved = db.transaction("history", "readwrite").objectStore("history");
         reqremoved = objremoved.delete(reqprms);
+        reqremoved.onsuccess = function() 
+        {
+          resolve("");
+        }
       }
-
       if(reqs.request == "getuserhistory")
       {
         var histmap = new Map();
@@ -317,13 +351,19 @@ function onContentMessage(msg, sender, handleResponse)
 	    var curusr = cur.value.username.toLowerCase();
 	    if(curusr === reqprms.username.toLowerCase())
 	    {
-	      var itmap = new Map();
-	      itmap.set("time", cur.value.time);
+	      var itmap = {}; //new Map();
+	      /*itmap.set("time", cur.value.time);
 	      itmap.set("title", cur.value.title);
 	      itmap.set("type", cur.value.type);
 	      itmap.set("alias", cur.value.alias);
 	      itmap.set("descript", cur.value.descript);
-	      itmap.set("repost", cur.value.repost);
+	      itmap.set("repost", cur.value.repost);  */
+	      itmap['time'] = cur.value.time;
+	      itmap['title'] = cur.value.title;
+	      itmap['type'] = cur.value.type;
+	      itmap['alias'] = cur.value.alias;
+	      itmap['descript'] = cur.value.descript;
+	      itmap['repost'] = cur.value.repost;
 	      histmap.set(cur.value.url, itmap);
 	    }
 	    cur.continue();
