@@ -94,8 +94,9 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
   var fldtime = document.getElementById('fldtime');
   fldtime.textContent = evtime; 
   var fldmain = document.getElementById('fldmain');
-  titlefld.value = evtitle; 
-  fldmain.textContent = evmain; 
+  titlefld.value = evtitle;
+  fldmain.value = evmain; 
+  fldmain.textContent = evmain; // some firefox versions requires setting textContent instead of value
   linkfld.textContent = url;
 
   var rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
@@ -112,7 +113,6 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
   dlg.style.setProperty('top', dlgY + 'px');
   dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');
 
-
   //режим редактирования
   if(mode)
   {
@@ -122,7 +122,6 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
       erasebtn = document.createElement('span');
     erasebtn.classList.add('continvbutton');
     erasebtn.innerHTML = "Удалить";
-    //erasebtn.style.setProperty('align', 'center');
     erasebtn.style.setProperty('margin-left', '100px');
     erasebtn.setAttribute("id", "erasebtn");
     buttonsline.insertBefore(erasebtn, okbtn);
@@ -130,6 +129,10 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
   }
   else
   {
+    var erasebtn = document.getElementById('erasebtn');
+    if(erasebtn != null)
+      erasebtn.remove();
+    
     okbtn.innerHTML = "Добавить";
   }
 
@@ -153,7 +156,6 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
     }
   }); 
 }
-
 
 function extractTime(torig)
 {
@@ -234,7 +236,6 @@ function extractTime(torig)
       
       commtime = tm.toLocaleString('ru-RU');
     }
-    
   }
   return commtime;
 }
@@ -258,7 +259,7 @@ function addHistoryEvent(cname, alias, timestamp, url, title, descript, type, re
   var sendonrankchange = browser.runtime.sendMessage(setarr); 
   
   sendonrankchange.then(
-		result => { /*historyEventAdded(result); */},
+		result => { },
 		error => { alert("addHistoryEvent: " + error); });
 }
 

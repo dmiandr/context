@@ -226,16 +226,3 @@ function identifyTable(fieldslist)
   }
   return "";  
 }
-/*
-function handleMarkMode()
-{
-  if(this.checked)
-  {
-    localStorage.setItem('markinfeed', true);
-  }
-  else
-  {
-    localStorage.setItem('markinfeed', false);
-  }
-}
-*/

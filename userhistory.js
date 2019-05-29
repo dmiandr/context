@@ -1,7 +1,6 @@
 var titlelem = document.getElementById("popuptitle");
 var searchstr = document.location.search;
 var uname = searchstr.split("=")[1];
-titlelem.innerHTML = uname;
 window.addEventListener("load", onCompletePageLoad, false);
 var closebtnelem = document.getElementById("closebtn");
 closebtnelem.addEventListener("click", function(evt)
@@ -114,7 +113,12 @@ function buildTable(historymap)
     newelem.addEventListener("click", function(evt){
       drawHistoryEventDlg(evt, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, true);
     });
-    newelem.innerText = rowmap.title;
+    if(rowmap.title == "")
+    {
+      newelem.innerText = "(без заголовка)";
+    }
+    else
+      newelem.innerText = rowmap.title;
     curcell.appendChild(newelem);
 
     curcell = row.insertCell(2);

@@ -154,17 +154,9 @@ function handleItemsStatuses(itmsmap)
     uopts = userelems.get(u);
     if(uopts.rankid != -1)
       gUsersCache.set(uopts.username, uopts.rankid);
-
-    //if(MarkFeed == true)
-    //{
-      if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR)
-	addMenuToCurrentItem(u, uopts.type);
-   /* }
-    else
-    {
-      if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR && uopts.type != UserContextTypes.FEED)
-	addMenuToCurrentItem(u, uopts.type);
-    }*/
+    
+    if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR)
+      addMenuToCurrentItem(u, uopts.type);
   }
   colorAll();
 }
@@ -240,9 +232,31 @@ function extractUsername(h)
     return null;
 }
 
+function gCallEvent(itm, evt)
+{
+  var opt = userelems.get(itm);
+  var is = opt.isevent;
+  var cnam = opt.username;
+  var typ = opt.type;
+  var url = opt.url;
+  
+  onHistoryEvent(is, cnam, evt, itm, typ, url);
+}
+
+function gCallHistory(itm)
+{
+  var opt = userelems.get(itm);
+  var cnam = opt.username;
+  var numev = opt.numevents;
+  
+  if(numev == 0)
+    return;
+  
+  popupHistoryWindow(cnam);
+}
+
 function addMenuToCurrentItem(item, type)
 {
-  
   if(type == UserContextTypes.COMMENTREPLY || type == UserContextTypes.COMMENT)
     var n = userelems.get(item);
   
@@ -250,21 +264,16 @@ function addMenuToCurrentItem(item, type)
   if(alrex.length > 0)
    return;
   
-  console.log("Adding menu to ");
-
   let curname = extractUsername(item);
   if(curname == null)
     return;
 
-  var urlcur;// = getCommentURL(item);
   var useropts = userelems.get(item);
   if(useropts == undefined)
   {
     useropts.numevents = 0;
     useropts.isevent = false;
   }
-
-  urlcur = useropts.url;
   
   var astr = document.createElement('span');
   astr.className = 'dropdownusr';
@@ -278,24 +287,25 @@ function addMenuToCurrentItem(item, type)
   itm_uname.textContent = curname + " (" + useropts.numevents + ")";
   itm_uname.style.background = "#FFFFDD";
   itm_uname.style.color = "#000";
-  if(useropts.numevents > 0)
-    itm_uname.addEventListener("click", function(){let cnam = curname; popupHistoryWindow(cnam);});
+  itm_uname.addEventListener("click", function(){let itm = item; gCallHistory(itm);});
   ddown.appendChild(itm_uname);
-
-  if(useropts.isevent)
-    item.classList.add('history');
-  
+ 
   if(type != UserContextTypes.COMMENT && type != UserContextTypes.POSTAUTHOR)
     return;
   
-  itmhst = document.createElement('a');
+  if(useropts.isevent)
+    item.classList.add('history');
+  
+  var itmhst = document.createElement('a');
   if(useropts.isevent)
     itmhst.innerHTML = "Изменить событие";
   else
     itmhst.innerHTML = "Добавить к истории";
   itmhst.style.color = "#000";
   itmhst.style.background = "#FFFFDD";
-  itmhst.addEventListener("click", function(evt){let is = useropts.isevent; let cnam = curname; let e = evt; let itm = item; let t = type; let u = urlcur; onHistoryEvent(is, cnam, e, itm, t, u);});
+  itmhst.addEventListener("click", function(evt){let itm = item; gCallEvent(itm, evt);});
+  userelems.set(item, useropts);
+    
   ddown.appendChild(itmhst);
   itm1 = document.createElement('a');
   itm1.innerHTML = "Убрать статус";
@@ -308,7 +318,6 @@ function addMenuToCurrentItem(item, type)
   {
     itm1 = document.createElement('a');
     itm1.textContent = cvalue.rank;
-    //itm1.href = '#' + ckey;
     itm1.style.background = cvalue.bgcolor;
     itm1.style.color = cvalue.fontcolor;
     itm1.addEventListener("click", function(){var k = ckey; menuevent(k, curname);}	);
@@ -316,8 +325,12 @@ function addMenuToCurrentItem(item, type)
   }
 }
 
-//! Передает комманду на установку статуса пользователя. Возврат из комманды - ответ, удалось ли установить статус и имя пользователя. Если статус изменен - то производится раскраска всех копий этого пользователя
+/*! \brief \~russian Передает комманду на установку статуса пользователя в БД. Возврат из комманды - ответ, удалось ли установить статус. Если 
+ * да - то производится раскраска всех упоминаний этого пользователя на текущей странице. */
+/*! \brief \~english Send message to set user's status in database table. Message returns promice resolved if status is successfully set, than
+ * function calls colorising all references to this user on current page */
 function menuevent(ev, nam)
+
 {
   if(ev == -1)
     gUsersCache.delete(nam);
@@ -398,7 +411,6 @@ function getAllUserItems(where)
     
     if(username == 'doctordragon')
       complkey['url'] = null;
-      
 
     if(isParentElementBelobgsToClass(itm, "new_author_bar"))
       complkey['type'] = UserContextTypes.FEED;
@@ -408,8 +420,6 @@ function getAllUserItems(where)
       complkey['type'] = UserContextTypes.FEED;
     else if(isParentElementBelobgsToClass(itm, "comment-body"))
       complkey['type'] = UserContextTypes.COMMENTREPLY;
-    //else if(isParentElementBelobgsToClass(itm, "post_prv"))
-      //complkey['type'] = UserContextTypes.TOOLBAR;
     else if(itm.classList.contains("m_author"))
       complkey['type'] = UserContextTypes.POSTAUTHOR;
     else if(itm.classList.contains("user-card__login"))
@@ -435,30 +445,6 @@ function getAllUserItems(where)
     itmsmap.set(itm, complkey);
   }
   return itmsmap;  
-}
-
-function isDuplicates(array)
-{
-  var a = new Array([...array]);
-  var numdups = 0;
-  for(var co = 0; co < a.length; co++)
-  {
-    var c = array[co];
-    var cur = a[co];
-    var t;
-    try {
-    t = a.indexOf(cur);
-    }
-    catch(e)
-    {
-      console.log('Ошибка ' + e.name + ":" + e.message + "\n" + e.stack);
-    }
-    
-    
-    if(t != co)
-      numdups++;
-  }
-  return numdups;
 }
 
 function onHistoryEvent(loaddb, cname, mouseevent, commentitem, type, url)
@@ -490,7 +476,7 @@ function fillHistoryDialogFromPage(cname, mouseevent, commentitem, type)
     }
   }
   else if(type == UserContextTypes.COMMENT)
-    timestampss = commentitem.parentElement.parentElement.getElementsByClassName("comment-date")[0]; //.querySelectorAll('[class="comment-date"]');
+    timestampss = commentitem.parentElement.parentElement.getElementsByClassName("comment-date")[0];
   var evtime = extractTime(timestampss.innerText);
 
   var clearurl = window.location.href.split('#')[0];
@@ -542,96 +528,83 @@ function fillHistoryDialogFromDb(url, mouseevent, cname, type)
     });
 }
 
+/*! \brief \~russian Модифицирует все упоминания автора на странице в связи с добавлением события. Просматривает все потенциальные события рассматриваемого автора, 
+ * если обнаружено совпадение по ссылке т.е. событие добавляется к этом элементу, то проверяется что в соответсвии userelems ранее этому элементу не соответсвовало 
+ * событий (это должно выполняться всегда), тогда для элеметна, соответствующего событию, прибавляется класс 'history', отвечающий за визуальное отображения события 
+ * (мигающее имя автора). Второму пункту меню изменяется название на "Изменить событие".  Также для всех элементов данного автора увеличивается на единицу счетчик 
+ * событий. */
+/*! \brief \~english Modify every author reference on the page, according to event appearence.*/
 function addEventMark(url, uname)
 {
   for( var k of userelems.keys())
   {
-    v = userelems.get(k);
+    let v = userelems.get(k);
     var mencont;
-    var m0;
+    var m0, m1;
     var u = true;
-    
     if(v.type != UserContextTypes.COMMENT && v.type != UserContextTypes.POSTAUTHOR)
       u = false;
     
+    mencont = locateMenuElement(k);
+    if(mencont == null) 
+      continue;
+    m0 = mencont.childNodes[0];
+    m1 = mencont.childNodes[1];
+  
     if(v.url == url)
     {
-      mencont = locateMenuElement(k);
-      if(mencont == null) 
-	continue;
-      m0 = mencont.childNodes[0];
       if(v.isevent == false)
       {
 	v.isevent = true;
 	k.classList.add('history');
-	if(u) mencont.childNodes[1].textContent = "Изменить событие";
-	if(u) mencont.childNodes[1].addEventListener("click", function(evt){let cnam = uname; let e = evt; let itm = k; let t = v.type; let u = url; onHistoryEvent(true, cnam, e, itm, t, u);});
+	if(u) m1.textContent = "Изменить событие";
       }
-      if(v.numevents == 0)
-      {
-	v.numevents = 1;
-	m0.textContent = uname + " (" + v.numevents + ")";
-	m0.addEventListener("click", function(){let cnam = uname; popupHistoryWindow(cnam);});
-      }
-      else
-      {
-	v.numevents = v.numevents + 1;
-	m0.textContent = uname + " (" + v.numevents + ")";
-      }
+      v.numevents = v.numevents + 1;
+      m0.textContent = uname + " (" + v.numevents + ")";
       userelems.set(k, v);
       continue;
     }
     if(v.username == uname)
     {
-      mencont = locateMenuElement(k);
-      if(mencont == null) 
-	continue;
-      m0 = mencont.childNodes[0];
-      if(v.numevents == 0)
-      {
-	v.numevents = 1;
-	m0.textContent = uname + " (" + v.numevents + ")";
-	m0.addEventListener("click", function(){let cnam = uname; popupHistoryWindow(cnam);});
-      }
-      else
-      {
-	v.numevents = v.numevents + 1;
-	m0.textContent = uname + " (" + v.numevents + ")";
-      }
+      v.numevents = v.numevents + 1;
+      m0.textContent = uname + " (" + v.numevents + ")";
       userelems.set(k, v);
     }
   }
 }
 
+/*! \brief \~russian Модифицирует все упоминания автора на странице в связи с удалением события. Просматривает все потенциальные события рассматриваемого автора,
+ * если обнаружено совпадение по ссылке то проверяет что для этого элемента действительно выставлен флаг isevent и убирает его, а также убирает класс history из
+ * списка классов css, отвечающий за визуальное отображения события. Также для всех элементов уменьшается на единицу счетчик событий для данного автора. Если это 
+ * было единственное событие у автора - то также меняется текст второго пункта меню.
+ * Результирующий объект заносится обратно в отображение userelems */
+/*! \brief \~english Modify every author reference on the page, according to event removal.*/
 function removeEventMark(url, uname)
 {
   for( var k of userelems.keys())
   {
     v = userelems.get(k);
     var mencont;
-    var m0;
+    var m0, m1;
+    var u = true;
+    if(v.type != UserContextTypes.COMMENT && v.type != UserContextTypes.POSTAUTHOR)
+      u = false;
+    
+    mencont = locateMenuElement(k);
+    if(mencont == null) 
+      continue;
+    m0 = mencont.childNodes[0];
+    m1 = mencont.childNodes[1];
+    
     if(v.url == url)
     {
-      mencont = locateMenuElement(k);
-      if(mencont == null) 
-	continue;
-      m0 = mencont.childNodes[0];
       if(v.isevent == true)
       {
 	v.isevent = false;
 	k.classList.remove('history');
-	let m1clone = mencont.childNodes[1].cloneNode();
-	m1clone.textContent = "Добавить к истории";
-	m1clone.addEventListener("click", function(evt){let cnam = uname; let e = evt; let itm = k; let t = v.type; let u = url; onHistoryEvent(false, cnam, e, itm, t, u);});
+	if(u) m1.textContent = "Добавить к истории";
       }
-      if(v.numevents == 1)
-      {
-	v.numevents = 0;
-	let m0clone = m0.cloneNode();
-	m0.parentNode.replaceChild(m0clone, m0);
-	m0clone.textContent = uname + " (" + v.numevents + ")";
-      }
-      else
+      if(v.numevents > 0)
       {
 	v.numevents = v.numevents - 1;
 	m0.textContent = uname + " (" + v.numevents + ")";
@@ -641,18 +614,7 @@ function removeEventMark(url, uname)
     }
     if(v.username == uname)
     {
-      mencont = locateMenuElement(k);
-      if(mencont == null) 
-	continue;
-      m0 = mencont.childNodes[0];
-      if(v.numevents == 1)
-      {
-	v.numevents = 0;
-	let m0clone = m0.cloneNode();
-	m0.parentNode.replaceChild(m0clone, m0);
-	m0clone.textContent = uname + " (" + v.numevents + ")";
-      }
-      else
+      if(v.numevents > 0)
       {
 	v.numevents = v.numevents - 1;
 	m0.textContent = uname + " (" + v.numevents + ")";
@@ -678,11 +640,9 @@ function locateMenuElement(item)
 
 function getCommentURL(item)
 {
-  var liauthor = getParentItemWithAttribute(item, "comment-id");//item.parentElement.parentElement.parentElement.parentElement.parentElement;
+  var liauthor = getParentItemWithAttribute(item, "comment-id");
   if(liauthor === null)
     return null;
-  
-  var ttt = liauthor.nodeName;
   
   if(liauthor.nodeName.toLowerCase().indexOf("li") === -1)
     return null;

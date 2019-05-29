@@ -168,14 +168,9 @@ function onContentMessage(msg, sender, handleResponse)
 		    optstoadd['rankid'] = -1;
 		  else
 		    optstoadd['rankid'] = r;
-		    
-		  console.log("rankid = " +  optstoadd['rankid'] + ", isevent = " + optstoadd['isevent'] + ", Number Events = " + numev);
 		  
-		  //if(cururl != undefined)
-		  //{
-		    if(r != undefined || optstoadd['isevent'] != false || numev != 0)
-		      stsmap.set(cururl, optstoadd);
-		  //}
+		  if(r != undefined || optstoadd['isevent'] != false || numev != 0)
+		    stsmap.set(cururl, optstoadd);
 		}
 		resolve([...stsmap]);
 	      }
@@ -351,13 +346,7 @@ function onContentMessage(msg, sender, handleResponse)
 	    var curusr = cur.value.username.toLowerCase();
 	    if(curusr === reqprms.username.toLowerCase())
 	    {
-	      var itmap = {}; //new Map();
-	      /*itmap.set("time", cur.value.time);
-	      itmap.set("title", cur.value.title);
-	      itmap.set("type", cur.value.type);
-	      itmap.set("alias", cur.value.alias);
-	      itmap.set("descript", cur.value.descript);
-	      itmap.set("repost", cur.value.repost);  */
+	      var itmap = {};
 	      itmap['time'] = cur.value.time;
 	      itmap['title'] = cur.value.title;
 	      itmap['type'] = cur.value.type;
@@ -454,7 +443,6 @@ function onContentMessage(msg, sender, handleResponse)
 		var o = umap.get(un); 
 		if(o != undefined)
 		{
-		  //var oo = {};
 		  o['rankid'] = r;
 		  umap.set(un, o);
 		}

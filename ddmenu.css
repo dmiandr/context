@@ -62,7 +62,7 @@
     position: absolute;
     margin: auto;
     background: #326891;
-    z-index: 3
+    z-index: 3;
     overflow: scroll;
 }
 .close {
