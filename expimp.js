@@ -203,7 +203,7 @@ function importParcedData(datparced)
     }
     var eventbkgrnd = document.getElementById("dataimported");
     eventbkgrnd.style.display = "block";
-    document.getElementById("eventmessage").innerHTML = "Осуществлен импорт данных CONText.<br>" + "Загружено:<br>" + numranks + " статусов,<br>" + numusers + " пользователей.";
+    document.getElementById("eventmessage").innerHTML = "Осуществлен импорт данных CONText.<br>" + "Загружено:<br>" + numranks + " статусов,<br>" + numusers + " событий истории.";
     
     var closebtn = document.getElementsByClassName("close")[0];
     closebtn.onclick = function() {  eventbkgrnd.style.display = "none"; }
