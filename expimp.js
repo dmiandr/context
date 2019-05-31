@@ -27,16 +27,10 @@ function setExport(ver) {
     rankspossible = [];
     users = [];
     hist = [];
-    getAllFromTable(dbn, "ranks", rankspossible).then(getAllFromTable(dbn, "users", users)).then(getAllFromTable(dbn, "history", hist)).then(function(){
-      ranksfields = Object.keys(rankspossible[0]);
-      console.log("Readed fields: " + ranksfields);
-      
-      if(users.length > 0)
-      {
-        usersfields = Object.keys(users[0]);
-      }
-      else usersfields = "";
-      console.log("USER: " + usersfields);
+    var pr_r = getAllFromTable(dbn, "ranks", rankspossible);
+    var pr_u = getAllFromTable(dbn, "users", users);
+    var pr_h = getAllFromTable(dbn, "history", hist)
+    Promise.all([pr_r, pr_u, pr_h]).then(function(){
       alldata = [];
       alldata.push(rankspossible);  
       alldata.push(users);
@@ -52,7 +46,8 @@ function setExport(ver) {
 	var blobtosave = new Blob([str], {type: "application/octet-stream", name: "file.json"});
 	saveAs(blobtosave, 'context.json');
       }
-    });
+    }, (error) => {
+       console.log(error);} );
     dbn.close();	
   }
 
@@ -66,21 +61,16 @@ function getAllFromTable(db, tabname, basket)
 {
   return new Promise(function(resolve, reject) {
     var tr = db.transaction(tabname);
-    tr.oncomplete = function(event){
-      resolve();
-    }
-    tr.onerror = function(event){
-      reject();
-    }
     var objstore = tr.objectStore(tabname);
     objstore.openCursor().onsuccess = function(event) {
       var cur = event.target.result;
       if(cur)
       {
-	var newcur = cur.value;
 	basket.push(cur.value);
 	cur.continue();
       }
+      else
+	resolve();
     }  
   });
 }

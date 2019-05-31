@@ -14,8 +14,6 @@ const defaultranks = [
 var rankspossible = [];
 
 function onInstallInit(details) {
-  console.log("Installing CONText... " + details.reason);
-  
   if(details.reason == "install")
   {
     var req = indexedDB.open("contest", 2);
@@ -122,7 +120,7 @@ function onContentMessage(msg, sender, handleResponse)
 	  if(cur)
 	  {
 	    var u = cur.value.username.toLowerCase();
-	    console.log("histevent = " + u);
+	    //console.log("histevent = " + u);
 	    lstevents.push(cur.value.url);
 	    var t = evcounter.get(u);
 	    if(t != undefined)

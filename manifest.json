@@ -3,7 +3,7 @@
   "name": "CONT.ws user management extension",
   "short_name": "CONText",
   "version": "0.2",
-  "description": "Расширение позволяет присваивать статусы пользователям cont.ws и далее отображать их измененным цветом.",
+  "description": "Расширение для ведения истории и присвоения статусов пользователям платформы cont.ws.",
 
   "developer": {
         "name": "dmitrevo",
@@ -46,5 +46,5 @@
     "page": "options.html",
     "open_in_tab": true
   },
-  "web_accessible_resources": ["addhistorydialog.html", "icons/historymark.gif", "userhistory.html", "contextlib.js"]
+  "web_accessible_resources": ["addhistorydialog.html", "userhistory.html", "contextlib.js"]
 }
