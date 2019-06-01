@@ -1,0 +1,14 @@
+{
+  "addons": {
+    "dmiandich@yandex.ru": {
+      "updates": [
+        { "version": "0.1",
+        "update_link": "https://github.com/dmiandr/context/blob/devel/context-0.1.xpi"},
+        { "version": "0.1.1",
+        "update_link": "https://github.com/dmiandr/context/releases/download/v0.1.1/contws_user_management_extension-0.1.1-fx.xpi"},
+        { "version": "0.2",
+        "update_link": "https://github.com/dmiandr/context/releases/download/v0.2/contws_user_management_extension-0.2-fx.xpi"}
+      ]
+    }
+  }
+}
