@@ -162,7 +162,7 @@ function extractTime(torig)
   var commtime;
   commtime = torig;
 
-  if(timestampss.length == 0)
+  if(torig.length == 0)
     commtime = new Date().toString().split('GMT')[0];
   else
   {
@@ -208,6 +208,7 @@ function extractTime(torig)
       var month;
       var date;
       var time;
+      var dset = false;
       for(mn = 0; mn < mothsnamesrod.length; mn++)
       {
 	if(torig.indexOf(mothsnamesrod[mn]) != -1)
@@ -215,6 +216,7 @@ function extractTime(torig)
 	  month = mn;	// why months are counted from 0??
 	  date = torig.split(mothsnamesrod[mn])[0];
 	  time = torig.split(mothsnamesrod[mn])[1];
+	  dset = true;
 	  break;
 	}	
       }
@@ -226,15 +228,19 @@ function extractTime(torig)
 	var ypos = time.indexOf("г.");
 	time = time.substring(ypos+2, time.length);
       }
-      tm.setMonth(month);
-      tm.setDate(date.trim());
-      hours = time.split(':')[0];
-      minutes = time.split(':')[1];
-      tm.setHours(hours.trim());
-      tm.setMinutes(minutes.trim());
-      tm.setSeconds(0);
-      
-      commtime = tm.toLocaleString('ru-RU');
+      if(dset == true)
+      {
+      	tm.setMonth(month);
+      	tm.setDate(date.trim());
+      	hours = time.split(':')[0];
+      	minutes = time.split(':')[1];
+      	tm.setHours(hours.trim());
+      	tm.setMinutes(minutes.trim());
+      	tm.setSeconds(0);
+      	commtime = tm.toLocaleString('ru-RU');
+      }
+      else
+	commtime = new Date().toString().split('GMT')[0];
     }
   }
   return commtime;
@@ -273,7 +279,7 @@ function removeHistoryEvent(url)
 
 function popupHistoryWindow(cnam)
 {
-  var histurl = browser.extension.getURL("userhistory.html");
+  var histurl = browser.runtime.getURL("userhistory.html");
   histurl += "?username=";
   histurl += cnam;
   var popup = window.open(histurl, "TEST POPUP", 'height=400,width=750');
@@ -330,7 +336,8 @@ function injectHistoryDialog(res)
     var win = tst.contentWindow;
     var frmrange = win.document.createRange();
     frmrange.selectNode(win.document.firstChild);
-    var frg = frmrange.createContextualFragment(res);
+    if(res.length != 0)
+      var frg = frmrange.createContextualFragment(res);
     document.body.appendChild(frg);
     backgrnd = document.getElementById('histbackground');
     backgrnd.style.setProperty('display', "none");

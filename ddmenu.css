@@ -198,3 +198,14 @@ table.histable td {
 .contselector:disabled{
    opacity: 0.6;
 }
+
+.badge {
+    position: relative;
+    top: -10px;
+    left: -5px;
+    background: #111111;
+    color: rgba(255,255,255,0.8);
+    border: 1px solid black;
+    border-radius: 8px;
+    font-size: 10px;
+}

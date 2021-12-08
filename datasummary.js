@@ -63,6 +63,9 @@ function tableSummary(result)
     cellelem.href = "#";
     cellelem.addEventListener("click", function(evt){popupHistoryWindow(h);});
     cellelem.innerText = h;
+    if(rowmap.hidden == true)
+	cellelem.style.fontStyle = "italic"
+
     curcell.appendChild(cellelem);
     
     curcell = row.insertCell(1);

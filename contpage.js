@@ -54,6 +54,7 @@ function handleRanksList(rankslist)
   console.log("NUM RANKS: " + gRanksParams.size);
   if(window.location.href.indexOf("mycomments_archive") !== -1) //Собственные комментарии снабжать историей не требуется
     return;
+  setTimeout('', 5000);
   window.addEventListener("load", onCompletePageLoad, false);
   onCompletePageLoad();
 }
@@ -89,7 +90,7 @@ function onCompletePageLoad() {
 }
 
 // перечень расцвечиваемых элементов помещается в глобальную переменную (userelems), так как  сначала производится поиск имеющихся на странице пользователей,
-// потом отправляется запрос в background для получения из статусов, а потом, уже в функции обрабатывающей возврат сообщения, производится раскраска.
+// потом отправляется запрос в background для получения их статусов, а потом, уже в функции обрабатывающей возврат сообщения, производится раскраска.
 // Передавать список в виде аргумента очень неудобно.
 function requestForStatuses()
 {
@@ -130,6 +131,7 @@ function handleItemsStatuses(itmsmap)
 	  uopts.numevents = opt.numevents;
 	  uopts.isevent = opt.isevent;
 	  uopts.rankid = opt.rankid;
+	  uopts.hidden = opt.hidden;
 	  userelems.set(u, uopts);
 	  break;
 	}
@@ -142,6 +144,7 @@ function handleItemsStatuses(itmsmap)
 	  uopts.isevent = false;	// No event without URL possible
 	  uopts.rankid = opt.rankid;
 	  uopts.url = null;
+	  uopts.hidden = opt.hidden;
 	  userelems.set(u, uopts);
 	  break;
 	}
@@ -249,8 +252,8 @@ function gCallHistory(itm)
   var cnam = opt.username;
   var numev = opt.numevents;
   
-  if(numev == 0)
-    return;
+  //if(numev == 0)
+    //return;
   
   popupHistoryWindow(cnam);
 }
@@ -273,6 +276,24 @@ function addMenuToCurrentItem(item, type)
   {
     useropts.numevents = 0;
     useropts.isevent = false;
+  }
+  
+  if(useropts.numevents > 0)
+  {
+    let badgelem = document.createElement('span');
+    badgelem.className = 'badge';
+    badgelem.textContent = useropts.numevents;
+    item.append(badgelem);
+  }
+
+  var totalblock = getParentItemWithAttribute(item, "comment-author-login");
+  if(totalblock != null)
+  {
+    if(useropts.hidden == true)
+    {
+      totalblock.style.setProperty('display', "none");
+      return;
+    }
   }
   
   var astr = document.createElement('span');
@@ -461,6 +482,7 @@ function onHistoryEvent(loaddb, cname, mouseevent, commentitem, type, url)
 
 function fillHistoryDialogFromPage(cname, mouseevent, commentitem, type)
 {
+  var timestampss;
   var ualias = commentitem.innerText;
   if(type == UserContextTypes.POSTAUTHOR)
   {
@@ -477,8 +499,17 @@ function fillHistoryDialogFromPage(cname, mouseevent, commentitem, type)
   }
   else if(type == UserContextTypes.COMMENT)
     timestampss = commentitem.parentElement.parentElement.getElementsByClassName("comment-date")[0];
-  var evtime = extractTime(timestampss.innerText);
 
+  var evtime;
+  if(timestampss !== undefined)
+  {
+    evtime = extractTime(timestampss.innerText);
+  }
+  else
+  {
+    timestampss = '';
+    evtime = extractTime('');
+  }
   var clearurl = window.location.href.split('#')[0];
   if(type == UserContextTypes.COMMENT)
   {

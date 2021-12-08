@@ -98,6 +98,7 @@ function onContentMessage(msg, sender, handleResponse)
 	var stsmap = new Map();
 	var tmpmap = new Map();
 	var rnkmap = new Map();
+	var hidmap = new Map();
 	var lstevents = new Array();
 	var evcounter = new Map();
 	let numusrs = msg.length;
@@ -145,6 +146,8 @@ function onContentMessage(msg, sender, handleResponse)
 		var hu = cur.value.user.toLowerCase();
 		var hrnk = cur.value.rankid;
 		rnkmap.set(hu, hrnk);
+		if(cur.value.hidden == true)
+		{ hidmap.set(hu, true); }
 		cur.continue();
 	      }
 	      else
@@ -166,7 +169,12 @@ function onContentMessage(msg, sender, handleResponse)
 		    optstoadd['rankid'] = -1;
 		  else
 		    optstoadd['rankid'] = r;
-		  
+
+		  if(hidmap.get(curusr) == undefined)
+		    optstoadd['hidden'] = false;
+		  else
+		    optstoadd['hidden'] = true;
+
 		  if(r != undefined || optstoadd['isevent'] != false || numev != 0)
 		    stsmap.set(cururl, optstoadd);
 		}
@@ -189,7 +197,7 @@ function onContentMessage(msg, sender, handleResponse)
 	var objset = db.transaction("users", "readwrite").objectStore("users");
 	objset.openCursor().onsuccess = function(event) 
 	{
-	  if(reqprms.userrank == -1 && reqprms.description == "")
+	  if(reqprms.userrank == -1 && reqprms.description == "" && reqprms.hidden == null)
 	  {
 	    var reqdel;
 	    reqdel = objset.delete(u);
@@ -209,6 +217,7 @@ function onContentMessage(msg, sender, handleResponse)
 	    data.user = u; // \todo А зачем они называются по-разному? Может, если поля в пришедшем массиве назвать так-же, то и грузить можно будет непосредственно reqprms?
 	    data.rankid = reqprms.userrank;
 	    data.description = reqprms.description;
+	    data.hidden = reqprms.hidden;
 	    reqput = objset.put(data);
 	    reqput.onsuccess = function(event)
 	    {
@@ -239,6 +248,7 @@ function onContentMessage(msg, sender, handleResponse)
 	    res['user'] = d.user;
 	    res['rankid'] = d.rankid;
 	    res['description'] = d.description;
+	    res['hidden'] = d.hidden;
 	    resolve(res);
 	  }
 	}
@@ -439,10 +449,22 @@ function onContentMessage(msg, sender, handleResponse)
 		var un = c.value.user.toLowerCase();
 		var r = c.value.rankid;
 		var o = umap.get(un); 
+		var o2 = {};
 		if(o != undefined)
 		{
 		  o['rankid'] = r;
+		  if(c.value.hidden == true)
+		    o['hidden'] = true;
 		  umap.set(un, o);
+		}
+		else
+		{
+		  o2['numevents'] = 0;
+		  o2['alias'] = un;
+		  o2['rankid'] = -1;
+		  if(c.value.hidden == true)
+		    o2['hidden'] = true;
+		  umap.set(un, o2);
 		}
 		c.continue();
 	      }
@@ -452,6 +474,10 @@ function onContentMessage(msg, sender, handleResponse)
 	      }
 	    }    
 	  }
+	}
+	oc.onerror = function(err)
+	{
+	  console.log("getbrieflist error"); 
 	}
       }
     }

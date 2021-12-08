@@ -41,6 +41,10 @@ sentondescript.then(result =>
       else
         gRankId = result.rankid;
       document.getElementById("useroverall").textContent = descr;
+      if(result.hidden == true)
+      {
+      document.getElementById("hidehim").checked = true;
+      }
       updateContent(); 
     }, error => {});
 
@@ -140,6 +144,7 @@ function saveUserDescription()
   userprms['username'] = uname;
   userprms['userrank'] = gRankId;
   userprms['description'] = descript;
+  userprms['hidden'] = document.getElementById("hidehim").checked;
   nmarr.push(userprms);  
   nmarr.push({request: "setstatus"});
   var sendonrankchange = browser.runtime.sendMessage(nmarr);
