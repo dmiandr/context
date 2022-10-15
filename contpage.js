@@ -5,6 +5,9 @@ var gUserItems = new Map(); // карта видимых в рамках пос�
 var config = { attributes: false, childList: true, subtree: true }; // Конфигурация MutationObserver
 var userelems;
 var MarkFeed;
+var FakeUrl = 0; // уникальный идентификатор, используемый вместо ссылки для потенциального события - в случае, если из верстки не удалось вычленить правильную ссылку, чтобы там не был null
+var callcounter = 0;
+var obs;
 
 var rnkarr = new Array();
 rnkarr.push({request: "ranks"});
@@ -27,7 +30,6 @@ function statushandleError(e)
    console.log("STATUS ERROR HANDLED: " + e);
 }
 
-
 function handleRanksList(rankslist)
 {
   console.log(rankslist.length + " ranks got.");
@@ -40,6 +42,7 @@ function handleRanksList(rankslist)
   {
     MarkFeed = mark;
   }
+  //addFloatInfo();
 
   for(var co = 0; co < rankslist.length; co++)
   {
@@ -84,9 +87,29 @@ function onCompletePageLoad() {
     error => { statushandleError(error); });
     reqpr = requestForStatuses();
     reqpr.then(result => {
-      obs.observe(document.body, config);
+        var obs = new MutationObserverThin(mutationCallback, window);
+        obs.observe(document.body, config);
     });
   }
+}
+
+function addFloatInfo(inf) {
+    var inp = document.getElementById('floatinfocontainer');
+    if(inp == null){
+        var flt = document.createElement('div');
+        flt.style.setProperty('position', "fixed");
+        flt.style.setProperty('width', "70px");
+        flt.style.setProperty('height', "170px");
+        flt.style.setProperty('bottom', "30px");
+        flt.style.setProperty('right', "30px");
+        flt.style.setProperty('z-index', "50px");
+        flt.style.setProperty('font-size', "11px");
+        inp = document.createElement('p');
+        inp.setAttribute("id", "floatinfocontainer");
+        flt.appendChild(inp);
+        document.body.appendChild(flt);
+    }
+    inp.textContent = inf;
 }
 
 // перечень расцвечиваемых элементов помещается в глобальную переменную (userelems), так как  сначала производится поиск имеющихся на странице пользователей,
@@ -95,18 +118,26 @@ function onCompletePageLoad() {
 function requestForStatuses()
 {
     userelems = getAllUserItems(document);
+	
+	//var flo = document.getElementById('floatinfocontainer');
+	//flo.textContent = userelems.size + " упоминаний";
+	
     if(userelems.size === 0) return;
     var nmarr = new Array();
     var v;
+    var usrlst ='';
     for( var k of userelems.keys())
     {
       var itmdata = {};
       v = userelems.get(k);
       itmdata['username'] = v.username;
       itmdata['url'] = v.url;
+      console.log("URL SENT: ", v.url + " (" + v.username + ")");
       itmdata['type'] = v.type;
       nmarr.push(itmdata);
+      usrlst += v.username + ", ";
     }
+    console.log("ON COMPL PAGE: ", usrlst + " (" + userelems.size + ")");
     nmarr.push({request: "histatuses"});
     var sendonstatus = browser.runtime.sendMessage(nmarr);
     return sendonstatus.then(
@@ -118,28 +149,42 @@ function handleItemsStatuses(itmsmap)
 {
   let sts = new Map(itmsmap);  
   var uopts;
+  var notnullc = 0;
+  var badgedcount = 0;
+  
+  /*var dbg = sts.get("$")
+  sts.delete("$")
+  addFloatInfo(dbg);*/
+  
   for(var u of userelems.keys())
   {
     uopts = userelems.get(u);
+    
+    badgedcount = 0;
     for( var k of sts.keys())
     {
       var opt = sts.get(k);
+      
       if(uopts.url != undefined)
       {
-	if(uopts.url == k)
-	{
-	  uopts.numevents = opt.numevents;
-	  uopts.isevent = opt.isevent;
-	  uopts.rankid = opt.rankid;
-	  uopts.hidden = opt.hidden;
-	  userelems.set(u, uopts);
-	  break;
-	}
+        notnullc++;
+        if(uopts.url == k)
+        {
+            //console.log("URL MATCH");
+            badgedcount++;
+            uopts.numevents = opt.numevents;
+            uopts.isevent = opt.isevent;
+            uopts.rankid = opt.rankid;
+            uopts.hidden = opt.hidden;
+            userelems.set(u, uopts);
+            break;
+        }
       }
       else
       {
 	if(uopts.username == opt.username)
 	{
+            
 	  uopts.numevents = opt.numevents;
 	  uopts.isevent = false;	// No event without URL possible
 	  uopts.rankid = opt.rankid;
@@ -150,16 +195,16 @@ function handleItemsStatuses(itmsmap)
 	}
       }
     }
-  }  
+  }
   
-  for(var u of userelems.keys())
-  {
+  for(var u of userelems.keys()) {
     uopts = userelems.get(u);
     if(uopts.rankid != -1)
       gUsersCache.set(uopts.username, uopts.rankid);
     
-    if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR)
-      addMenuToCurrentItem(u, uopts.type);
+    if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR) {
+        addMenuToCurrentItem(u, uopts.type);
+    }
   }
   colorAll();
 }
@@ -176,10 +221,12 @@ function handleStatusList(spreadedmap)
 }
 
 var mutationCallback = function(mutlst, observer) {
-  userelems = getAllUserItems(document);
+    userelems = getAllUserItems(document);
+  
   if(userelems.size === 0) return;
   var nmarr = new Array();
   var v;
+  var usrlst = '';
   for( var k of userelems.keys())
   {
     var itmdata = {};
@@ -188,6 +235,7 @@ var mutationCallback = function(mutlst, observer) {
     itmdata['url'] = v.url;
     itmdata['type'] = v.type;
     nmarr.push(itmdata);
+    usrlst += v.username + ", ";
   }
   nmarr.push({request: "histatuses"});
   var sendonstatus = browser.runtime.sendMessage(nmarr);
@@ -195,8 +243,6 @@ var mutationCallback = function(mutlst, observer) {
     result => { handleItemsStatuses(result); },
     error => { statushandleError(error); });
 }
-
-var obs = new MutationObserver(mutationCallback);
 
 /*! \brief \~russian Выделение имени пользователя из ссылки на его профиль */
 function extractUsername(h)
@@ -260,26 +306,38 @@ function gCallHistory(itm)
 
 function addMenuToCurrentItem(item, type)
 {
-  if(type == UserContextTypes.COMMENTREPLY || type == UserContextTypes.COMMENT)
-    var n = userelems.get(item);
+  //if(type == UserContextTypes.COMMENTREPLY || type == UserContextTypes.COMMENT)
+    //var n = userelems.get(item);
+  
+  //console.log("BEGIN n= ", n + ", type = " + type)
   
   var alrex = item.parentNode.getElementsByClassName("dropdownusr");
+  
+  //console.log("ALREX = ", alrex);  
+  
   if(alrex.length > 0)
    return;
   
   let curname = extractUsername(item);
+  
+  
   if(curname == null)
     return;
 
   var useropts = userelems.get(item);
   if(useropts == undefined)
   {
+    console.log(" User " + curname + " NOT FOUND in userelems"); // DEBUG!!! REMOVE !!!
+    for( var k of userelems.keys()) {
+        usrlst += v.username + ", ";        
+    }
+    //console.log("IN addMenuToCurrentItem: ", usrlst + " (" + userelems.size + ")");
+    
     useropts.numevents = 0;
     useropts.isevent = false;
   }
   
-  if(useropts.numevents > 0)
-  {
+  if(useropts.numevents > 0) {
     let badgelem = document.createElement('span');
     badgelem.className = 'badge';
     badgelem.textContent = useropts.numevents;
@@ -311,11 +369,13 @@ function addMenuToCurrentItem(item, type)
   itm_uname.addEventListener("click", function(){let itm = item; gCallHistory(itm);});
   ddown.appendChild(itm_uname);
  
-  if(type != UserContextTypes.COMMENT && type != UserContextTypes.POSTAUTHOR)
+  if(type != UserContextTypes.COMMENT && type != UserContextTypes.POSTAUTHOR && type != UserContextTypes.FEED)
     return;
   
-  if(useropts.isevent)
-    item.classList.add('history');
+  if(useropts.isevent) {
+      console.log("SET N+BLINK FOR= ", item.nodeName);
+      item.classList.add('history');
+  }
   
   var itmhst = document.createElement('a');
   if(useropts.isevent)
@@ -325,7 +385,7 @@ function addMenuToCurrentItem(item, type)
   itmhst.style.color = "#000";
   itmhst.style.background = "#FFFFDD";
   itmhst.addEventListener("click", function(evt){let itm = item; gCallEvent(itm, evt);});
-  userelems.set(item, useropts);
+  userelems.set(item, useropts);        // ЭТО ЗАЧЕМ??? Я ЖЕ ТОЛЬКЛ ЧТО useropts оттуда взял?
     
   ddown.appendChild(itmhst);
   itm1 = document.createElement('a');
@@ -430,9 +490,6 @@ function getAllUserItems(where)
     complkey['rankid'] = -1;
     complkey['url'] = null;
     
-    if(username == 'doctordragon')
-      complkey['url'] = null;
-
     if(isParentElementBelobgsToClass(itm, "new_author_bar"))
       complkey['type'] = UserContextTypes.FEED;
     else if(itm.classList.contains("new_m_author"))
@@ -452,8 +509,8 @@ function getAllUserItems(where)
           
     if(complkey['type'] == UserContextTypes.POSTAUTHOR)
     {
-       curl = window.location.href.split('#')[0];
-       complkey['url'] = curl;
+      curl = window.location.href.split('#')[0];
+      complkey['url'] = curl;
     }
     
     if(complkey['type'] == UserContextTypes.COMMENT)
@@ -463,6 +520,17 @@ function getAllUserItems(where)
 	continue;
       complkey['url'] = curl;
     }
+    if(complkey['type'] == UserContextTypes.FEED) {
+      curl = getFeedURL(itm);
+      complkey['url'] = curl;
+      //console.log("FWWD URL = ", curl);
+    }
+
+    if(complkey['url'] == null)  { // В случае если настоящий url определить не удалось, на его месте должен быть по-крайней мере уникальный идентификатор
+        complkey['url'] = "undefined_url_" + FakeUrl;
+        FakeUrl++
+    }
+    
     itmsmap.set(itm, complkey);
   }
   return itmsmap;  
@@ -479,20 +547,22 @@ function onHistoryEvent(loaddb, cname, mouseevent, commentitem, type, url)
     fillHistoryDialogFromPage(cname, mouseevent, commentitem, type);
   }
 }
-
+/*! Функция считывает данные события для которого передан анкерный элемент из тегов страницы и вызывает диалог добавления события заполненный этими данными.
+* относительное расположение и характеные значения атрибутов, на основе которых определяются параметры, жестко зашиты в код данной функции. В частности, для событий POSTAUTHOR
+дата может располагаться как на одном уровне с тегом имеющим класс class="m_author", так и на уровень выше. Оба варианта должны быть рассмотрены при поиске поля Дата */
 function fillHistoryDialogFromPage(cname, mouseevent, commentitem, type)
 {
   var timestampss;
   var ualias = commentitem.innerText;
   if(type == UserContextTypes.POSTAUTHOR)
   {
-    var chn  = commentitem.parentElement.childNodes;
+    var chn  = commentitem.parentElement.parentElement.childNodes;
     for(var i = 0; i <chn.length; i++)
     {
       var curch = chn[i];
       if('classList' in curch)
       {
-	if(curch.classList.contains("m_first"))
+	if(curch.getAttribute("itemprop") == "datePublished")//curch.classList.contains("m_first"))
 	  timestampss = curch;			//last child element belongs to class is date container
       }
     }
@@ -561,7 +631,7 @@ function fillHistoryDialogFromDb(url, mouseevent, cname, type)
 
 /*! \brief \~russian Модифицирует все упоминания автора на странице в связи с добавлением события. Просматривает все потенциальные события рассматриваемого автора, 
  * если обнаружено совпадение по ссылке т.е. событие добавляется к этом элементу, то проверяется что в соответсвии userelems ранее этому элементу не соответсвовало 
- * событий (это должно выполняться всегда), тогда для элеметна, соответствующего событию, прибавляется класс 'history', отвечающий за визуальное отображения события 
+ * событий (это должно выполняться всегда), тогда для элемента, соответствующего событию, прибавляется класс 'history', отвечающий за визуальное отображения события 
  * (мигающее имя автора). Второму пункту меню изменяется название на "Изменить событие".  Также для всех элементов данного автора увеличивается на единицу счетчик 
  * событий. */
 /*! \brief \~english Modify every author reference on the page, according to event appearence.*/
@@ -683,6 +753,50 @@ function getCommentURL(item)
     return null;
 
   return clearurl + "#comment" + liauthor.getAttribute("comment-id");
+}
+
+function getFeedURL(item) {
+    //console.log("ITM FEED = ", item.nodeName);
+    
+    var p = item.parentElement;
+    if(p.classList.contains("new_m_author") == null)
+        return null;
+  
+    tag = ''
+    var n = p;
+    
+    while(tag.toLowerCase() != 'a') {
+        n = n.nextElementSibling;
+        tag = item.nodeName
+    }
+    if(n != null) {
+        var clearurl = window.location.href.split('#')[0];
+        var loclink = n.getAttribute("href")
+        if(clearurl[clearurl.length-1] == '/' && loclink[0] == '/')
+            clearurl = clearurl.slice(0, -1)
+        
+        //console.log("FEEDURL= ", clearurl + n.getAttribute("href"))
+        return clearurl + n.getAttribute("href");         
+    }
+        
+    
+    
+    //console.log("SYB TAG= ", t.nodeName);
+    
+    //if(t.nodeName.toLowerCase() == 'a')
+    //console.log("A opts= ", n.getAttribute("href"));  
+    
+/*
+  while(tag.toLowerCase() != 'a') {
+    item = item.nextElementSibling();
+    tag = item.tagName();
+    
+  }
+  var clearurl = window.location.href.split('#')[0];
+  console.log("FEEDURL= ", clearurl + item.getAttribute("href"))
+  return clearurl + item.getAttribute("href");  
+  
+  */
 }
 
 function isParentElementBelobgsToClass(item, classname)

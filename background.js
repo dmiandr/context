@@ -63,175 +63,196 @@ function onInstallInit(details) {
 
 function onContentMessage(msg, sender, handleResponse)
 {
-  return new Promise(resolve => {
+    return new Promise(resolve => {
     var reqs = msg.pop();
     var req = indexedDB.open("contest", 2);
     req.onsuccess = function(event)
     {
-      db = this.result;
-       
-      if(reqs.request == "ranks")
-      {
-        var tr = db.transaction("ranks");
-        var objstore = tr.objectStore("ranks");
-        var numranks_tmp = 0;
-        rankspossible = [];
-        objstore.openCursor().onsuccess = function(event)
+        db = this.result;
+        if(reqs.request == "ranks")
         {
-	  var cur = event.target.result;
-	  if(cur)
-	  {
-	    var rcur = new createrank(cur.value.id, cur.value.rank, cur.value.bgcolor, cur.value.fontcolor);
-	    rankspossible.push(rcur);
-	    cur.continue();
-	  }
-	  else
-	  {
-	    rankspossible.push(localStorage.getItem('markinfeed'));
-	    resolve(rankspossible);
-	  }
+            var tr = db.transaction("ranks");
+            var objstore = tr.objectStore("ranks");
+            var numranks_tmp = 0;
+            rankspossible = [];
+            objstore.openCursor().onsuccess = function(event)
+            {
+                var cur = event.target.result;
+                if(cur)
+                {
+                    var rcur = new createrank(cur.value.id, cur.value.rank, cur.value.bgcolor, cur.value.fontcolor);
+                    rankspossible.push(rcur);
+                    cur.continue();
+                }
+                else
+                {
+                    rankspossible.push(localStorage.getItem('markinfeed'));
+                    resolve(rankspossible);
+                }
+            }
         }
-      }
   
-      if(reqs.request == "histatuses")
-      {
-	var stsmap = new Map();
-	var tmpmap = new Map();
-	var rnkmap = new Map();
-	var hidmap = new Map();
-	var lstevents = new Array();
-	var evcounter = new Map();
-	let numusrs = msg.length;
-	var usrscopy = [];
-	
-	for(var i = 0; i < numusrs; i++)
-	{
-	  var r = msg.pop();
-	  usrscopy.push(r);
-	}
+        if(reqs.request == "histatuses")
+        {
+            var stsmap = new Map();
+            var tmpmap = new Map();
+            var rnkmap = new Map();
+            var hidmap = new Map();
+            var lstevents = new Array();
+            var evcounter = new Map();  //!< Карта соответствий имен пользователей и количества событий в их истории, составляется по анализу полного списка событий
+            let numusrs = msg.length;
+            var usrscopy = [];
 
-	db = this.result;
-	
-	var tr = db.transaction(["users", "history"]);
-	var objh = tr.objectStore("history");
-	var oc = objh.openCursor();
-	oc.onsuccess = function(event)
-	{
-	  var cur = event.target.result;
-	  if(cur)
-	  {
-	    var u = cur.value.username.toLowerCase();
-	    //console.log("histevent = " + u);
-	    lstevents.push(cur.value.url);
-	    var t = evcounter.get(u);
-	    if(t != undefined)
-	    {
-	      var count = t;
-	      evcounter.set(u, count+1);
-	    }
-	    else
-	      evcounter.set(u, 1);
-	    
-	    cur.continue();
-	  }
-	  else
-	  {
-	    var obju = tr.objectStore("users");
-	    var ocu = obju.openCursor();
-	    ocu.onsuccess = function(event)
-	    {
-	      var cur = event.target.result;
-	      if(cur)
-	      {
-		var hu = cur.value.user.toLowerCase();
-		var hrnk = cur.value.rankid;
-		rnkmap.set(hu, hrnk);
-		if(cur.value.hidden == true)
-		{ hidmap.set(hu, true); }
-		cur.continue();
-	      }
-	      else
-	      {
-		for(var co = 0; co < usrscopy.length; co++)
-		{
-		  var optstoadd = {};
-		  var curitm = usrscopy[co];
-		  var curusr = curitm.username.toLowerCase();
-		  var cururl = curitm.url;
-		  optstoadd['username'] = curusr;
-		  optstoadd['isevent'] = lstevents.includes(cururl);
-		  var numev = evcounter.get(curusr);
-		  if(numev == undefined)
-		    numev = 0;
-		  optstoadd['numevents'] = numev;
-		  var r = rnkmap.get(curusr);
-		  if(r == undefined)
-		    optstoadd['rankid'] = -1;
-		  else
-		    optstoadd['rankid'] = r;
+            for(var i = 0; i < numusrs; i++)
+            {
+                var r = msg.pop();
+                usrscopy.push(r);
+            }
 
-		  if(hidmap.get(curusr) == undefined)
-		    optstoadd['hidden'] = false;
-		  else
-		    optstoadd['hidden'] = true;
+            var tr = db.transaction(["users", "history"]);
+            var objh = tr.objectStore("history");
+            var oc = objh.openCursor();
+            var histcount = 0;
+            oc.onsuccess = function(event)
+            {
+                var cur = event.target.result;
+                if(cur)
+                {
+                    var u = cur.value.username.toLowerCase();
+                    //console.log("histevent = " + cur.value.url);
+                    lstevents.push(cur.value.url);
+                    var t = evcounter.get(u);
+                    if(t != undefined)
+                    {
+                        var count = t;
+                        evcounter.set(u, count+1);
+                    }
+                    else
+                        evcounter.set(u, 1);
+                    cur.continue();
+                }
+                else
+                {
+                    if(lstevents.length == 0) {         // DEBUG
+                        stsmap.set("$", "0 history read");
+                    }
+                    
+                    var obju = tr.objectStore("users");
+                    var ocu = obju.openCursor();
+                    ocu.onsuccess = function(event)
+                    {
+                        var cur = event.target.result;
+                        if(cur)
+                        {
+                            var hu = cur.value.user.toLowerCase();
+                            var hrnk = cur.value.rankid;
+                            rnkmap.set(hu, hrnk);
+                            if(cur.value.hidden == true) // ЗАЧЕМ ТУТ MAP? Ведь для едиснтвенного признака достаточно просто списка? Разве что если сюда пихать еще что-то в дополнение.. И то, можно сделать массив структур
+                            { hidmap.set(hu, true); }
+                            cur.continue();
+                        }
+                        else {
+                            var coopts = 0;
+                            var cornks = 0
+                            var coev = 0
+                            var cobadges = 0
+                            for(var co = 0; co < usrscopy.length; co++)
+                            {
+                                var optstoadd = {};
+                                var curitm = usrscopy[co];
+                                var curusr = curitm.username.toLowerCase();
+                                if(typeof curitm.url !== 'string') continue;  // Вообще-то стоит сделать явную проверку типов везде, а не только там где оно протекло
+                                var cururl = curitm.url;
+                                var cururlequiv = getEquivalentLink(cururl); // /full added or removed
+                                optstoadd['username'] = curusr;
+                                optstoadd['isevent'] = lstevents.includes(cururl) || lstevents.includes(cururlequiv);
+                                var numev = evcounter.get(curusr);
+                                if(numev == undefined)
+                                    numev = 0;
+                                optstoadd['numevents'] = numev;
+                                var r = rnkmap.get(curusr);
+                                if(r == undefined)
+                                    optstoadd['rankid'] = -1;
+                                else
+                                    optstoadd['rankid'] = r;
 
-		  if(r != undefined || optstoadd['isevent'] != false || numev != 0)
-		    stsmap.set(cururl, optstoadd);
-		}
-		resolve([...stsmap]);
-	      }
-	    }
-	  }
-	}
-	oc.onerror = function(err)
-	{
-	  console.log("histatuses error"); 
-	}
-      }
-    
-      if(reqs.request == "setstatus")
-      {
-	var reqprms = msg.pop();
-	var u = reqprms.username.toLowerCase();
-	db = this.result;
-	var objset = db.transaction("users", "readwrite").objectStore("users");
-	objset.openCursor().onsuccess = function(event) 
-	{
-	  if(reqprms.userrank == -1 && reqprms.description == "" && reqprms.hidden == null)
-	  {
-	    var reqdel;
-	    reqdel = objset.delete(u);
-	    reqdel.onsuccess = function(event)
-	    {
-	      resolve(u);
-	    }
-	    reqdel.onerror = function(event)
-	    {
-	      resolve("");
-	    }
-	  }
-	  else
-	  {
-	    var reqput;
-	    var data = {user: '', rankid:0, description: ''};
-	    data.user = u; // \todo А зачем они называются по-разному? Может, если поля в пришедшем массиве назвать так-же, то и грузить можно будет непосредственно reqprms?
-	    data.rankid = reqprms.userrank;
-	    data.description = reqprms.description;
-	    data.hidden = reqprms.hidden;
-	    reqput = objset.put(data);
-	    reqput.onsuccess = function(event)
-	    {
-	      resolve(u);
-	    }
-	    reqput.onerror = function(event)
-	    {
-	      resolve("");
-	    }
-	  }	    
-	}
-      }
-      if(reqs.request == "getstatus")
-      {
+                                if(hidmap.get(curusr) == undefined)
+                                    optstoadd['hidden'] = false;
+                                else
+                                    optstoadd['hidden'] = true;
+
+                                if(r != undefined || optstoadd['isevent'] != false || numev != 0)
+                                {
+                                    stsmap.set(cururl, optstoadd);
+                                    console.log("ADDED ", curusr)
+                                    coopts++;
+                                }
+                            }
+                            
+                            if(coopts == 0) {
+                                var os = stsmap.get("$");
+                                if(os != undefined)
+                                    stsmap.set("$", os + ", Added 0 opts");
+                                else
+                                    stsmap.set("$", "Added 0 opts");
+                            }
+                            else
+                                stsmap.set("$", "W " + coopts);
+                            resolve([...stsmap]);
+                        }
+                    }                   // users onsuccess
+                    ocu.onerror - function(err) {
+                        stsmap.set("$", "user ERROR: " + err);
+                        resolve([...stsmap]);                        
+                    }
+                }                       // end else
+            }
+            oc.onerror = function(err) {
+                console.log("histatuses error"); 
+            }
+        }
+        if(reqs.request == "setstatus") {
+            var reqprms = msg.pop();
+            var u = reqprms.username.toLowerCase();
+            db = this.result;
+            var objset = db.transaction("users", "readwrite").objectStore("users");
+            objset.openCursor().onsuccess = function(event) 
+            {   
+                if(reqprms.userrank == -1 && reqprms.description == "" && reqprms.hidden == null)
+                {
+                    var reqdel;
+                    reqdel = objset.delete(u);
+                    reqdel.onsuccess = function(event)
+                    {
+                        resolve(u);
+                    }
+                    reqdel.onerror = function(event)
+                    {
+                        resolve("");
+                    }
+                }
+                else
+                {
+                    var reqput;
+                    var data = {user: '', rankid:0, description: ''};
+                    data.user = u; // \todo А зачем они называются по-разному? Может, если поля в пришедшем массиве назвать так-же, то и грузить можно будет непосредственно reqprms?
+                    data.rankid = reqprms.userrank;
+                    data.description = reqprms.description;
+                    data.hidden = reqprms.hidden;
+                    reqput = objset.put(data);
+                    reqput.onsuccess = function(event)
+                    {
+                        resolve(u);
+                    }
+                    reqput.onerror = function(event)
+                    {
+                        resolve("");
+                    }
+                }	    
+            }
+        }
+        if(reqs.request == "getstatus")
+        {
 	var reqprms = msg.pop();
 	var u = reqprms.toLowerCase();
 	db = this.result;
@@ -488,7 +509,7 @@ browser.runtime.onInstalled.addListener(onInstallInit);
 browser.runtime.onMessage.addListener(onContentMessage);
 
 
-function createrank(id, rank, bgcolor, fontcolor){
+function createrank(id, rank, bgcolor, fontcolor) {
 	this.id = id;
 	this.rank = rank;
 	this.bgcolor = bgcolor;
@@ -497,3 +518,16 @@ function createrank(id, rank, bgcolor, fontcolor){
 	this.italic = false;
 	return this;
 };
+
+function getEquivalentLink(link) {
+    var pos = link.search("#comment");
+    if(pos == -1)
+        return link;
+    
+    var fpos = link.search("\/full")
+    if(fpos == -1) {
+        return link.slice(0, pos) + "/full" + link.slice(pos);
+    }
+    else
+        return link.replace("\/full", "");   
+}

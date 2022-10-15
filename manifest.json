@@ -31,7 +31,7 @@
     {
       "matches": ["*://*.cont.ws/*"],
       "css": ["ddmenu.css"],
-      "js": ["browser-polyfill.js", "contextlib.js", "contpage.js"]
+      "js": ["browser-polyfill.js", "mutation.js", "contextlib.js", "contpage.js"]
     }
   ],
   "incognito": "spanning",

@@ -156,6 +156,9 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
     }
   }); 
 }
+/*!
+Функция, выделяющая из переданной строки время в стандартном виде, как его возвращает локаль ru-RU. Если на вход передана строка, не содержащая штампа времени в понятном виде
+* возвращается текущий момент времени */
 
 function extractTime(torig)
 {
@@ -163,7 +166,7 @@ function extractTime(torig)
   commtime = torig;
 
   if(torig.length == 0)
-    commtime = new Date().toString().split('GMT')[0];
+    commtime = new Date().toLocaleString('ru-RU');
   else
   {
     var timepart;
@@ -180,27 +183,31 @@ function extractTime(torig)
     if(postoday !== -1 || posyesterday !== -1)
     {
       var tnow = new Date();
-      if(postoday !== -1)
+      timepart = tadapted.substring(tadapted.length - 5, tadapted.length);
+      if(/^\d{2}:\d{2}$/.test(timepart))
       {
-	timepart = tadapted.substring(tadapted.length - 5, tadapted.length);
-	hours = timepart.split(':')[0];
-	minutes = timepart.split(':')[1];
+        if(postoday !== -1)
+        {
+	  hours = timepart.split(':')[0];
+	  minutes = timepart.split(':')[1];
 	  tnow.setHours(hours.trim());
 	  tnow.setMinutes(minutes.trim());
 	  tnow.setSeconds(0);
-	commtime = tnow.toLocaleString('ru-RU');
-      }
-      if(posyesterday !== -1)
-      {
-	yesterday = new Date(tnow.setDate(tnow.getDate() - 1))
-	timepart = tadapted.substring(tadapted.length - 5, tadapted.length);
-	hours = timepart.split(':')[0];
-	minutes = timepart.split(':')[1];
+	  commtime = tnow.toLocaleString('ru-RU');
+        }
+        if(posyesterday !== -1)
+        {
+	  yesterday = new Date(tnow.setDate(tnow.getDate() - 1))
+	  hours = timepart.split(':')[0];
+	  minutes = timepart.split(':')[1];
 	  yesterday.setHours(hours.trim());
 	  yesterday.setMinutes(minutes.trim());
 	  yesterday.setSeconds(0);
-	commtime = yesterday.toLocaleString('ru-RU');
+	  commtime = yesterday.toLocaleString('ru-RU');
+        }
       }
+      else
+	commtime = new Date().toLocaleString('ru-RU');
     }
     else
     {
@@ -240,7 +247,7 @@ function extractTime(torig)
       	commtime = tm.toLocaleString('ru-RU');
       }
       else
-	commtime = new Date().toString().split('GMT')[0];
+	commtime = new Date().toLocaleString('ru-RU');
     }
   }
   return commtime;
