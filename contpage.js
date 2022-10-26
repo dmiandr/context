@@ -57,7 +57,7 @@ function handleRanksList(rankslist)
   console.log("NUM RANKS: " + gRanksParams.size);
   if(window.location.href.indexOf("mycomments_archive") !== -1) //Собственные комментарии снабжать историей не требуется
     return;
-  setTimeout('', 5000);
+  
   window.addEventListener("load", onCompletePageLoad, false);
   onCompletePageLoad();
 }
@@ -132,12 +132,10 @@ function requestForStatuses()
       v = userelems.get(k);
       itmdata['username'] = v.username;
       itmdata['url'] = v.url;
-      console.log("URL SENT: ", v.url + " (" + v.username + ")");
       itmdata['type'] = v.type;
       nmarr.push(itmdata);
       usrlst += v.username + ", ";
     }
-    console.log("ON COMPL PAGE: ", usrlst + " (" + userelems.size + ")");
     nmarr.push({request: "histatuses"});
     var sendonstatus = browser.runtime.sendMessage(nmarr);
     return sendonstatus.then(
@@ -145,68 +143,59 @@ function requestForStatuses()
       error => { statushandleError(error); });
 }
 
-function handleItemsStatuses(itmsmap)
-{
-  let sts = new Map(itmsmap);  
-  var uopts;
-  var notnullc = 0;
-  var badgedcount = 0;
-  
-  /*var dbg = sts.get("$")
-  sts.delete("$")
-  addFloatInfo(dbg);*/
-  
-  for(var u of userelems.keys())
-  {
-    uopts = userelems.get(u);
+function handleItemsStatuses(itmsmap) {
+    let sts = new Map(itmsmap);  
+    var uopts;
+    var notnullc = 0;
+    var badgedcount = 0;
     
-    badgedcount = 0;
-    for( var k of sts.keys())
-    {
-      var opt = sts.get(k);
-      
-      if(uopts.url != undefined)
-      {
-        notnullc++;
-        if(uopts.url == k)
-        {
-            //console.log("URL MATCH");
-            badgedcount++;
-            uopts.numevents = opt.numevents;
-            uopts.isevent = opt.isevent;
-            uopts.rankid = opt.rankid;
-            uopts.hidden = opt.hidden;
-            userelems.set(u, uopts);
-            break;
-        }
-      }
-      else
-      {
-	if(uopts.username == opt.username)
-	{
+    /*var dbg = sts.get("$")
+    sts.delete("$")
+    addFloatInfo(dbg);*/
+    
+    for(var u of userelems.keys()) {
+        uopts = userelems.get(u);
+        
+        badgedcount = 0;
+        for( var k of sts.keys()) {
+            var opt = sts.get(k);
             
-	  uopts.numevents = opt.numevents;
-	  uopts.isevent = false;	// No event without URL possible
-	  uopts.rankid = opt.rankid;
-	  uopts.url = null;
-	  uopts.hidden = opt.hidden;
-	  userelems.set(u, uopts);
-	  break;
-	}
-      }
+            if(uopts.url != undefined) {
+                notnullc++;
+                if(uopts.url == k) {
+                    badgedcount++;
+                    uopts.numevents = opt.numevents;
+                    uopts.isevent = opt.isevent;
+                    uopts.rankid = opt.rankid;
+                    uopts.hidden = opt.hidden;
+                    userelems.set(u, uopts);
+                    break;
+                }
+            }
+            else {
+                if(uopts.username == opt.username) {
+                    uopts.numevents = opt.numevents;
+                    uopts.isevent = false;	// No event without URL possible
+                    uopts.rankid = opt.rankid;
+                    uopts.url = null;
+                    uopts.hidden = opt.hidden;
+                    userelems.set(u, uopts);
+                    break;
+                }
+            }
+        }
     }
-  }
-  
-  for(var u of userelems.keys()) {
-    uopts = userelems.get(u);
-    if(uopts.rankid != -1)
-      gUsersCache.set(uopts.username, uopts.rankid);
     
-    if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR) {
-        addMenuToCurrentItem(u, uopts.type);
+    for(var u of userelems.keys()) {
+        uopts = userelems.get(u);
+        if(uopts.rankid != -1)
+        gUsersCache.set(uopts.username, uopts.rankid);
+        
+        if(uopts.type != UserContextTypes.COMMENTREPLY && uopts.type != UserContextTypes.TOOLBAR) {
+            addMenuToCurrentItem(u, uopts.type);
+        }
     }
-  }
-  colorAll();
+    colorAll();
 }
 
 function handleStatusList(spreadedmap)
@@ -309,7 +298,7 @@ function addMenuToCurrentItem(item, type)
   //if(type == UserContextTypes.COMMENTREPLY || type == UserContextTypes.COMMENT)
     //var n = userelems.get(item);
   
-  //console.log("BEGIN n= ", n + ", type = " + type)
+  //console.log("BEGIN addMenuToCurrentItem")
   
   var alrex = item.parentNode.getElementsByClassName("dropdownusr");
   
@@ -345,10 +334,8 @@ function addMenuToCurrentItem(item, type)
   }
 
   var totalblock = getParentItemWithAttribute(item, "comment-author-login");
-  if(totalblock != null)
-  {
-    if(useropts.hidden == true)
-    {
+  if(totalblock != null) {
+    if(useropts.hidden == true) {
       totalblock.style.setProperty('display', "none");
       return;
     }
@@ -372,10 +359,8 @@ function addMenuToCurrentItem(item, type)
   if(type != UserContextTypes.COMMENT && type != UserContextTypes.POSTAUTHOR && type != UserContextTypes.FEED)
     return;
   
-  if(useropts.isevent) {
-      console.log("SET N+BLINK FOR= ", item.nodeName);
+  if(useropts.isevent)
       item.classList.add('history');
-  }
   
   var itmhst = document.createElement('a');
   if(useropts.isevent)
@@ -633,45 +618,53 @@ function fillHistoryDialogFromDb(url, mouseevent, cname, type)
  * если обнаружено совпадение по ссылке т.е. событие добавляется к этом элементу, то проверяется что в соответсвии userelems ранее этому элементу не соответсвовало 
  * событий (это должно выполняться всегда), тогда для элемента, соответствующего событию, прибавляется класс 'history', отвечающий за визуальное отображения события 
  * (мигающее имя автора). Второму пункту меню изменяется название на "Изменить событие".  Также для всех элементов данного автора увеличивается на единицу счетчик 
- * событий. */
+ * событий. UPD: также добавляется/обновляется счетчик событий в виде беджа */
 /*! \brief \~english Modify every author reference on the page, according to event appearence.*/
 function addEventMark(url, uname)
 {
-  for( var k of userelems.keys())
-  {
-    let v = userelems.get(k);
-    var mencont;
-    var m0, m1;
-    var u = true;
-    if(v.type != UserContextTypes.COMMENT && v.type != UserContextTypes.POSTAUTHOR)
-      u = false;
+    for( var k of userelems.keys())
+    {
+        let v = userelems.get(k);
+        var mencont;
+        var m0, m1;
+        var u = true;
+        if(v.type != UserContextTypes.COMMENT && v.type != UserContextTypes.POSTAUTHOR)
+        u = false;
+        
+        mencont = locateMenuElement(k);
+        if(mencont == null) 
+        continue;
+        m0 = mencont.childNodes[0];
+        m1 = mencont.childNodes[1];
     
-    mencont = locateMenuElement(k);
-    if(mencont == null) 
-      continue;
-    m0 = mencont.childNodes[0];
-    m1 = mencont.childNodes[1];
-  
-    if(v.url == url)
-    {
-      if(v.isevent == false)
-      {
-	v.isevent = true;
-	k.classList.add('history');
-	if(u) m1.textContent = "Изменить событие";
-      }
-      v.numevents = v.numevents + 1;
-      m0.textContent = uname + " (" + v.numevents + ")";
-      userelems.set(k, v);
-      continue;
+        if(v.username == uname) {
+            if(v.numevents == 0) {
+                let badgelem = document.createElement('span');
+                badgelem.className = 'badge';
+                badgelem.textContent = v.numevents + 1;
+                k.append(badgelem);          
+            }
+            if(v.numevents > 0) {
+                badgelems = k.getElementsByClassName('badge');
+                if(badgelems.length > 0)
+                    badgelems[0].textContent = v.numevents + 1;
+            }
+            v.numevents = v.numevents + 1;
+            m0.textContent = uname + " (" + v.numevents + ")";
+            userelems.set(k, v);
+        }
+        
+        if(v.url == url)
+        {
+            if(v.isevent == false)
+            {
+                v.isevent = true;
+                k.classList.add('history');
+                if(u) m1.textContent = "Изменить событие";
+            }
+            userelems.set(k, v);
+        }
     }
-    if(v.username == uname)
-    {
-      v.numevents = v.numevents + 1;
-      m0.textContent = uname + " (" + v.numevents + ")";
-      userelems.set(k, v);
-    }
-  }
 }
 
 /*! \brief \~russian Модифицирует все упоминания автора на странице в связи с удалением события. Просматривает все потенциальные события рассматриваемого автора,
@@ -680,49 +673,48 @@ function addEventMark(url, uname)
  * было единственное событие у автора - то также меняется текст второго пункта меню.
  * Результирующий объект заносится обратно в отображение userelems */
 /*! \brief \~english Modify every author reference on the page, according to event removal.*/
-function removeEventMark(url, uname)
-{
-  for( var k of userelems.keys())
-  {
-    v = userelems.get(k);
-    var mencont;
-    var m0, m1;
-    var u = true;
-    if(v.type != UserContextTypes.COMMENT && v.type != UserContextTypes.POSTAUTHOR)
-      u = false;
-    
-    mencont = locateMenuElement(k);
-    if(mencont == null) 
-      continue;
-    m0 = mencont.childNodes[0];
-    m1 = mencont.childNodes[1];
-    
-    if(v.url == url)
-    {
-      if(v.isevent == true)
-      {
-	v.isevent = false;
-	k.classList.remove('history');
-	if(u) m1.textContent = "Добавить к истории";
-      }
-      if(v.numevents > 0)
-      {
-	v.numevents = v.numevents - 1;
-	m0.textContent = uname + " (" + v.numevents + ")";
-      }
-      userelems.set(k, v);
-      continue;
+function removeEventMark(url, uname) {
+    for( var k of userelems.keys()) {
+        v = userelems.get(k);
+        var mencont;
+        var m0, m1;
+        var u = true;
+        if(v.type != UserContextTypes.COMMENT && v.type != UserContextTypes.POSTAUTHOR)
+        u = false;
+        
+        mencont = locateMenuElement(k);
+        if(mencont == null) 
+        continue;
+        m0 = mencont.childNodes[0];
+        m1 = mencont.childNodes[1];
+        
+        if(v.username == uname) {
+            badgelems = k.getElementsByClassName('badge');
+            
+            if(v.numevents > 1) {
+                if(badgelems.length > 0)
+                    badgelems[0].textContent = v.numevents - 1;
+            }
+            if(v.numevents == 1) {
+                if(badgelems.length > 0)
+                    badgelems[0].remove();
+            }
+            if(v.numevents > 0) {
+                v.numevents = v.numevents - 1;
+                m0.textContent = uname + " (" + v.numevents + ")";
+            }
+            userelems.set(k, v);
+        }
+        
+        if(v.url == url) {
+            if(v.isevent == true) {
+                v.isevent = false;
+                k.classList.remove('history');
+                if(u) m1.textContent = "Добавить к истории";
+            }
+            userelems.set(k, v);
+        }
     }
-    if(v.username == uname)
-    {
-      if(v.numevents > 0)
-      {
-	v.numevents = v.numevents - 1;
-	m0.textContent = uname + " (" + v.numevents + ")";
-      }
-      userelems.set(k, v);
-    }
-  }
 }
 
 function locateMenuElement(item)
@@ -756,8 +748,6 @@ function getCommentURL(item)
 }
 
 function getFeedURL(item) {
-    //console.log("ITM FEED = ", item.nodeName);
-    
     var p = item.parentElement;
     if(p.classList.contains("new_m_author") == null)
         return null;
@@ -774,29 +764,8 @@ function getFeedURL(item) {
         var loclink = n.getAttribute("href")
         if(clearurl[clearurl.length-1] == '/' && loclink[0] == '/')
             clearurl = clearurl.slice(0, -1)
-        
-        //console.log("FEEDURL= ", clearurl + n.getAttribute("href"))
         return clearurl + n.getAttribute("href");         
     }
-        
-    
-    
-    //console.log("SYB TAG= ", t.nodeName);
-    
-    //if(t.nodeName.toLowerCase() == 'a')
-    //console.log("A opts= ", n.getAttribute("href"));  
-    
-/*
-  while(tag.toLowerCase() != 'a') {
-    item = item.nextElementSibling();
-    tag = item.tagName();
-    
-  }
-  var clearurl = window.location.href.split('#')[0];
-  console.log("FEEDURL= ", clearurl + item.getAttribute("href"))
-  return clearurl + item.getAttribute("href");  
-  
-  */
 }
 
 function isParentElementBelobgsToClass(item, classname)

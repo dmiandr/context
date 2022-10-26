@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "CONT.ws user management extension",
   "short_name": "CONText",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Расширение для ведения истории и присвоения статусов пользователям платформы cont.ws.",
 
   "developer": {
@@ -24,7 +24,7 @@
   },
 
   "background": {
-    "scripts": ["browser-polyfill.js", "background.js"]
+    "scripts": ["browser-polyfill.js", "contextlib.js", "background.js"]
   },
 
   "content_scripts": [

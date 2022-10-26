@@ -321,32 +321,48 @@ function colorItem(ranks, itm, rankid)
   }
 }
 
-function createrank(rank, bgcolor, fontcolor){
-  let rnk = new Object();
-  	rnk.rank = rank;
-	rnk.bgcolor = bgcolor;
-	rnk.fontcolor = fontcolor;
-	rnk.bold = false;
-	rnk.italic = false;
-  return rnk;
+function createrank(rank, bgcolor, fontcolor) {
+    let rnk = new Object();
+    rnk.rank = rank;
+    rnk.bgcolor = bgcolor;
+    rnk.fontcolor = fontcolor;
+    rnk.bold = false;
+    rnk.italic = false;
+    return rnk;
 };
 
-function injectHistoryDialog(res)
-{
-  var backgrnd = document.getElementById('histbackground');
-  if(backgrnd == null)
-  {
-    tst = document.createElement('iframe');
-    tst.style.setProperty('height', '0px');
-    tst.style.setProperty('width', '0px');
-    document.body.appendChild(tst);
-    var win = tst.contentWindow;
-    var frmrange = win.document.createRange();
-    frmrange.selectNode(win.document.firstChild);
-    if(res.length != 0)
-      var frg = frmrange.createContextualFragment(res);
-    document.body.appendChild(frg);
-    backgrnd = document.getElementById('histbackground');
-    backgrnd.style.setProperty('display', "none");
-  }
+function injectHistoryDialog(res) {
+    var backgrnd = document.getElementById('histbackground');
+    if(backgrnd == null)
+    {
+        tst = document.createElement('iframe');
+        tst.style.setProperty('height', '0px');
+        tst.style.setProperty('width', '0px');
+        document.body.appendChild(tst);
+        var win = tst.contentWindow;
+        var frmrange = win.document.createRange();
+        frmrange.selectNode(win.document.firstChild);
+        if(res.length != 0)
+            var frg = frmrange.createContextualFragment(res);
+        document.body.appendChild(frg);
+        backgrnd = document.getElementById('histbackground');
+        backgrnd.style.setProperty('display', "none");
+    }
+}
+
+function parceDateFromRuLocale(strdateru) {
+    var d = new Date;
+    var dta = strdateru.split(",");
+    if(dta.length != 2)
+        return d
+    var ta = dta[1].split(":");
+    if(ta.length != 3)
+        return d
+    var da = dta[0].split(".");
+    if(da.length != 3)
+        return d
+    d.setHours(ta[0], ta[1], ta[2]);
+    d.setFullYear(da[2], da[1], da[0]);
+    
+    return d
 }

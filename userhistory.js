@@ -69,84 +69,96 @@ function updateContent()
 
 function buildTable(historymap)
 {
-  var htable = document.getElementById("historytabid");
+    var htable = document.getElementById("historytabid");
 
-  var rowcount = htable.rows.length;
-  for (var i = rowcount - 1; i > 0; i--)
-  {
-    htable.deleteRow(i);
-  }
-  
-  let data = new Map(historymap);
-  var numcell;
-  var curcell;
-  var newtext;
-  var newelem;
-  var newelemlink;
-  var evtype;
-  var evtype_name;
-
-
-  for(let h of data.keys())
-  {
-    var rowmap = data.get(h);
     var rowcount = htable.rows.length;
-    var row = htable.insertRow(-1);
-    var curtitle = rowmap.title;
-
-    evtype = rowmap.type;
-    if(evtype == 1 || evtype == 2)
-      evtype_name = "Комментарий";
-    if(evtype == 4)
-      evtype_name = "Запись";
-
-    curcell = row.insertCell(0);
-    newtext = document.createTextNode(rowmap.time);
-    curcell.appendChild(newtext);
-
-    curcell = row.insertCell(1);
-    newelem = document.createElement('a');
-    newelem.href = "#";
-      let cnam = uname; 
-      let calias = rowmap.alias;
-      let ctime = rowmap.time;
-      let curl = h;
-      let ctitle = rowmap.title;
-      let cdescr = rowmap.descript;
-      let crepost = rowmap.repost;
-    newelem.addEventListener("click", function(evt){
-      drawHistoryEventDlg(evt, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, true);
-    });
-    if(rowmap.title == "")
-    {
-      newelem.innerText = "(без заголовка)";
+    for (var i = rowcount - 1; i > 0; i--) {
+        htable.deleteRow(i);
     }
-    else
-      newelem.innerText = rowmap.title;
-    curcell.appendChild(newelem);
+    
+    let data = new Map(historymap);
+    var numcell;
+    var curcell;
+    var newtext;
+    var newelem;
+    var newelemlink;
+    var evtype;
+    var evtype_name;
 
-    curcell = row.insertCell(2);
-    newelem = document.createElement('a');
-    newelem.href = "#";
-    newelem.addEventListener("click", function(evt){parent.window.open(h)});
-    newelem.innerText = evtype_name;
-    curcell.appendChild(newelem);
-    var lastalias = rowmap.alias;
-  }
-  titlelem.innerText= lastalias + " (" + uname + ")";
+    function cmptime(obj1, obj2) {
+        var d1 = parceDateFromRuLocale(obj1.time)
+        var d2 = parceDateFromRuLocale(obj2.time)
+        return d1 < d2 ? -1 : 1;
+    }
+  
+    var histarray = []; // user events as an array
+
+    for(let h of data.keys())
+    {
+        var rowmap = data.get(h);
+        rowmap['url'] = h
+        histarray.push(rowmap);    
+    }
+    histarray.sort(cmptime);
+    
+    for(let h of histarray)
+    {
+        var rowmap = h;
+        var rowcount = htable.rows.length;
+        var row = htable.insertRow(-1);
+        var curtitle = rowmap.title;
+
+        evtype = rowmap.type;
+        if(evtype == 1 || evtype == 2)
+            evtype_name = "Комментарий";
+        if(evtype == 4)
+            evtype_name = "Запись";
+
+        curcell = row.insertCell(0);
+        newtext = document.createTextNode(rowmap.time);
+        curcell.appendChild(newtext);
+
+        curcell = row.insertCell(1);
+        newelem = document.createElement('a');
+        newelem.href = "#";
+        let cnam = uname; 
+        let calias = rowmap.alias;
+        let ctime = rowmap.time;
+        let curl = rowmap.url;
+        let ctitle = rowmap.title;
+        let cdescr = rowmap.descript;
+        let crepost = rowmap.repost;
+        newelem.addEventListener("click", function(evt){
+            drawHistoryEventDlg(evt, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, true);
+        });
+        if(rowmap.title == "")
+            newelem.innerText = "(без заголовка)";
+        else
+            newelem.innerText = rowmap.title;
+
+        curcell.appendChild(newelem);
+        curcell = row.insertCell(2);
+        newelem = document.createElement('a');
+        newelem.href = "#";
+        newelem.addEventListener("click", function(evt){parent.window.open(rowmap.url)});
+        newelem.innerText = evtype_name;
+        curcell.appendChild(newelem);
+        var lastalias = rowmap.alias;
+    }
+    titlelem.innerText= lastalias + " (" + uname + ")";
 }
 
 function saveUserDescription()
 {
-  var descript = useroverall.value;
-  var nmarr = new Array();
-  var userprms = {};
-  userprms['username'] = uname;
-  userprms['userrank'] = gRankId;
-  userprms['description'] = descript;
-  userprms['hidden'] = document.getElementById("hidehim").checked;
-  nmarr.push(userprms);  
-  nmarr.push({request: "setstatus"});
-  var sendonrankchange = browser.runtime.sendMessage(nmarr);
+    var descript = useroverall.value;
+    var nmarr = new Array();
+    var userprms = {};
+    userprms['username'] = uname;
+    userprms['userrank'] = gRankId;
+    userprms['description'] = descript;
+    userprms['hidden'] = document.getElementById("hidehim").checked;
+    nmarr.push(userprms);  
+    nmarr.push({request: "setstatus"});
+    var sendonrankchange = browser.runtime.sendMessage(nmarr);
 }
 

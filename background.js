@@ -60,6 +60,34 @@ function onInstallInit(details) {
   }
 }
 
+var Handlers = new Map();
+
+function ranks_handler(msg) {
+    var tr = db.transaction("ranks");
+    var objstore = tr.objectStore("ranks");
+    var numranks_tmp = 0;
+    rankspossible = [];
+    objstore.openCursor().onsuccess = function(event)
+    {
+        var cur = event.target.result;
+        if(cur)
+        {
+            var rcur = new createrank(cur.value.id, cur.value.rank, cur.value.bgcolor, cur.value.fontcolor);
+            rankspossible.push(rcur);
+            cur.continue();
+        }
+        else
+        {
+            rankspossible.push(localStorage.getItem('markinfeed'));
+            resolve(rankspossible);
+        }
+    }    
+}
+
+Handlers.set("ranks", ranks_handler);
+
+
+
 
 function onContentMessage(msg, sender, handleResponse)
 {
@@ -184,7 +212,6 @@ function onContentMessage(msg, sender, handleResponse)
                                 if(r != undefined || optstoadd['isevent'] != false || numev != 0)
                                 {
                                     stsmap.set(cururl, optstoadd);
-                                    console.log("ADDED ", curusr)
                                     coopts++;
                                 }
                             }
@@ -412,7 +439,6 @@ function onContentMessage(msg, sender, handleResponse)
 	    console.log("gethistoryitem undefined before resolve");
             resolve("");
 	  }
-	  console.log("itmap = " + d.title + "; url = " + url);
           var itmap = new Map();
           itmap.set("time", d.time);
           itmap.set("title", d.title);
@@ -430,84 +456,115 @@ function onContentMessage(msg, sender, handleResponse)
       }
       if(reqs.request == "getbrieflist")
       {
-	db = this.result;
-	var umap = new Map();
+        db = this.result;
+        var umap = new Map();
         var tr = db.transaction(["users", "history"]);
-	var objh = tr.objectStore("history");
-	var oc = objh.openCursor();
-	oc.onsuccess = function(event) 
-	{
-	  var cur = event.target.result;
-	  if(cur)
-	  {
-	    var uopts = {};
-	    var newopts = {};
-	    var curusr = cur.value.username.toLowerCase();
-	    uopts = umap.get(curusr);
-	    
-	    if(uopts === undefined)
-	    {
-	      newopts['numevents'] = 1;
-	    }
-	    else
-	    {
-	      newopts['numevents'] = uopts['numevents'] + 1;
-	    }
-	    newopts['alias'] = cur.value.alias;
-	    umap.set(curusr, newopts);
-	    cur.continue();
-	  }
-	  else
-	  {
-	    var obju = tr.objectStore("users");
-	    var uc = obju.openCursor();
-	    uc.onsuccess = function(ev)
-	    {
-	      var opts = {};
-	      var c = ev.target.result;
-	      if(c)
-	      {
-		var un = c.value.user.toLowerCase();
-		var r = c.value.rankid;
-		var o = umap.get(un); 
-		var o2 = {};
-		if(o != undefined)
-		{
-		  o['rankid'] = r;
-		  if(c.value.hidden == true)
-		    o['hidden'] = true;
-		  umap.set(un, o);
-		}
-		else
-		{
-		  o2['numevents'] = 0;
-		  o2['alias'] = un;
-		  o2['rankid'] = -1;
-		  if(c.value.hidden == true)
-		    o2['hidden'] = true;
-		  umap.set(un, o2);
-		}
-		c.continue();
-	      }
-	      else
-	      {
-		resolve([...umap]);
-	      }
-	    }    
-	  }
-	}
-	oc.onerror = function(err)
-	{
-	  console.log("getbrieflist error"); 
-	}
-      }
+        var objh = tr.objectStore("history");
+        var oc = objh.openCursor();
+        var lastmodf = undefined;
+        var lastalias;
+        var lastname;
+        var lasttitle;
+        var lasttype;
+        var lasturl;
+        var lasthidden;
+        var totalevents = 0;
+        
+        oc.onsuccess = function(event) 
+        {
+            var cur = event.target.result;
+            if(cur)
+            {
+                var uopts = {};
+                var newopts = {};
+                var curusr = cur.value.username.toLowerCase();
+                uopts = umap.get(curusr);
+                totalevents++;
+                
+                if(uopts === undefined)
+                    newopts['numevents'] = 1;
+                else
+                    newopts['numevents'] = uopts['numevents'] + 1;
+                
+                if(lastmodf === undefined) {
+                    lastmodf = parceDateFromRuLocale(cur.value.time);
+                    lastalias = cur.value.alias;
+                    lastname = curusr;
+                    lasttitle = cur.value.title;
+                    lasttype = cur.value.type;
+                    lasturl = cur.value.url;
+                    lasthidden = cur.value.hidden;
+                }
+                else {
+                    tcur = parceDateFromRuLocale(cur.value.time);
+                    if(tcur > lastmodf) {
+                        lastmodf = tcur;
+                        lastalias = cur.value.alias;
+                        lastname = curusr;
+                        lasttitle = cur.value.title;
+                        lasttype = cur.value.type;
+                        lasturl = cur.value.url;
+                        lasthidden = cur.value.hidden;
+                    }
+                }
+                newopts['alias'] = cur.value.alias;
+                umap.set(curusr, newopts);
+                cur.continue();
+            }
+            else {
+                var obju = tr.objectStore("users");
+                var uc = obju.openCursor();
+                uc.onsuccess = function(ev) {
+                    var opts = {};
+                    var c = ev.target.result;
+                    if(c) {
+                        var un = c.value.user.toLowerCase();
+                        var r = c.value.rankid;
+                        var o = umap.get(un); 
+                        var o2 = {};
+                        if(o != undefined) {
+                            o['rankid'] = r;
+                            if(c.value.hidden == true)
+                                o['hidden'] = true;
+                            umap.set(un, o);
+                        }
+                        else {
+                        o2['numevents'] = 0;
+                        o2['alias'] = un;
+                        o2['rankid'] = -1;
+                        if(c.value.hidden == true)
+                            o2['hidden'] = true;
+                        umap.set(un, o2);
+                        }
+                        c.continue();
+                    }
+                    else
+                    {
+                        var summ = {};
+                        summ['time'] = lastmodf;
+                        summ['alias'] = lastalias;
+                        summ['type'] = lasttype;
+                        summ['username'] = lastname;
+                        summ['title'] = lasttitle;
+                        summ['url'] = lasturl;
+                        summ['hidden'] = lasthidden;
+                        summ['totalevents'] = totalevents
+                        umap.set("$", summ); 
+                        resolve([...umap]);
+                    }
+                }    
+            }
+        }
+        oc.onerror = function(err) {
+            console.log("getbrieflist error"); 
+        }
+    }
     }
   });
 }
 
 browser.runtime.onInstalled.addListener(onInstallInit);
 browser.runtime.onMessage.addListener(onContentMessage);
-
 
 function createrank(id, rank, bgcolor, fontcolor) {
 	this.id = id;

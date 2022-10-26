@@ -76,34 +76,33 @@ function getAllFromTable(db, tabname, basket)
 }
 
 function handleSelectImport(evt) {
-  var files = evt.target.files; 
-  ff = files[0];
-  fr = new FileReader();
-  fr.onload = handleImportedData;
-  fr.readAsText(ff);
+    var files = evt.target.files; 
+    ff = files[0];
+    fr = new FileReader();
+    fr.onload = handleImportedData;
+    fr.readAsText(ff);
+    
+    function handleImportedData(e) {
+        let lines = e.target.result;
+        try{
+            var allLoaded = JSON.parse(lines);
+        }
+        catch(e) {
+            alert(e);
+            return;
+        }
 
-  function handleImportedData(e) {
-    let lines = e.target.result;
-    try{
-      var allLoaded = JSON.parse(lines);
+        if(document.getElementById("erasebeforeimport").checked == true) {
+            var erarr = new Array();
+            erarr.push({request: "eraseall"});
+            var senderase = browser.runtime.sendMessage(erarr);
+            senderase.then(
+                result => { importParcedData(allLoaded); return;},
+                error => { alert("Ошибка при удалении данных: " + error); return; });
+        }
+        else
+            importParcedData(allLoaded);
     }
-    catch(e)
-    {
-      alert(e);
-      return;
-    }
-
-    if(document.getElementById("erasebeforeimport").checked == true)
-    {
-      var erarr = new Array();
-      erarr.push({request: "eraseall"});
-      var senderase = browser.runtime.sendMessage(erarr);
-      senderase.then(
-        result => { importParcedData(allLoaded); return;},
-        error => { alert("Ошибка при удалении данных: " + error); return; });
-    }
-    importParcedData(allLoaded);
-  }
 }
 
 function clearHistory()
@@ -169,28 +168,36 @@ function importParcedData(datparced)
       if(curtable == "history")
       {
         numusers = curar.length;
-	for(k = 0; k < curar.length; k++)
-	{
-	  sing = curar[k];
-	  var histarr = new Array();
-	  var histprms = {};
-	  histprms['username'] = sing.username;
-	  histprms['alias'] = sing.alias;
-	  histprms['time'] = sing.time;
-	  histprms['url'] = sing.url;
-	  histprms['title'] = sing.title;
-	  histprms['descript'] = sing.descript;
-	  histprms['type'] = sing.type;
-	  histprms['repost'] = sing.repost;
-	  histprms['recipient'] = sing.recipient;
-	  histarr.push(histprms);
-	  histarr.push({request: "addhistoryevent"});
+        for(k = 0; k < curar.length; k++)
+        {
+            sing = curar[k];
+            var histarr = new Array();
+            var histprms = {};
+            histprms['username'] = sing.username;
+            histprms['alias'] = sing.alias;
+            histprms['time'] = sing.time;
+            histprms['url'] = sing.url;
+            histprms['title'] = sing.title;
+            histprms['descript'] = sing.descript;
+            histprms['type'] = sing.type;
+            histprms['repost'] = sing.repost;
+            histprms['recipient'] = sing.recipient;
+            histarr.push(histprms);
+            histarr.push({request: "addhistoryevent"});
 
-	  var sendonhistadd = browser.runtime.sendMessage(histarr);
-	  sendonhistadd.catch(err => { alert("Ошибка загрузки истории: " + err); return; });
-	}
+            var sendonhistadd = browser.runtime.sendMessage(histarr);
+            sendonhistadd.catch(err => { alert("Ошибка загрузки истории: " + err); return; });
+        }
       }
     }
+    
+    setTimeout('', 5000);
+    var arr = new Array();
+    arr.push({request: "getbrieflist"});
+    var sumres = browser.runtime.sendMessage(arr);
+    sumres.then( result => { tableSummary(result);}, 
+                 error => {console.log("Brief list: " + error); });
+    
     var eventbkgrnd = document.getElementById("dataimported");
     eventbkgrnd.style.display = "block";
     document.getElementById("eventmessage").innerText = "Осуществлен импорт данных CONText.\n Загружено: \n" + numranks + " статусов,\n" + numusers + " событий истории	.";
