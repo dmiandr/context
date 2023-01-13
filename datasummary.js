@@ -51,8 +51,8 @@ function tableSummary(result)
     var curcell;
     var celltext;
     var cellelem;  
+    let numdesc = 0
   
-    var tmp = data.size;
     var lastevent = data.get("$")
     data.delete("$")
     var lasthldr = document.getElementById("lastevent");
@@ -65,7 +65,7 @@ function tableSummary(result)
     curcell = singlrow.insertCell(1);
     cellelem = document.createElement('a');
     cellelem.href = "#";
-    cellelem.addEventListener("click", function(evt){popupHistoryWindow(lastevent.username);});
+    cellelem.addEventListener("click", function(evt){popupHistoryWindow(lastevent.socnet, lastevent.username);});
     cellelem.innerText = lastevent.alias + " (" + lastevent.username + ")";
     if(lastevent.hidden == true)
         cellelem.style.fontStyle = "italic"
@@ -84,34 +84,51 @@ function tableSummary(result)
     celltext = document.createTextNode(evtype_name);
     curcell.appendChild(celltext);   
     }    
-    var totalevnts = document.getElementById("totaleventsplace");
+    let totalevnts = document.getElementById("totaleventsplace");
     totalevnts.innerText = lastevent.totalevents;
     
+    let totaldiffusers = document.getElementById("totaldiffuserssplace");
+    totaldiffusers.innerText = data.size;
+    
     tbl.innerHTML = '';
+    usrn = 1
     for(let h of data.keys())
     {
-        var rowmap = data.get(h);
-        var ualias = rowmap.alias;
-        var row = tbl.insertRow(-1);
-    
+        let rowmap = data.get(h);
+        let ualias = rowmap.alias;
+        let socnet = h.split("%")[0]
+        let uname = h.split("%")[1]
+        let row = tbl.insertRow(-1);
+        
         curcell = row.insertCell(0);
+        celltext = document.createTextNode(usrn);
+        curcell.appendChild(celltext);    
+    
+        curcell = row.insertCell(1);
         cellelem = document.createElement('a');
         cellelem.href = "#";
-        cellelem.addEventListener("click", function(evt){popupHistoryWindow(h);});
-        cellelem.innerText = h;
+        cellelem.addEventListener("click", function(evt){evt.preventDefault(); popupHistoryWindow(socnet, uname); });
+        cellelem.innerText = uname;
         if(rowmap.hidden == true)
         cellelem.style.fontStyle = "italic"
-
         curcell.appendChild(cellelem);
         
-        curcell = row.insertCell(1);
-        celltext = document.createTextNode(ualias);
-        colorItem(gRanksParams, curcell, rowmap.rankid);
-        curcell.appendChild(celltext);
-
+        curcell = row.insertCell(2)
+        celltext = document.createTextNode(ualias)
+        colorItem(gRanksParams, curcell, rowmap.rankid)
+        if(rowmap.description != undefined) {
+            curcell.title = rowmap.description
+            numdesc++;
+        }
+        curcell.appendChild(celltext)
         
-        curcell = row.insertCell(2);
+        curcell = row.insertCell(3);
         celltext = document.createTextNode(rowmap.numevents);
         curcell.appendChild(celltext);    
+        
+        usrn++
     }  
+    
+        let totaldescrs = document.getElementById("totaldescripts");
+        totaldescrs.innerText = numdesc
 }

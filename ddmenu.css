@@ -35,8 +35,7 @@
 
 .dropdownusr-content a:hover {
     background-color: #f1f1f1;
-   text-decoration: bold;
-    
+   text-decoration: bold;    
 }
 
 .dropdownusr:hover .dropdownusr-content {

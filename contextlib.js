@@ -52,7 +52,7 @@ var mothsnamesrod = ["января","февраля","марта","апреля"
  * 
  * Dialog can work in two modes - "ADD NEW EVENT" and "EDIT EXISTED EVENT". In the later mode button "add" is
  * renamed to "Save" and "Erase" button is added. */
-function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, evmain, type, repost, mode)
+function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, mode)
 {
   var resY;
   var eventbkgrnd = document.getElementById("histbackground"); 
@@ -72,11 +72,11 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
   var repostlbl = document.getElementById('repostlbl');
   repostlbl.style.display = "none";
   var evselector = document.getElementById('eventypeselector');
-  if(type == UserContextTypes.COMMENT)
+  if(type == 1) // Comment
   {
     evselector.value = "comment";
   }
-  else if(type == UserContextTypes.POSTAUTHOR)
+  else if(type == 2) // Post
   {
     repostlbl.style.display = "inline";
     evselector.value = "post";
@@ -141,7 +141,7 @@ function drawHistoryEventDlg(mouseevent, uname, ualias, evtime, url, evtitle, ev
     {
       let tcnt = titlefld.value;
       let mcnt = fldmain.value;
-      addHistoryEvent(uname, fldalias.textContent, evtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, ""); 
+      addHistoryEvent(socname, uname, fldalias.textContent, evtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, ""); 
       eventbkgrnd.style.display = "none"; 
       resolve("okbtn");
     };
@@ -253,10 +253,11 @@ function extractTime(torig)
   return commtime;
 }
 
-function addHistoryEvent(cname, alias, timestamp, url, title, descript, type, repost, commrecip)
+function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript, type, repost, commrecip)
 {
   var setarr = new Array();
   var userprms = {};
+  userprms['socnet'] = socname;
   userprms['username'] = cname;
   userprms['alias'] = alias;
   userprms['time'] = timestamp;
@@ -284,12 +285,14 @@ function removeHistoryEvent(url)
   var send = browser.runtime.sendMessage(setarr); 
 }
 
-function popupHistoryWindow(cnam)
+function popupHistoryWindow(socnet, user)
 {
   var histurl = browser.runtime.getURL("userhistory.html");
-  histurl += "?username=";
-  histurl += cnam;
-  var popup = window.open(histurl, "TEST POPUP", 'height=400,width=750');
+  histurl += "?socnet=";
+  histurl += socnet;
+  histurl += "&username=";
+  histurl += user;
+  var popup = window.open(histurl, "", "height=400,width=750");
   popup.focus();
 }
 
@@ -307,7 +310,6 @@ function colorItem(ranks, itm, rankid)
   {
     itm.style.backgroundColor = "white";
     itm.style.color = "black";
-    itm.title = "";  
   }
   else
   {
@@ -316,7 +318,8 @@ function colorItem(ranks, itm, rankid)
     {
       itm.style.backgroundColor = styl.bgcolor;
       itm.style.color = styl.fontcolor;
-      itm.title = styl.rank;  
+      if(itm.title === "")
+          itm.title = styl.rank;                // Если у пользователя есть индивидуальное описание, то будет вывешено оно, если нет - то описание его ранка
     }
   }
 }
@@ -365,4 +368,34 @@ function parceDateFromRuLocale(strdateru) {
     d.setFullYear(da[2], da[1], da[0]);
     
     return d
+}
+
+/*! Функия представляет собой оболочку для вызова запроса setstatus. Именно здесь жестко зашиты имена для переменных 
+ * все посторонние члены userparams игнорируются, если определенный параметр не задан, то считается что его значение должно
+ * остаться прежним, если в соответствующей записи в БД значение отсутствоовало - то оно заменяются на значение по умолчанию */
+function setUserStatus(socnet, user, userparams) {
+    if(!socnet || !user) return null;
+    let usrarr = new Array();
+    let mustuserparams = {rankid: "-1", description: "", hidden: false};
+    usrarr.push({user: user, socnet: socnet})
+    usrarr.push({request: "getstatus"})
+    let getst = browser.runtime.sendMessage(usrarr);
+    return getst.then(result => {
+        let usrkeys = Object.keys(mustuserparams)
+        for(let k in usrkeys) {
+            if(userparams[usrkeys[k]] != undefined)
+                mustuserparams[usrkeys[k]] = userparams[usrkeys[k]]     // если параметр был передан как обновляемый - то используется новое значение
+            else
+                mustuserparams[usrkeys[k]] = result[usrkeys[k]]         // если значение параметра не задано - используется считанное ранее из этой-же записи
+            }
+        mustuserparams['user'] = user
+        mustuserparams['socnet'] = socnet
+        usrarr.push(mustuserparams);
+        usrarr.push({request: "setstatus"});
+        return browser.runtime.sendMessage(usrarr);
+    }, error => {
+        console.log("Error executing getstatus command")
+    })
+    
+    return 0;// new Promise();
 }

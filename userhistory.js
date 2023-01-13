@@ -1,13 +1,17 @@
-var titlelem = document.getElementById("popuptitle");
-var searchstr = document.location.search;
-var uname = searchstr.split("=")[1];
-window.addEventListener("load", onCompletePageLoad, false);
-var closebtnelem = document.getElementById("closebtn");
-closebtnelem.addEventListener("click", function(evt)
-{ 
-  window.opener=null;
-  window.close(); 
-  return false;
+let titlelem = document.getElementById("popuptitle")
+let searchstr = document.location.search
+let params = searchstr.split("?")[1] 
+let usr_equity = params.split("&")[1] 
+let soc_equity = params.split("&")[0] 
+let uname = usr_equity.split("=")[1]
+let socname = soc_equity.split("=")[1]
+
+window.addEventListener("load", onCompletePageLoad, false)
+let closebtnelem = document.getElementById("closebtn")
+closebtnelem.addEventListener("click", function(evt) {
+    window.opener=null
+    window.close()
+    return false
 });
 var updatelbtnelem = document.getElementById("updatelbtn");
 updatelbtnelem.addEventListener("click", function(evt){ updateContent(); });
@@ -30,54 +34,50 @@ function onCompletePageLoad() {
 
 var gRankId;
 var arr = new Array();
-arr.push(uname);
+arr.push({user: uname, socnet: socname});
 arr.push({request: "getstatus"});
 var sentondescript = browser.runtime.sendMessage(arr);
-sentondescript.then(result => 
-    { 
-      var descr = result.description;
-      if(result.rankid == undefined)
-       gRankId = -1;
-      else
+sentondescript.then(result => { 
+    let descr = result.description;
+    if(result.rankid == undefined)
+        gRankId = -1;
+    else
         gRankId = result.rankid;
-      document.getElementById("useroverall").textContent = descr;
-      if(result.hidden == true)
-      {
-      document.getElementById("hidehim").checked = true;
-      }
-      updateContent(); 
-    }, error => {});
+            
+    document.getElementById("useroverall").textContent = descr;
+    if(result.hidden == true) {
+        document.getElementById("hidehim").checked = true;
+    }
+    updateContent();
+}, error => {});
 
 
-function updateContent()
-{
-  var bhistarr = new Array();
-  var userprms = {};
-  userprms['username'] = uname;
-  userprms['url'] = "";
-  bhistarr.push(userprms);  
-  bhistarr.push({request: "getuserhistory"});
-  
-  var sendhistorybrief = browser.runtime.sendMessage(bhistarr);   
-  sendhistorybrief.then(
-		result =>{ buildTable(result);
-		},	
-		error => { 
-		  console.log("History overview: " + error); 
-		 });
+function updateContent() {
+    let bhistarr = new Array()
+    let userprms = {}
+    userprms['username'] = uname
+    userprms['socnet'] = socname
+    userprms['url'] = ""
+    bhistarr.push(userprms)
+    bhistarr.push({request: "getuserhistory"})
+    let sendhistorybrief = browser.runtime.sendMessage(bhistarr)
+    sendhistorybrief.then( result => { 
+        buildTable(result);
+    }, error => { 
+        console.log("History overview: " + error); 
+    })
 }
 
 function buildTable(historymap)
 {
-    var htable = document.getElementById("historytabid");
-
-    var rowcount = htable.rows.length;
-    for (var i = rowcount - 1; i > 0; i--) {
+    let htable = document.getElementById("historytabid");
+    let rowcount = htable.rows.length;
+    for (let i = rowcount - 1; i > 0; i--) {
         htable.deleteRow(i);
     }
     
     let data = new Map(historymap);
-    var numcell;
+    let numcell;
     var curcell;
     var newtext;
     var newelem;
@@ -104,7 +104,6 @@ function buildTable(historymap)
     for(let h of histarray)
     {
         var rowmap = h;
-        var rowcount = htable.rows.length;
         var row = htable.insertRow(-1);
         var curtitle = rowmap.title;
 
@@ -129,7 +128,7 @@ function buildTable(historymap)
         let cdescr = rowmap.descript;
         let crepost = rowmap.repost;
         newelem.addEventListener("click", function(evt){
-            drawHistoryEventDlg(evt, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, true);
+            drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, true);
         });
         if(rowmap.title == "")
             newelem.innerText = "(без заголовка)";
@@ -140,25 +139,16 @@ function buildTable(historymap)
         curcell = row.insertCell(2);
         newelem = document.createElement('a');
         newelem.href = "#";
-        newelem.addEventListener("click", function(evt){parent.window.open(rowmap.url)});
+        newelem.addEventListener("click", function(evt){parent.window.open(curl)});
         newelem.innerText = evtype_name;
         curcell.appendChild(newelem);
         var lastalias = rowmap.alias;
     }
-    titlelem.innerText= lastalias + " (" + uname + ")";
+    titlelem.innerText= socname + ": " + lastalias + " (" + uname + ")"
 }
 
 function saveUserDescription()
 {
-    var descript = useroverall.value;
-    var nmarr = new Array();
-    var userprms = {};
-    userprms['username'] = uname;
-    userprms['userrank'] = gRankId;
-    userprms['description'] = descript;
-    userprms['hidden'] = document.getElementById("hidehim").checked;
-    nmarr.push(userprms);  
-    nmarr.push({request: "setstatus"});
-    var sendonrankchange = browser.runtime.sendMessage(nmarr);
+    setUserStatus(socname, uname, {user: uname, rankid: gRankId, description: useroverall.value, hidden: document.getElementById("hidehim").checked})
 }
 

@@ -10,57 +10,119 @@ const defaultranks = [
 {id: 7, rank: "Хороший собеседник",  descript: "Не значит, что он со мной согласен, значит что он умеет беседовать содержательно, без демагогии", bgcolor: "#29ff1b", fontcolor: "#000000", bold: false, italic: false },
 {id: 8, rank: "Читать",  descript: "", bgcolor: "#17760f", fontcolor: "#ffffff", bold: false, italic: false }
 ];
-
 var rankspossible = [];
 
-function onInstallInit(details) {
-  if(details.reason == "install")
-  {
-    var req = indexedDB.open("contest", 2);
-    var db;
-
-    req.onerror = function(event)
-    {
-      console.log("Opening DB error:" + event.error);
-    };
-    
-    req.onupgradeneeded = function(event)
-    {
-      console.log("Upgrading to version " + event.newVersion + " from version " + event.oldVersion);
-      var db = event.target.result;
-      if(event.oldVersion < 1)
-      {
-	db.createObjectStore("ranks", {keyPath: "id" });
-	db.createObjectStore("users", {keyPath: "user" });
-      }
-      if(event.oldVersion < 2)
-      {
-	db.createObjectStore("history", {keyPath: "url"});
-      }
-    };
-
-    req.onsuccess = function(event)
-    {
-      var dbn = this.result;
-      
-      var objstore = dbn.transaction("ranks", "readwrite").objectStore("ranks");
-      objstore.openCursor().onsuccess = function(event)
-      {
-	defaultranks.forEach(function(rank)
-	{
-	  var res = objstore.add(rank);
-	  res.onerror = function(ev)
-	  {
-	    console.log("error adding value " + rank.rank);
-	  }
-	})
-      }
-      dbn.close();
-    };
-  }
+if (!(crypto.randomUUID instanceof Function)) {
+    crypto.randomUUID = function uuidv4() {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    }
 }
 
-var Handlers = new Map();
+function onInstallInit(details) {
+    // details.reason can be "install" or "update", but unfortunately "install" does not mean that no database exists 
+    // so installation procedure ignores this parameter, every existed data should be keeped. No implicit data removal.
+    
+    const prevver = details.previousVersion // if prev. version less than current, opening DB cause onupgradeneeded to fire
+    let req = indexedDB.open("contest", 3);
+    req.onerror = function(event) {
+        console.log("onInstallInit. Opening DB error:" + event.error);
+    };
+    
+    req.onupgradeneeded = function(event) {
+        let db = event.target.result
+        let txn = event.target.transaction
+        //if(details.reason == "update") {
+            if(event.oldVersion < 1) {
+                db.createObjectStore("ranks", {keyPath: "id" })
+            }
+            if(event.oldVersion < 2) {
+                db.createObjectStore("history", {keyPath: "url" })
+            }
+            if(event.oldVersion < 3) {
+                db.createObjectStore("identitier", {keyPath: "collectionid"})
+                if(db.objectStoreNames.contains("users")) {
+                    let tempholder = []
+                    let usrstore = txn.objectStore("users")
+                    usrstore.openCursor().onsuccess = function(ev) {
+                        let cur = ev.target.result
+                        if(cur) {
+                            let oldusr = cur.value;
+                            oldusr['socnet'] = "contws"
+                            tempholder.push(oldusr)
+                            cur.continue()
+                        }
+                        else {
+                            db.deleteObjectStore("users")
+                            db.createObjectStore("users", {keyPath: ["socnet","user"] })
+                            let usrstorenew = txn.objectStore("users")
+                            usrstorenew.openCursor().onsuccess = function(ev) {
+                                tempholder.forEach( function(dat) {
+                                    let r = usrstorenew.add(dat)
+                                    r.onerror = function(ev) {
+                                        console.log("error adding value " + dat)
+                                    }
+                                })
+                            }
+                        }
+                    }
+                }
+                else
+                    db.createObjectStore("users", {keyPath: ["socnet","user"] })
+                    
+                if(db.objectStoreNames.contains("history")) {
+                    let histore = txn.objectStore("history")
+                    histore.openCursor().onsuccess = function(ev) {
+                        let cur = ev.target.result
+                        if(cur) {
+                            let oldhist = cur.value;
+                            oldhist['socnet'] = "contws"
+                            let updput = histore.put(oldhist)
+                            updput.onerror = function(event) {
+                                console.log("unable to put history event back to table, ", oldhist);
+                            }                            
+                            cur.continue()
+                        }
+                    }
+                }
+            }
+        //}
+    }
+    
+    req.onsuccess = function(event) {
+        let dbn = this.result;
+        if(details.reason == "install") { 
+            let rnkstore = dbn.transaction("ranks", "readwrite").objectStore("ranks");
+            rnkstore.openCursor().onsuccess = function(event) {
+                defaultranks.forEach(function(rank) {
+                    rnkstore.add(rank);
+                })
+            }
+        }
+        let identstore = dbn.transaction("identitier", "readwrite").objectStore("identitier")
+        identstore.openCursor().onsuccess = function(event) {
+            const coident = identstore.count()
+            coident.onsuccess = () => {
+                if(coident.result == 0) {
+                    let uuid = crypto.randomUUID();
+                    identstore.openCursor().onsuccess = function(ev) {
+                        let identres = identstore.add({collectionid: uuid});
+                        identres.onerror = function(ev) {
+                            console.log("error adding identitier " + ev.error);
+                        }
+                    }
+                }
+            }
+            coident.onerror = () => {
+                console.log("count objects error")
+            }
+        }
+        dbn.close();
+    }
+}
+
+var Handlers = new Map();               // Видимо, это была попытка заменить прямые вызовы функций вызовами элементов карты, идентифицируемых по ключевому слову. Но не реализованная.
 
 function ranks_handler(msg) {
     var tr = db.transaction("ranks");
@@ -86,16 +148,18 @@ function ranks_handler(msg) {
 
 Handlers.set("ranks", ranks_handler);
 
-
-
-
 function onContentMessage(msg, sender, handleResponse)
 {
     return new Promise(resolve => {
-    var reqs = msg.pop();
-    var req = indexedDB.open("contest", 2);
-    req.onsuccess = function(event)
-    {
+    let reqs = msg.pop();
+    if(reqs == undefined) {
+        let stsmap = new Map();
+        console.log("incoming map does not contain any command");
+        stsmap.set("$", "incoming map does not contain any command");
+        resolve([...stsmap]);
+    }
+    
+    indexedDB.open("contest", 3).onsuccess = function(event) {
         db = this.result;
         if(reqs.request == "ranks")
         {
@@ -122,18 +186,16 @@ function onContentMessage(msg, sender, handleResponse)
   
         if(reqs.request == "histatuses")
         {
-            var stsmap = new Map();
-            var tmpmap = new Map();
-            var rnkmap = new Map();
-            var hidmap = new Map();
-            var lstevents = new Array();
-            var evcounter = new Map();  //!< Карта соответствий имен пользователей и количества событий в их истории, составляется по анализу полного списка событий
+            let stsmap = new Map();
+            let umap = new Map();
+            let lstevents = new Array();
+            let evcounter = new Map();  //!< Карта соответствий имен пользователей и количества событий в их истории, составляется по анализу полного списка событий
             let numusrs = msg.length;
-            var usrscopy = [];
+            let usrscopy = [];
 
-            for(var i = 0; i < numusrs; i++)
+            for(let i = 0; i < numusrs; i++)
             {
-                var r = msg.pop();
+                let r = msg.pop();
                 usrscopy.push(r);
             }
 
@@ -143,20 +205,19 @@ function onContentMessage(msg, sender, handleResponse)
             var histcount = 0;
             oc.onsuccess = function(event)
             {
-                var cur = event.target.result;
+                let cur = event.target.result;
                 if(cur)
                 {
-                    var u = cur.value.username.toLowerCase();
-                    //console.log("histevent = " + cur.value.url);
+                    let u = cur.value.username.toLowerCase()
+                    let n = cur.value.socnet
+                    let x = n+"%"+u
                     lstevents.push(cur.value.url);
-                    var t = evcounter.get(u);
-                    if(t != undefined)
-                    {
-                        var count = t;
-                        evcounter.set(u, count+1);
+                    let t = evcounter.get(x);
+                    if(t != undefined) {
+                        evcounter.set(x, t+1);
                     }
                     else
-                        evcounter.set(u, 1);
+                        evcounter.set(x, 1);
                     cur.continue();
                 }
                 else
@@ -165,59 +226,65 @@ function onContentMessage(msg, sender, handleResponse)
                         stsmap.set("$", "0 history read");
                     }
                     
-                    var obju = tr.objectStore("users");
-                    var ocu = obju.openCursor();
+                    let obju = tr.objectStore("users");
+                    let ocu = obju.openCursor();
                     ocu.onsuccess = function(event)
                     {
-                        var cur = event.target.result;
+                        let cur = event.target.result;
                         if(cur)
                         {
-                            var hu = cur.value.user.toLowerCase();
-                            var hrnk = cur.value.rankid;
-                            rnkmap.set(hu, hrnk);
-                            if(cur.value.hidden == true) // ЗАЧЕМ ТУТ MAP? Ведь для едиснтвенного признака достаточно просто списка? Разве что если сюда пихать еще что-то в дополнение.. И то, можно сделать массив структур
-                            { hidmap.set(hu, true); }
+                            let hu = cur.value.user.toLowerCase()
+                            let hn = cur.value.socnet
+                            let hx = hn+"%"+hu
+                            let hrnk = cur.value.rankid
+                            let uopts = {}
+                            uopts['rankid'] = cur.value.rankid
+                            uopts['hidden'] = (cur.value.hidden ? true : false)
+                            uopts['description'] = cur.value.description
+                            umap.set(hx, uopts)
                             cur.continue();
                         }
                         else {
-                            var coopts = 0;
-                            var cornks = 0
-                            var coev = 0
-                            var cobadges = 0
-                            for(var co = 0; co < usrscopy.length; co++)
+                            let coopts = 0;
+                            let cornks = 0
+                            let coev = 0
+                            let cobadges = 0
+                            for(let co = 0; co < usrscopy.length; co++)
                             {
-                                var optstoadd = {};
-                                var curitm = usrscopy[co];
-                                var curusr = curitm.username.toLowerCase();
+                                let optstoadd = {};
+                                let curitm = usrscopy[co];
+                                let curusr = curitm.username.toLowerCase();
+                                let curnet = curitm.socnet
+                                let curx = curnet + "%" + curusr
                                 if(typeof curitm.url !== 'string') continue;  // Вообще-то стоит сделать явную проверку типов везде, а не только там где оно протекло
-                                var cururl = curitm.url;
-                                var cururlequiv = getEquivalentLink(cururl); // /full added or removed
-                                optstoadd['username'] = curusr;
+                                let cururl = curitm.url;
+                                let cururlequiv = getEquivalentLink(cururl); // /full added or removed
+                                optstoadd['username'] = curusr
+                                optstoadd['socnet'] = curnet
                                 optstoadd['isevent'] = lstevents.includes(cururl) || lstevents.includes(cururlequiv);
-                                var numev = evcounter.get(curusr);
+                                let numev = evcounter.get(curx);
                                 if(numev == undefined)
                                     numev = 0;
                                 optstoadd['numevents'] = numev;
-                                var r = rnkmap.get(curusr);
-                                if(r == undefined)
-                                    optstoadd['rankid'] = -1;
-                                else
-                                    optstoadd['rankid'] = r;
-
-                                if(hidmap.get(curusr) == undefined)
-                                    optstoadd['hidden'] = false;
-                                else
-                                    optstoadd['hidden'] = true;
-
+                                let r = umap.get(curx)
+                                if(r == undefined) {
+                                    optstoadd['rankid'] = -1
+                                    optstoadd['hidden'] = false
+                                    optstoadd['description'] = ""
+                                }
+                                else {
+                                    optstoadd['rankid'] = r.rankid
+                                    optstoadd['hidden'] = r.hidden
+                                    optstoadd['description'] = r.description
+                                }
                                 if(r != undefined || optstoadd['isevent'] != false || numev != 0)
                                 {
                                     stsmap.set(cururl, optstoadd);
                                     coopts++;
                                 }
-                            }
-                            
+                            }                            
                             if(coopts == 0) {
-                                var os = stsmap.get("$");
+                                let os = stsmap.get("$");
                                 if(os != undefined)
                                     stsmap.set("$", os + ", Added 0 opts");
                                 else
@@ -228,30 +295,34 @@ function onContentMessage(msg, sender, handleResponse)
                             resolve([...stsmap]);
                         }
                     }                   // users onsuccess
-                    ocu.onerror - function(err) {
-                        stsmap.set("$", "user ERROR: " + err);
+                    ocu.onerror = function(err) {
+                        stsmap.set("$", "openCursor users ERROR: " + err);
                         resolve([...stsmap]);                        
                     }
                 }                       // end else
             }
             oc.onerror = function(err) {
-                console.log("histatuses error"); 
+                //console.log("histatuses error"); 
+                stsmap.set("$", "openCursor history error: " + err);
+                resolve([...stsmap]);
             }
         }
         if(reqs.request == "setstatus") {
-            var reqprms = msg.pop();
-            var u = reqprms.username.toLowerCase();
-            db = this.result;
-            var objset = db.transaction("users", "readwrite").objectStore("users");
+            let reqprms = msg.pop();
+            let user = reqprms.user.toLowerCase();
+            let socnet = reqprms.socnet
+            let usrx = [socnet,user]
+            db = this.result
+            let objset = db.transaction("users", "readwrite").objectStore("users");
             objset.openCursor().onsuccess = function(event) 
             {   
-                if(reqprms.userrank == -1 && reqprms.description == "" && reqprms.hidden == null)
+                if(reqprms.rankid == -1 && reqprms.description == "" && reqprms.hidden == null)
                 {
-                    var reqdel;
-                    reqdel = objset.delete(u);
+                    let reqdel;
+                    reqdel = objset.delete(usrx);
                     reqdel.onsuccess = function(event)
                     {
-                        resolve(u);
+                        resolve({socnet, user});
                     }
                     reqdel.onerror = function(event)
                     {
@@ -260,54 +331,38 @@ function onContentMessage(msg, sender, handleResponse)
                 }
                 else
                 {
-                    var reqput;
-                    var data = {user: '', rankid:0, description: ''};
-                    data.user = u; // \todo А зачем они называются по-разному? Может, если поля в пришедшем массиве назвать так-же, то и грузить можно будет непосредственно reqprms?
-                    data.rankid = reqprms.userrank;
-                    data.description = reqprms.description;
-                    data.hidden = reqprms.hidden;
-                    reqput = objset.put(data);
+                    let reqput;
+                    reqput = objset.put(reqprms);
                     reqput.onsuccess = function(event)
                     {
-                        resolve(u);
+                        resolve({socnet, user});
                     }
                     reqput.onerror = function(event)
                     {
                         resolve("");
                     }
-                }	    
+                }
             }
         }
-        if(reqs.request == "getstatus")
-        {
-	var reqprms = msg.pop();
-	var u = reqprms.toLowerCase();
-	db = this.result;
-	var objset = db.transaction("users").objectStore("users");
-	var reqsta = objset.get(u);
-	reqsta.onsuccess = function(e)
-	{
-	  var d = reqsta.result;
-	  if(d == undefined)
-	    resolve("");
-	  else
-	  {
-	    var res = {};
-	    res['user'] = d.user;
-	    res['rankid'] = d.rankid;
-	    res['description'] = d.description;
-	    res['hidden'] = d.hidden;
-	    resolve(res);
-	  }
-	}
-	reqsta.onerror = function(event)
-	{
-	  resolve("");
-	}
-      }
-      if(reqs.request == "addrank")
-      {
-	var reqadd;
+        if(reqs.request == "getstatus") {
+            let reqprms = msg.pop()
+            let u = reqprms.user.toLowerCase()
+            let socnet = reqprms.socnet
+            
+            db = this.result;
+            let objset = db.transaction("users").objectStore("users");
+            let ux = [socnet,u]
+            let reqsta = objset.get(ux);
+            reqsta.onsuccess = function(e) {
+                let d = reqsta.result;
+                if(d == undefined)
+                    resolve("");
+                else 
+                    resolve(d);                
+            }
+    }
+    if(reqs.request == "addrank") {
+        var reqadd;
 	var addrnkprms = msg.pop();
 	var objset = db.transaction("ranks", "readwrite").objectStore("ranks");
 	var newrank = {id: 0, rank: '',  descript: '', bgcolor: '', fontcolor: '', bold: false, italic: false } 
@@ -387,99 +442,85 @@ function onContentMessage(msg, sender, handleResponse)
           resolve("");
         }
       }
-      if(reqs.request == "getuserhistory")
-      {
-        var histmap = new Map();
-	var reqprms = msg.pop();
-        db = this.result;
-	var objh = db.transaction("history").objectStore("history");
-	var oc = objh.openCursor();
-	oc.onsuccess = function(event) 
-	{
-	  var cur = event.target.result;
-	  if(cur)
-	  {
-	    var curusr = cur.value.username.toLowerCase();
-	    if(curusr === reqprms.username.toLowerCase())
-	    {
-	      var itmap = {};
-	      itmap['time'] = cur.value.time;
-	      itmap['title'] = cur.value.title;
-	      itmap['type'] = cur.value.type;
-	      itmap['alias'] = cur.value.alias;
-	      itmap['descript'] = cur.value.descript;
-	      itmap['repost'] = cur.value.repost;
-	      histmap.set(cur.value.url, itmap);
-	    }
-	    cur.continue();
-	  }
-	  else
-	  {
-	    resolve([...histmap]);
-	  }
-	}
-	oc.onerror = function(err)
-	{
-	  console.log("getuserhistory error"); 
-	}
+      if(reqs.request == "getuserhistory") {
+          var histmap = new Map();
+          var reqprms = msg.pop();
+          db = this.result;
+          var objh = db.transaction("history").objectStore("history");
+          var oc = objh.openCursor();
+          oc.onsuccess = function(event) {
+              var cur = event.target.result;
+              if(cur) {
+                  var curusr = cur.value.username.toLowerCase();
+                  if(curusr === reqprms.username.toLowerCase() && cur.value.socnet === reqprms.socnet) {
+                      var itmap = {};
+                      itmap['time'] = cur.value.time;
+                      itmap['title'] = cur.value.title;
+                      itmap['type'] = cur.value.type;
+                      itmap['alias'] = cur.value.alias;
+                      itmap['descript'] = cur.value.descript;
+                      itmap['repost'] = cur.value.repost;
+                      histmap.set(cur.value.url, itmap);
+                  }
+                  cur.continue();
+              }
+              else
+              {
+                resolve([...histmap]);
+              }
+            }
+            oc.onerror = function(err)
+            {
+              console.log("getuserhistory error"); 
+            }
       }
-
-      if(reqs.request == "gethistoryitem")
-      {
-        var url = msg.pop();
-        db = this.result;
-        var objh = db.transaction("history").objectStore("history");
-        var geth = objh.get(url);
-        geth.onsuccess = function(event)
-        {
-	  
-          var d = geth.result;
-          if(d === undefined)
-	  {
-	    console.log("gethistoryitem undefined before resolve");
-            resolve("");
-	  }
-          var itmap = new Map();
-          itmap.set("time", d.time);
-          itmap.set("title", d.title);
-          itmap.set("type", d.type);
-          itmap.set("alias", d.alias);
-          itmap.set("descript", d.descript);
-          itmap.set("repost", d.repost);
-	  resolve([...itmap]);
+      if(reqs.request == "gethistoryitem") {
+          var url = msg.pop();
+          db = this.result;
+          var objh = db.transaction("history").objectStore("history");
+          var geth = objh.get(url);
+          geth.onsuccess = function(event) {
+              var d = geth.result;
+              if(d === undefined) {
+                  console.log("gethistoryitem undefined before resolve");
+                  resolve("");
+              }
+            var itmap = new Map();
+            itmap.set("time", d.time);
+            itmap.set("title", d.title);
+            itmap.set("type", d.type);
+            itmap.set("alias", d.alias);
+            itmap.set("descript", d.descript);
+            itmap.set("repost", d.repost);
+            resolve([...itmap]);
+          }
+        geth.onerror = function(err) {
+            console.log("gethistoryitem error: " + err);
+            resolve("")
         }
-        geth.onerror = function(err)
-	{
-	  console.log("gethistoryitem error: " + err); 
-	  resolve("");
-	}
       }
-      if(reqs.request == "getbrieflist")
-      {
+      if(reqs.request == "getbrieflist") {
         db = this.result;
-        var umap = new Map();
-        var tr = db.transaction(["users", "history"]);
-        var objh = tr.objectStore("history");
-        var oc = objh.openCursor();
-        var lastmodf = undefined;
-        var lastalias;
-        var lastname;
-        var lasttitle;
-        var lasttype;
-        var lasturl;
-        var lasthidden;
-        var totalevents = 0;
+        let umap = new Map();
+        let tr = db.transaction(["users", "history"]);
+        let objh = tr.objectStore("history");
+        let oc = objh.openCursor();
+        let lastmodf = undefined;
+        let lastevent = {}
+        let totalevents = 0;
         
         oc.onsuccess = function(event) 
         {
-            var cur = event.target.result;
+            let cur = event.target.result
             if(cur)
             {
-                var uopts = {};
-                var newopts = {};
-                var curusr = cur.value.username.toLowerCase();
-                uopts = umap.get(curusr);
-                totalevents++;
+                let uopts = {}
+                let newopts = {}
+                let curusr = cur.value.username.toLowerCase()
+                let curnet = cur.value.socnet
+                let xusr = curnet + "%" + curusr
+                uopts = umap.get(xusr)
+                totalevents++
                 
                 if(uopts === undefined)
                     newopts['numevents'] = 1;
@@ -488,68 +529,56 @@ function onContentMessage(msg, sender, handleResponse)
                 
                 if(lastmodf === undefined) {
                     lastmodf = parceDateFromRuLocale(cur.value.time);
-                    lastalias = cur.value.alias;
-                    lastname = curusr;
-                    lasttitle = cur.value.title;
-                    lasttype = cur.value.type;
-                    lasturl = cur.value.url;
-                    lasthidden = cur.value.hidden;
+                    lastevent = cur.value
                 }
                 else {
                     tcur = parceDateFromRuLocale(cur.value.time);
                     if(tcur > lastmodf) {
                         lastmodf = tcur;
-                        lastalias = cur.value.alias;
-                        lastname = curusr;
-                        lasttitle = cur.value.title;
-                        lasttype = cur.value.type;
-                        lasturl = cur.value.url;
-                        lasthidden = cur.value.hidden;
+                        lastevent = cur.value
                     }
                 }
                 newopts['alias'] = cur.value.alias;
-                umap.set(curusr, newopts);
+                umap.set(xusr, newopts);
                 cur.continue();
             }
             else {
-                var obju = tr.objectStore("users");
-                var uc = obju.openCursor();
+                let obju = tr.objectStore("users");
+                let uc = obju.openCursor();
                 uc.onsuccess = function(ev) {
-                    var opts = {};
-                    var c = ev.target.result;
+                    let opts = {};
+                    let c = ev.target.result;
                     if(c) {
-                        var un = c.value.user.toLowerCase();
-                        var r = c.value.rankid;
-                        var o = umap.get(un); 
-                        var o2 = {};
+                        let un = c.value.user.toLowerCase()
+                        let net = c.value.socnet
+                        let d = c.value.description
+                        let r = c.value.rankid
+                        let x = net + "%" + un
+                        let o = umap.get(x)
+                        let o2 = {}
                         if(o != undefined) {
                             o['rankid'] = r;
                             if(c.value.hidden == true)
                                 o['hidden'] = true;
-                            umap.set(un, o);
+                            o['description'] = d;
+                            umap.set(x, o);
                         }
                         else {
                         o2['numevents'] = 0;
                         o2['alias'] = un;
                         o2['rankid'] = -1;
+                        o2['description'] = d;
                         if(c.value.hidden == true)
                             o2['hidden'] = true;
-                        umap.set(un, o2);
+                        umap.set(x, o2);
                         }
                         c.continue();
                     }
                     else
                     {
-                        var summ = {};
-                        summ['time'] = lastmodf;
-                        summ['alias'] = lastalias;
-                        summ['type'] = lasttype;
-                        summ['username'] = lastname;
-                        summ['title'] = lasttitle;
-                        summ['url'] = lasturl;
-                        summ['hidden'] = lasthidden;
-                        summ['totalevents'] = totalevents
-                        umap.set("$", summ); 
+                        lastevent['time'] = lastmodf;
+                        lastevent['totalevents'] = totalevents
+                        umap.set("$", lastevent); 
                         resolve([...umap]);
                     }
                 }    
@@ -560,7 +589,7 @@ function onContentMessage(msg, sender, handleResponse)
         }
     }
     }
-  });
+  })
 }
 
 browser.runtime.onInstalled.addListener(onInstallInit);

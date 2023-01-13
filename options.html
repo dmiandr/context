@@ -16,13 +16,14 @@
 </div>
 Параметры расширения CONText.<br>
 <br>
-<a href="#" id="expbtn" download="file.json"><button>Экспорт</button></a>&nbsp&nbsp&nbsp(<a href="#" id="expbackw">Экспорт для FireFox v60.0 и старше</a>)<br>
+<a href="#" id="expbtn" download="file.json"><button>Экспорт</button></a><br>
 <br>
 <br>Импорт:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт"><label><input type="checkbox" id="erasebeforeimport"/>Удалить данные перед импортом новых</label>
 <br>
 <hr>
 <br>
-Всего сохранено событий: <label id="totaleventsplace"></label><br>
+Всего сохранено событий: <label id="totaleventsplace"></label> от <label id="totaldiffuserssplace"></label> различных пользователей<br>
+<label id="totaldescripts"></label> обобщенных характеристик.
 <br>
 Последнее добавленное событие:<br>
 <table id="lastevent">
@@ -30,6 +31,7 @@
 <br>
 Перечень пользователей:<br>
 <table class="histable" id="overalltabid" width="50%">
+<th>N</th>
 <th>Имя</th>
 <th>Псевдоним</th>
 <th>Количество событий</th>
