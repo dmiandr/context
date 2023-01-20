@@ -7,6 +7,7 @@ var UserContextTypes = {
   TOOLBAR: 6			//!< \~russian Имя на нижней панели или в промо \~english Author's name on the toolbar
 };
 var mothsnamesrod = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+var gTagsStat = new Map();
 
 /*! \brief \~russian Отображение окна описания события с данными, переданными как аргументы функции 
  * \param mouseevent событие созданное нажатием мыши
@@ -52,16 +53,44 @@ var mothsnamesrod = ["января","февраля","марта","апреля"
  * 
  * Dialog can work in two modes - "ADD NEW EVENT" and "EDIT EXISTED EVENT". In the later mode button "add" is
  * renamed to "Save" and "Erase" button is added. */
-function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, mode)
+function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, tags, mode)
 {
-  var resY;
-  var eventbkgrnd = document.getElementById("histbackground"); 
+  let resY;
+  let eventbkgrnd = document.getElementById("histbackground"); 
   var dlg = document.getElementById('histdialog');
   var cancelbtn = document.getElementById('cancelbtn');
   var linkfld = document.getElementById('fldlink');
   var titlefld = document.getElementById('fldtitle');
   var okbtn = document.getElementById('okbtn');
-
+  let tagsfield = document.getElementById('fldtags')
+  let tagslistfdl = document.getElementById('tagslist') // Текущий список тегов помещается в поле tags данного элемента, и обновляется при каждой операции.
+  let newtagfld = document.getElementById('inputtag')
+  let datalistelem = document.getElementById('usedtags')
+  newtagfld.value = ""
+  if(tags != undefined) {
+      tagslistfdl['tags'] = tags
+  }
+  else
+      tagslistfdl['tags'] = ""
+      
+      
+    console.log("drawHistoryEventDlg")
+  
+    renderTags()
+    let tgsarr
+    if(tags == undefined)
+        tgsarr = []
+    else
+        tgsarr = tags.split("#").filter(o=>o)
+    datalistelem.replaceChildren()
+    for(const k of gTagsStat) {
+        if(tgsarr.indexOf(k[0]) == -1) {
+            let opt = document.createElement('option')
+            opt.value = k[0]
+            datalistelem.appendChild(opt)
+        }
+    }
+  
   eventbkgrnd.style.display = "block";
   dlg.style.setProperty('position', "fixed");
   dlg.style.setProperty('width', "700px");
@@ -112,6 +141,41 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
 
   dlg.style.setProperty('top', dlgY + 'px');
   dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');
+  
+    newtagfld.addEventListener('keypress', keypress_onevent)
+    
+    newtagfld.addEventListener('keydown', (e) => {
+        if(e.key == "#") {
+            e.preventDefault()
+        }
+    })
+    
+    function keypress_onevent(e) {
+        if(e.key == 'Enter') {
+            let tagsjoined = tagslistfdl.tags
+            let tgsarr = tagsjoined.split("#").filter(o=>o)
+            let tag = newtagfld.value
+            if(tag != '') {
+                if(tgsarr.indexOf(tag) != -1) {
+                    alert('Данный тег уже присутствует в списке')
+                }
+                else {
+                    tgsarr.push(tag)
+                    tagslistfdl.tags = tgsarr.join("#")
+                    let ntags = gTagsStat.get(tag);
+                    if(ntags == undefined) {
+                        ntags = 1
+                    }
+                    else {
+                        ntags++
+                    }
+                    gTagsStat.set(tag, ntags)
+                    renderTags()
+                    newtagfld.value = ''
+                }                    
+            }                
+        }        
+    }
 
   //режим редактирования
   if(mode)
@@ -141,7 +205,7 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
     {
       let tcnt = titlefld.value;
       let mcnt = fldmain.value;
-      addHistoryEvent(socname, uname, fldalias.textContent, evtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, ""); 
+      addHistoryEvent(socname, uname, fldalias.textContent, evtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, "", tagslistfdl.tags)
       eventbkgrnd.style.display = "none"; 
       resolve("okbtn");
     };
@@ -155,7 +219,34 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
       }
     }
   }); 
+  
+    function renderTags() {
+        let tgsjoined = tagslistfdl.tags
+        tagslistfdl.innerHTML = ''
+        let tgsarr = tgsjoined.split("#").filter(o=>o) // see https://stackoverflow.com/questions/5164883/the-confusion-about-the-split-function-of-javascript-with-an-empty-string
+        tgsarr.map((item, index) => {
+            let li = document.createElement('li')
+            let tagn = document.createElement('span')
+            tagn.innerText = item
+            let x = document.createElement('a')
+            x.innerText = "X"
+            x.addEventListener('click', function(e) {removeTag(index) })
+            li.appendChild(tagn)
+            li.appendChild(x)
+            tagslistfdl.appendChild(li)
+        })    
+    }
+
+    function removeTag(i) {
+        let tgsjoined = tagslistfdl.tags
+        let tgsarr = tgsjoined.split("#").filter(o=>o)
+        tgsarr = tgsarr.filter(item => tgsarr.indexOf(item) != i)
+        tagslistfdl.tags = tgsarr.join("#")
+        renderTags()
+    }
 }
+
+
 /*!
 Функция, выделяющая из переданной строки время в стандартном виде, как его возвращает локаль ru-RU. Если на вход передана строка, не содержащая штампа времени в понятном виде
 * возвращается текущий момент времени */
@@ -253,7 +344,7 @@ function extractTime(torig)
   return commtime;
 }
 
-function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript, type, repost, commrecip)
+function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript, type, repost, commrecip, tags)
 {
   var setarr = new Array();
   var userprms = {};
@@ -267,6 +358,7 @@ function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript,
   userprms['type'] = type;
   userprms['repost'] = repost;
   userprms['recipient'] = commrecip;
+  userprms['tags'] = tags;
   setarr.push(userprms);  
   setarr.push({request: "addhistoryevent"});
   

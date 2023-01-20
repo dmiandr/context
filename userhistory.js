@@ -127,8 +127,9 @@ function buildTable(historymap)
         let ctitle = rowmap.title;
         let cdescr = rowmap.descript;
         let crepost = rowmap.repost;
+        let tags = rowmap.tags;
         newelem.addEventListener("click", function(evt){
-            drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, true);
+            drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, tags, true);
         });
         if(rowmap.title == "")
             newelem.innerText = "(без заголовка)";

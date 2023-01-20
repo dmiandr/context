@@ -460,6 +460,7 @@ function onContentMessage(msg, sender, handleResponse)
                       itmap['alias'] = cur.value.alias;
                       itmap['descript'] = cur.value.descript;
                       itmap['repost'] = cur.value.repost;
+                      itmap['tags'] = cur.value.tags;
                       histmap.set(cur.value.url, itmap);
                   }
                   cur.continue();
@@ -492,6 +493,7 @@ function onContentMessage(msg, sender, handleResponse)
             itmap.set("alias", d.alias);
             itmap.set("descript", d.descript);
             itmap.set("repost", d.repost);
+            itmap.set("tags", d.tags);
             resolve([...itmap]);
           }
         geth.onerror = function(err) {
@@ -588,6 +590,48 @@ function onContentMessage(msg, sender, handleResponse)
             console.log("getbrieflist error"); 
         }
     }
+    
+        if(reqs.request == "gettags") {
+            let tagsmap = new Map();
+            db = this.result;
+            let tr = db.transaction("history")
+            let objh = tr.objectStore("history")
+            let oc = objh.openCursor();
+            oc.onsuccess = function(event) {
+                let cur = event.target.result;
+                if(cur) {
+                    let alltags = cur.value.tags;
+                    console.log("found user tags = ", alltags)
+                    if(alltags == undefined)
+                        cur.continue()
+                    else {
+                        
+                        let tagsarr = alltags.split("#").filter(o=>o)
+                        for(let co = 0; co < tagsarr.length; co++) {
+                            console.log("co = ", co)
+                            let numalr = tagsmap.get(tagsarr[co])
+                            if( numalr == undefined) 
+                                numalr = 1;
+                            else 
+                                numalr++
+                                
+                            tagsmap.set(tagsarr[co], numalr)
+                        }
+                        cur.continue();
+                    }
+                } 
+                else {
+                    console.log("resolving. size = ", tagsmap.size)
+                    resolve([...tagsmap]);                
+                }
+                
+                console.log("oc.onsuccess end")
+            }
+            oc.onerror = function(err) {
+                console.log("gettags error")
+                resolve("")
+            } 
+    }    
     }
   })
 }

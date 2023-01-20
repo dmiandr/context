@@ -2,6 +2,7 @@ var gExeptionsNames = ["leffet"]; // имена пользователей, ко
 var gUsersCache = new Map();  // карта используемых на данной странице имен пользователей с указанием их статусов. Ключ - имя пользователя, значение - идентификатор статуса
 var gRanksParams = new Map(); // локальная копия перечня возможных статусов и данных для их отображения (цвета и особенности шрифта) 
 var config = { attributes: false, childList: true, subtree: true } // Конфигурация MutationObserver
+//var gTagsStat = new Map();
 gCurrnetNet = null;
 
 let mutationCallback = function(mutlst, observer) {   
@@ -45,6 +46,18 @@ function handleRanksList(rankslist) {
         gRanksParams.set(rankslist[co].id, prm);
     }
     console.log("NUM RANKS: " + gRanksParams.size);
+    
+    let tagsarr = new Array()
+    tagsarr.push({request: "gettags"})
+    let sentontags = browser.runtime.sendMessage(tagsarr)
+    sentontags.then(
+        res => { 
+            gTagsStat.length = 0
+            for(let a of res) {
+                gTagsStat.set(a[0], a[1])
+            }
+        },
+        err => { console.log("Error getting tags list: ", err ) });
   
     window.addEventListener('load', onCompletePageLoad(), false);
 }
@@ -381,6 +394,8 @@ function handleActualUsersStatuses(itmsmap) {
     let tmpmap = new Map()
 
     var dbg = sts.get("$")
+    //if(dbg != undefined)
+    //    console.log("histatuses error message: ", dbg)
     sts.delete("$")
 
     for ( let azitm of ActiveZones.keys()) {
@@ -448,9 +463,16 @@ function onHistoryEvent(loaddb, socname, cname, mouseevent, commentitem, type, u
 function fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type) {
     let evtime = gCurrnetNet.GetTimestamp(commentitem, type);
     let ualias = commentitem.innerText;
+    let uopt = gUsersCache.get(socname+"%"+cname)
+    if(uopt != undefined) {
+        let bdg = uopt.numevents.toString()
+        if(uopt.numevents != 0 && ualias.endsWith(bdg)) {
+            ualias = ualias.slice(0, ualias.length - bdg.length)
+        }
+    }    
     let ev = gCurrnetNet.GetEventText(commentitem, type);
     let evurl =  gCurrnetNet.GetEventUrl(commentitem, type);
-    let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, ualias, evtime, evurl, ev.evtitle, ev.evtext, type, false, false);
+    let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, ualias, evtime, evurl, ev.evtitle, ev.evtext, type, false, "", false);
     return dlgres.then(result => {
         addEventMark(evurl, socname, cname);
         requestActualUsersStauses(); // этот вызов нужен затем, чтобы в EventListener пункта меню "добавить/изменить событие" обновилась переменная - а конкретнее, ее поле isevent. Можно оптимизировать, убрав добавление классов и записей из addEventMark
@@ -465,7 +487,7 @@ function fillHistoryDialogFromDb(url, mouseevent, socname, cname, type)
     let sendongeth = browser.runtime.sendMessage(nmarr);
     return sendongeth.then(result => {
         let r = new Map(result);
-        let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, r.get("alias"), r.get("time"), url, r.get("title"), r.get("descript"), type, r.get("repost"), true);
+        let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, r.get("alias"), r.get("time"), url, r.get("title"), r.get("descript"), type, r.get("repost"), r.get("tags"), true);
         dlgres.then( result => {
             if(result == "rmbtn") {
                 removeEventMark(url, socname, cname);
