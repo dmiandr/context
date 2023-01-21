@@ -491,3 +491,11 @@ function setUserStatus(socnet, user, userparams) {
     
     return 0;// new Promise();
 }
+
+function convToLower(str) {
+    if(str == null || str == undefined)
+        return str;
+    
+    return str.toLowerCase();
+    //return str
+}

@@ -418,7 +418,8 @@ function handleActualUsersStatuses(itmsmap) {
                 uprms['hidden'] = opt.hidden
                 gUsersCache.set(v.socnet+"%"+v.username, uprms)
             }
-            if(v.url == k & opt.isevent == true) {
+            
+            if(convToLower(v.url) == convToLower(k) & opt.isevent == true) {
                 v.isevent = true;
                 ActiveZones.set(azitm, v)
                 break;
@@ -428,9 +429,7 @@ function handleActualUsersStatuses(itmsmap) {
     
     for ( let azitm of ActiveZones.keys()) {
         v = ActiveZones.get(azitm);
-        
         //v.element.style['border-style'] = 'solid';
-        
         //if(v.eventype == 1 || v.eventype == 2)
             addElemsToActiveZone(v)
     }
@@ -534,7 +533,7 @@ function addEventMark(url, socname, uname)
             if(mencont != null)
                 m0.textContent = uname + " (" + uopt.numevents + ")";
         }
-        if(v.url == url)
+        if(convToLower(v.url) == convToLower(url))
         {
             if(v.isevent == false)
             {
@@ -587,7 +586,7 @@ function removeEventMark(url, socname, uname) {
                     m0.textContent = uname + " (" + uopt.numevents + ")";
             }
         }
-        if(v.url == url) {
+        if(convToLower(v.url) == convToLower(url)) {
             if(v.isevent == true) {
                 v.isevent = false;
                 v.captElement.classList.remove('history');

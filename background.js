@@ -211,7 +211,7 @@ function onContentMessage(msg, sender, handleResponse)
                     let u = cur.value.username.toLowerCase()
                     let n = cur.value.socnet
                     let x = n+"%"+u
-                    lstevents.push(cur.value.url);
+                    lstevents.push(convToLower(cur.value.url));
                     let t = evcounter.get(x);
                     if(t != undefined) {
                         evcounter.set(x, t+1);
@@ -261,7 +261,7 @@ function onContentMessage(msg, sender, handleResponse)
                                 let cururlequiv = getEquivalentLink(cururl); // /full added or removed
                                 optstoadd['username'] = curusr
                                 optstoadd['socnet'] = curnet
-                                optstoadd['isevent'] = lstevents.includes(cururl) || lstevents.includes(cururlequiv);
+                                optstoadd['isevent'] = lstevents.includes(cururl.toLowerCase()) || lstevents.includes(cururlequiv.toLowerCase());
                                 let numev = evcounter.get(curx);
                                 if(numev == undefined)
                                     numev = 0;
