@@ -123,6 +123,7 @@ function onInstallInit(details) {
 }
 
 var Handlers = new Map();               // Видимо, это была попытка заменить прямые вызовы функций вызовами элементов карты, идентифицируемых по ключевому слову. Но не реализованная.
+Handlers.set("ranks", ranks_handler);
 
 function ranks_handler(msg) {
     var tr = db.transaction("ranks");
@@ -146,12 +147,13 @@ function ranks_handler(msg) {
     }    
 }
 
-Handlers.set("ranks", ranks_handler);
+
 
 function onContentMessage(msg, sender, handleResponse)
 {
     return new Promise(resolve => {
     let reqs = msg.pop();
+    
     if(reqs == undefined) {
         let stsmap = new Map();
         console.log("incoming map does not contain any command");
@@ -534,6 +536,7 @@ function onContentMessage(msg, sender, handleResponse)
                     lastevent = cur.value
                 }
                 else {
+                    
                     tcur = parceDateFromRuLocale(cur.value.time);
                     if(tcur > lastmodf) {
                         lastmodf = tcur;
@@ -592,6 +595,13 @@ function onContentMessage(msg, sender, handleResponse)
     }
     
         if(reqs.request == "gettags") {
+            let reqprms = msg.pop()
+            let usr = "";
+            let soc = "";
+            if(reqprms != undefined) {
+                usr = reqprms.user.toLowerCase()
+                soc = reqprms.socnet
+            }
             let tagsmap = new Map();
             db = this.result;
             let tr = db.transaction("history")
@@ -601,37 +611,66 @@ function onContentMessage(msg, sender, handleResponse)
                 let cur = event.target.result;
                 if(cur) {
                     let alltags = cur.value.tags;
-                    console.log("found user tags = ", alltags)
                     if(alltags == undefined)
                         cur.continue()
                     else {
-                        
-                        let tagsarr = alltags.split("#").filter(o=>o)
-                        for(let co = 0; co < tagsarr.length; co++) {
-                            console.log("co = ", co)
-                            let numalr = tagsmap.get(tagsarr[co])
-                            if( numalr == undefined) 
-                                numalr = 1;
-                            else 
-                                numalr++
-                                
-                            tagsmap.set(tagsarr[co], numalr)
+                        if(reqprms != undefined && (cur.value.username != usr || cur.value.socnet != soc)) { // если задано имя, то оно должно совпадать
+                                cur.continue();
                         }
-                        cur.continue();
+                        else {
+                            let tagsarr = alltags.split("#").filter(o=>o)
+                            for(let co = 0; co < tagsarr.length; co++) {
+                                let numalr = tagsmap.get(tagsarr[co])
+                                if( numalr == undefined) 
+                                    numalr = 1;
+                                else 
+                                    numalr++
+                                    
+                                tagsmap.set(tagsarr[co], numalr)
+                            }
+                            cur.continue();
+                        }
                     }
-                } 
-                else {
-                    console.log("resolving. size = ", tagsmap.size)
-                    resolve([...tagsmap]);                
                 }
-                
-                console.log("oc.onsuccess end")
+                else {
+                    resolve([...tagsmap]);
+                }
             }
             oc.onerror = function(err) {
                 console.log("gettags error")
                 resolve("")
-            } 
-    }    
+            }
+        }
+        if(reqs.request == "historybytags") {
+            let reqtags = msg.pop();
+            let evlist = []
+            let umap = new Map()
+            let reqtagslst = reqtags.split(/#/)
+            db = this.result;
+            let objh = db.transaction("history").objectStore("history");
+            let oc = objh.openCursor();
+            oc.onsuccess = function(event) {
+                let cur = event.target.result
+                if(cur) {
+                    let curusr = cur.value.tags
+                    if(curusr)
+                    {
+                        let curtagslst = curusr.split(/#/)
+                        for(let cot = 0; cot < reqtagslst.length; cot++) {
+                            let ctag = reqtagslst[cot]
+                            if(curtagslst.includes(ctag)) {
+                                evlist.push(cur.value)
+                                break;
+                            }
+                        }
+                    }
+                    cur.continue();
+                }
+                else {
+                    resolve(evlist)
+                }
+            }
+        }
     }
   })
 }

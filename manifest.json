@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "CONT.ws user management extension",
+  "name": "User management extension for CONT.ws",
   "short_name": "CONText",
-  "version": "0.2.4",
-  "description": "Расширение для ведения истории и присвоения статусов пользователям платформы cont.ws.",
+  "version": "0.3",
+  "description": "Расширение для ведения истории и присвоения статусов пользователям социальной сети cont.ws.",
 
   "developer": {
         "name": "dmitrevo",
@@ -29,7 +29,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.cont.ws/*"],
-      "css": ["ddmenu.css"],
+      "css": ["ddmenu.css", "tabs.css"],
       "js": ["browser-polyfill.js", "mutation.js", "contextlib.js", "initfirst.js", "contws.js", "content.js"]
     }
   ],

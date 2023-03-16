@@ -5,6 +5,7 @@ let usr_equity = params.split("&")[1]
 let soc_equity = params.split("&")[0] 
 let uname = usr_equity.split("=")[1]
 let socname = soc_equity.split("=")[1]
+let tagsul = document.querySelector(".tags")
 
 window.addEventListener("load", onCompletePageLoad, false)
 let closebtnelem = document.getElementById("closebtn")
@@ -51,6 +52,7 @@ sentondescript.then(result => {
     updateContent();
 }, error => {});
 
+buildCloud(tagsul, socname + "#" + uname)
 
 function updateContent() {
     let bhistarr = new Array()
@@ -108,9 +110,9 @@ function buildTable(historymap)
         var curtitle = rowmap.title;
 
         evtype = rowmap.type;
-        if(evtype == 1 || evtype == 2)
+        if(evtype == 1)
             evtype_name = "Комментарий";
-        if(evtype == 4)
+        if(evtype == 4 || evtype == 2)
             evtype_name = "Запись";
 
         curcell = row.insertCell(0);
@@ -128,7 +130,8 @@ function buildTable(historymap)
         let cdescr = rowmap.descript;
         let crepost = rowmap.repost;
         let tags = rowmap.tags;
-        newelem.addEventListener("click", function(evt){
+        newelem.addEventListener("click", function(evt){ 
+            evt.preventDefault(); 
             drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, tags, true);
         });
         if(rowmap.title == "")
@@ -140,12 +143,12 @@ function buildTable(historymap)
         curcell = row.insertCell(2);
         newelem = document.createElement('a');
         newelem.href = "#";
-        newelem.addEventListener("click", function(evt){parent.window.open(curl)});
+        newelem.addEventListener("click", function(evt){evt.preventDefault(); parent.window.open(curl)});
         newelem.innerText = evtype_name;
         curcell.appendChild(newelem);
         var lastalias = rowmap.alias;
     }
-    titlelem.innerText= socname + ": " + lastalias + " (" + uname + ")"
+    titlelem.innerText= KnownSNets.get(socname).Title + ": " + lastalias + " (" + uname + ")"
 }
 
 function saveUserDescription()

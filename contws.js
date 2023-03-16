@@ -8,7 +8,7 @@ for (d of contwsurls) {
     }
 }
 
-let contobj = {Mark: 0, IsPub: IsContPub, ListActiveZones: ListContActiveZones, GetTimestamp: GetContTimestamp, GetEventText: GetContEventText, GetEventUrl: GetContEventUrl};
+let contobj = {Mark: 0, IsPub: IsContPub, Title: "КОНТ", ListActiveZones: ListContActiveZones, GetTimestamp: GetContTimestamp, GetEventText: GetContEventText, GetEventUrl: GetContEventUrl};
 if (IsCont == 1)
     contobj.Mark = 1
 
@@ -64,6 +64,10 @@ function ListContActiveZones(zmap, ishome) {
             actzone['captElement'] = getContFeedElement(itm)
             actzone['url'] = getContFeedURL(actzone['captElement'])
             actzone['eventype'] = 2
+            /*let prntblock = getParentElementBelobgsToClass(itm, "new_author_bar")
+            console.log("prntblock = ", prntblock);
+            if(prntblock != null)
+                actzone['totalblock'] = prntblock.parentElement*/ // почему-то при каждой перемотке публикация возвращается в ленту, в результате она то появляется, то исчезает, х.з. как это исправить, пока отключу.
         }
         else if(itm.classList.contains("post_jr")) {                        // FEED
             actzone['captElement'] = getContFeedElement(itm)
@@ -120,7 +124,16 @@ function ListContActiveZones(zmap, ishome) {
             actzone['isModifiable'] = true
             actzone['eventype'] = 1
             actzone['url'] = getCommentURL(itm)
-            //actzone['totalblock'] = getParentItemWithAttribute(item, "comment-author-login")
+            let prntblock = getParentItemWithAttribute(itm, "comment-author-login")
+            actzone['totalblock'] = null;
+            if(prntblock != null) {
+                for(const ch of prntblock.children) {
+                    if(ch.tagName.toLowerCase() == "div" && ch.className == "media") {
+                        actzone['totalblock'] = ch;
+                        break;
+                    }
+                }                
+            }
         }
         zmap.set(itm, actzone)
     }

@@ -73,7 +73,6 @@ function getTotalEventsNumber(sizedb) {
         let req = indexedDB.open("contest", 3)
         let totnum = 0
         req.onsuccess = function(event) {
-            console.log("COUNTIND DB SIZE")
             let dbn = this.result
             let tr = dbn.transaction(["users", "history"])
             let objh = tr.objectStore("history")
@@ -82,15 +81,12 @@ function getTotalEventsNumber(sizedb) {
                 let cohist = objh.count()
                 cohist.onsuccess = () => {
                     totnum += cohist.result
-                    console.log("DB SIZE = ", sizedb)
-                    
                     let obju = tr.objectStore("users")
                     let ocu = obju.openCursor()
                     ocu.onsuccess = function(event) {
                         let cou = obju.count()
                         cou.onsuccess = () => {
                             totnum += cou.result
-                            console.log("DB SIZE 2 = ", sizedb)
                             sizedb.push(totnum)
                             resolve();
                         }
@@ -188,10 +184,8 @@ function importParcedData(datparced)
                         let usrkeys = Object.keys(sing)
                         let usrarr = new Array();
                         let userprms = {};
-                        for(let k in usrkeys) {
+                        for(let k in usrkeys)
                             userprms[usrkeys[k]] = sing[usrkeys[k]];
-                            console.log("KEY = " + usrkeys[k] + ", Val= " + sing[usrkeys[k]]);
-                        }
                         if(fileversion == 2)
                             userprms['socnet'] = "contws"   // добавление идентификатора сети к данным предыдущей версии
                     usrarr.push(userprms);
@@ -232,7 +226,7 @@ function importParcedData(datparced)
             window.onclick = function(event) {  if (event.target == eventbkgrnd) {    eventbkgrnd.style.display = "none";  }} 
     
             },
-        error  => {alert("Размер сцществующей базы определить не удалось, ошибка загрузки")},
+        error  => {alert("Размер существующей базы определить не удалось, ошибка загрузки")},
     )
 }
 

@@ -53,28 +53,37 @@ var gTagsStat = new Map();
  * 
  * Dialog can work in two modes - "ADD NEW EVENT" and "EDIT EXISTED EVENT". In the later mode button "add" is
  * renamed to "Save" and "Erase" button is added. */
-function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, tags, mode)
-{
-  let resY;
-  let eventbkgrnd = document.getElementById("histbackground"); 
-  var dlg = document.getElementById('histdialog');
-  var cancelbtn = document.getElementById('cancelbtn');
-  var linkfld = document.getElementById('fldlink');
-  var titlefld = document.getElementById('fldtitle');
-  var okbtn = document.getElementById('okbtn');
-  let tagsfield = document.getElementById('fldtags')
-  let tagslistfdl = document.getElementById('tagslist') // Текущий список тегов помещается в поле tags данного элемента, и обновляется при каждой операции.
-  let newtagfld = document.getElementById('inputtag')
-  let datalistelem = document.getElementById('usedtags')
-  newtagfld.value = ""
-  if(tags != undefined) {
-      tagslistfdl['tags'] = tags
-  }
-  else
-      tagslistfdl['tags'] = ""
-      
-      
-    console.log("drawHistoryEventDlg")
+function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, tags, mode) {
+    let resY;
+    let eventbkgrnd = document.getElementById("histbackground"); 
+    var dlg = document.getElementById('histdialog');
+    var cancelbtn = document.getElementById('cancelbtn');
+    var linkfld = document.getElementById('fldlink');
+    var titlefld = document.getElementById('fldtitle');
+    var okbtn = document.getElementById('okbtn');
+    let tagsfield = document.getElementById('fldtags')
+    let tagslistfdl = document.getElementById('tagslist') // Текущий список тегов помещается в поле tags данного элемента, и обновляется при каждой операции.
+    let newtagfld = document.getElementById('inputtag')
+    let datalistelem = document.getElementById('usedtags')
+    newtagfld.value = ""
+    if(tags != undefined) {
+        tagslistfdl['tags'] = tags
+    }
+    else
+        tagslistfdl['tags'] = ""
+        
+    getTagsList().then(result => {
+        let tgsmap = new Map(result);
+        for(const k of tgsmap) {
+            if(tgsarr.indexOf(k[0]) == -1) {
+                let opt = document.createElement('option')
+                opt.value = k[0]
+                datalistelem.appendChild(opt)
+            }
+        }
+        newtagfld.setAttribute("placeholder", "Введите тег  (" + tgsmap.size + ")")
+    }, 
+    error => {})
   
     renderTags()
     let tgsarr
@@ -83,13 +92,6 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
     else
         tgsarr = tags.split("#").filter(o=>o)
     datalistelem.replaceChildren()
-    for(const k of gTagsStat) {
-        if(tgsarr.indexOf(k[0]) == -1) {
-            let opt = document.createElement('option')
-            opt.value = k[0]
-            datalistelem.appendChild(opt)
-        }
-    }
   
   eventbkgrnd.style.display = "block";
   dlg.style.setProperty('position', "fixed");
@@ -244,6 +246,25 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
         tagslistfdl.tags = tgsarr.join("#")
         renderTags()
     }
+}
+
+
+function getTagsList() {
+    return new Promise(function(resolve, reject) {
+        let tgsmap = new Map();
+        let tagsarr = new Array()
+        tagsarr.push({request: "gettags"})
+        let sentontags = browser.runtime.sendMessage(tagsarr)
+        sentontags.then(
+            res => { 
+                //gTagsStat.length = 0
+                for(let a of res) {
+                    tgsmap.set(a[0], a[1])
+                }
+                resolve([...tgsmap])
+            },
+            err => { console.log("Error getting tags list: ", err ) });
+    })
 }
 
 
@@ -446,10 +467,14 @@ function injectHistoryDialog(res) {
 }
 
 function parceDateFromRuLocale(strdateru) {
-    var d = new Date;
+    var d;
     var dta = strdateru.split(",");
-    if(dta.length != 2)
+    if(dta.length != 2) {
+        d = new Date(strdateru) // Почему-то для инициализированной даты setHours не устанавливает время
         return d
+    }
+    else
+        d = new Date
     var ta = dta[1].split(":");
     if(ta.length != 3)
         return d
@@ -457,12 +482,12 @@ function parceDateFromRuLocale(strdateru) {
     if(da.length != 3)
         return d
     d.setHours(ta[0], ta[1], ta[2]);
-    d.setFullYear(da[2], da[1], da[0]);
+    d.setFullYear(da[2], da[1]-1, da[0]);
     
     return d
 }
 
-/*! Функия представляет собой оболочку для вызова запроса setstatus. Именно здесь жестко зашиты имена для переменных 
+/*! Функция представляет собой оболочку для вызова запроса setstatus. Именно здесь жестко зашиты имена для переменных 
  * все посторонние члены userparams игнорируются, если определенный параметр не задан, то считается что его значение должно
  * остаться прежним, если в соответствующей записи в БД значение отсутствоовало - то оно заменяются на значение по умолчанию */
 function setUserStatus(socnet, user, userparams) {
@@ -487,9 +512,8 @@ function setUserStatus(socnet, user, userparams) {
         return browser.runtime.sendMessage(usrarr);
     }, error => {
         console.log("Error executing getstatus command")
-    })
-    
-    return 0;// new Promise();
+    })    
+    return 0;
 }
 
 function convToLower(str) {
@@ -497,5 +521,85 @@ function convToLower(str) {
         return str;
     
     return str.toLowerCase();
-    //return str
+}
+/*! \brief \~russian Функция построения облака тегов в виде ненумерованного списка (ul) с варьируемым размером шрифта. Может использоваться как фильтр событий по заданным тегам
+ * \param tagsul элемент ul в котором строится облако тегов
+ * \param socusername имя пользователя и имя сети, разделенные символом #. Если в качестве значения передается только символ # то строится облако для всех пользователй и каждый тег сопровождается чекбоксом для
+ * возможности фильтрации. Если задается имя конкретного пользователя, то отображатся только текстовые строки. */
+/*! \brief \~english Building tags cloud as unnumerated list (ul) with variable font size. Can be used as filter on tags.
+ * \param tagsul ul element to hold tags cloud
+ * \param socusername social network name and user name, divided with # symbol. if only # symbol is given, cloud is crerated for all users with checkbox near each tag, owtherwise 
+ * only text labels are shown */
+function buildCloud(tagsul, socusername) {
+    return new Promise(function(resolve, reject) {
+        let minfontsz = 10;
+        let maxfontsz = 20;
+        tagsul.innerHTML = '';
+        
+        let fragment = document.createDocumentFragment();
+        let tagsarr = new Array()
+        let idnum = 0
+        if(socusername != "#")
+            tagsarr.push({socnet: socusername.split("#")[0], user: socusername.split("#")[1]})
+        tagsarr.push({request: "gettags"})
+        let sentontags = browser.runtime.sendMessage(tagsarr)
+        sentontags.then(
+            res => { 
+                let tgsidmap = new Map()
+                let tgsmap = new Map(res);
+                if(tgsmap.size != 0) {
+                    tgsmap = new Map([...tgsmap.entries()].sort((a, b) => b[1] - a[1]));
+                    let r = tgsmap.entries().next()
+                    let nmax = r.value[1]
+                    let nmin = nmax
+                    for(let a of tgsmap) {
+                        nmin = a[1]                    
+                    }
+                    let al = 0
+                    if(nmax != nmin)
+                        al = (maxfontsz - minfontsz)/(nmax - nmin);
+                    let base = ((maxfontsz + minfontsz) - al*(nmin + nmax))/2;
+                    
+                    for(let a of tgsmap) {
+                        tagtext = document.createTextNode(a[0]);
+                        tagmult = document.createTextNode(a[1]);
+                        let curfontsz = al * a[1] + base;
+                        let curid = "id" + idnum
+                        tgsidmap.set(curid, tagtext.data)
+                        let curli = document.createElement("li");
+                        if(socusername == "#") {
+                            let chbox = document.createElement("input");
+                            chbox.setAttribute("id", curid);
+                            chbox.type = "checkbox"
+                            chbox.addEventListener('change', (event) => {
+                                let res = tgsidmap.get(chbox.id)
+                                if (event.currentTarget.checked) {
+                                    curtagslst.push(res)
+                                    onSelectedTagsChanged(curtagslst)
+                                } else {
+                                    let pos = curtagslst.indexOf(res)
+                                    if(pos != -1) {
+                                        curtagslst.splice(pos, 1)
+                                    }
+                                    onSelectedTagsChanged(curtagslst)
+                                }   
+                            })
+                            curli.appendChild(chbox)
+                        }
+                        
+                        let curlbl = document.createElement("label")
+                        curlbl.setAttribute("for", curid)
+                        curlbl.innerText = tagtext.data + "(" + tagmult.data + ")"
+                        curlbl.style.fontSize = curfontsz + "px";
+                        curli.classList.add("tag");
+                        curli.appendChild(curlbl)
+                        fragment.appendChild(curli)
+                        idnum++
+                    }
+                    tagsul.appendChild(fragment)
+                }
+                resolve(idnum)
+            },
+        err => { console.log("Error getting tags list: ", err ) });
+    });
 }

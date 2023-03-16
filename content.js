@@ -245,6 +245,22 @@ function isParentElementBelobgsToClass(item, classname) {
     }
 }
 
+function getParentElementBelobgsToClass(item, classname) {
+    let p = item.parentElement;
+    if(p == null)
+        return null;
+    if('classList' in p) {
+        if(p.classList.contains(classname))
+            return p;
+        else {
+            return isParentElementBelobgsToClass(p, classname);
+        }
+    }
+    else {
+        return isParentElementBelobgsToClass(p, classname);
+    }    
+}
+
 /*!
 Функция, выделяющая из переданной строки время в стандартном виде, как его возвращает локаль ru-RU. Если на вход передана строка, не содержащая штампа времени в понятном виде
 * возвращается текущий момент времени. Пока функция заточена под строку времени из КОНТа, но надо будет сделать ее более универсальной */
