@@ -6,7 +6,6 @@ var config = { attributes: false, childList: true, subtree: true } // Конфи
 gCurrnetNet = null;
 
 let mutationCallback = function(mutlst, observer) {   
-
     requestActualUsersStauses();
 }
 
@@ -253,97 +252,24 @@ function getParentElementBelobgsToClass(item, classname) {
         if(p.classList.contains(classname))
             return p;
         else {
-            return isParentElementBelobgsToClass(p, classname);
+            return getParentElementBelobgsToClass(p, classname);
         }
     }
     else {
-        return isParentElementBelobgsToClass(p, classname);
+        return getParentElementBelobgsToClass(p, classname);
     }    
 }
 
-/*!
-Функция, выделяющая из переданной строки время в стандартном виде, как его возвращает локаль ru-RU. Если на вход передана строка, не содержащая штампа времени в понятном виде
-* возвращается текущий момент времени. Пока функция заточена под строку времени из КОНТа, но надо будет сделать ее более универсальной */
-
-function extractTime(torig)
-{
-    let commtime;
-    commtime = torig;
-    if(torig.length == 0)
-        commtime = new Date().toLocaleString('ru-RU');
-    else {
-        var timepart;
-        var hours; 
-        var minutes;
-        var datepart;
-        var tadapted = torig;
-        var tta = tadapted.toLowerCase();
-        var postoday = tadapted.toLowerCase().indexOf("сегодня");
-        if(postoday == -1)
-            postoday = tadapted.toLowerCase().indexOf("cегодня");
-        //Blyad! Ну вот почему в комментариях буква "с" в слове "сегодня" - латинская???!!!
-        var posyesterday = tadapted.toLowerCase().indexOf("вчера");
-        if(postoday !== -1 || posyesterday !== -1) {
-            let tnow = new Date();
-            timepart = tadapted.substring(tadapted.length - 5, tadapted.length);
-            if(/^\d{2}:\d{2}$/.test(timepart)) {
-                if(postoday !== -1) {
-                    hours = timepart.split(':')[0];
-                    minutes = timepart.split(':')[1];
-                    tnow.setHours(hours.trim());
-                    tnow.setMinutes(minutes.trim());
-                    tnow.setSeconds(0);
-                    commtime = tnow.toLocaleString('ru-RU');
-                }
-                if(posyesterday !== -1) {
-                    yesterday = new Date(tnow.setDate(tnow.getDate() - 1))
-                    hours = timepart.split(':')[0];
-                    minutes = timepart.split(':')[1];
-                    yesterday.setHours(hours.trim());
-                    yesterday.setMinutes(minutes.trim());
-                    yesterday.setSeconds(0);commtime = yesterday.toLocaleString('ru-RU');
-                }
-            }
-            else
-                commtime = new Date().toLocaleString('ru-RU');
-        }
-        else { 
-            let tm = new Date();
-            var month;
-            var date;
-            var time;
-            var dset = false;
-            for(mn = 0; mn < mothsnamesrod.length; mn++) {
-                if(torig.indexOf(mothsnamesrod[mn]) != -1) {
-                    month = mn;	// why months are counted from 0??
-                    date = torig.split(mothsnamesrod[mn])[0];
-                    time = torig.split(mothsnamesrod[mn])[1];
-                    dset = true;
-                    break;
-                }
-            }
-            if(/\d{4}/.test(torig)) {
-                var year = torig.match(/\d{4}/)[0];
-                tm.setYear(year);
-                time = torig.split(/\d{4}/)[1];
-                var ypos = time.indexOf("г.");
-                time = time.substring(ypos+2, time.length);
-            }
-            if(dset == true) {
-                tm.setMonth(month);
-                tm.setDate(date.trim());
-                hours = time.split(':')[0];
-                minutes = time.split(':')[1];
-                tm.setHours(hours.trim());
-                tm.setMinutes(minutes.trim());
-                tm.setSeconds(0);
-                commtime = tm.toLocaleString('ru-RU');
-            }
-            else
-                commtime = new Date().toLocaleString('ru-RU');
+/*! Просматриваются только непосредственно подчиненные элементы 
+ * 
+*/
+function getChildElementBelongsToClass(item, classname) {
+    for(const c of item.children) {
+        if(c.classList.contains(classname)) {
+            return c
         }
     }
-    return commtime;
+    return null;
 }
 
 function injectHistoryDialog(dlgcode) {

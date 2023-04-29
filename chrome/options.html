@@ -1,0 +1,75 @@
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Параметры расшрения CONText v0.31</title>
+<script defer="" type="text/javascript" src="FileSaver.js"></script>
+<script defer="" type="text/javascript" src="expimp.js"></script>
+<link rel="stylesheet" type="text/css" href="ddmenu.css">
+<link rel="stylesheet" type="text/css" href="tabs.css">
+
+</head>
+<body>
+<div id="dataimported" class="darkbackground">
+  <div class="eventwindow">
+    <span class="close">&times;</span>
+    <p id="eventmessage"></p>
+  </div>
+</div>
+<div class="pc-tab">
+<input checked="checked" id="tab1" type="radio" name="pct" />
+<input id="tab2" type="radio" name="pct" />
+  <nav>
+    <ul>
+      <li class="tab1">
+        <label for="tab1">Общие</label>
+      </li>
+      <li class="tab2">
+        <label for="tab2">Теги</label>
+      </li>
+    </ul>
+  </nav>
+<section>
+<div class="tab1">
+<a href="#" id="expbtn" download="file.json"><button>Экспорт</button></a><br>
+<br>
+<br>Импорт:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт"><label><input type="checkbox" id="erasebeforeimport"/>Удалить данные перед импортом новых</label>
+<br>
+<hr>
+<br>
+Всего сохранено событий: <label id="totaleventsplace"></label> от <label id="totaldiffuserssplace"></label> различных пользователей<br>
+<label id="totaldescripts"></label> обобщенных характеристик.
+<br>
+Последнее добавленное событие:<br>
+<table class="histable" id="lastevent">
+</table>
+<br>
+<br>
+Перечень пользователей:<br>
+<table class="histable" id="overalltabid" width="50%">
+<th>N</th>
+<th>Имя</th>
+<th>Псевдоним</th>
+<th>Количество событий</th>
+</table>
+</div>
+<div class="tab2" id="tab2section">
+<ul class="tags">
+</ul>
+<table class="histable" id="taggedevents">
+<thead>
+<tr>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+</table>
+</div>
+
+</section>
+</div>
+<script defer="" type="text/javascript" src="initfirst.js"></script>
+<script defer="" type="text/javascript" src="contws.js"></script>
+<script defer="" type="text/javascript" src="contextlib.js"></script>
+<script defer="" type="text/javascript" src="datasummary.js"></script>
+</body>
+</html>

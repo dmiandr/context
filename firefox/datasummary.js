@@ -5,46 +5,39 @@ var gRanksParams = new Map();
 window.addEventListener("load", onCompletePageLoad, false);
 
 function onCompletePageLoad() {
-  if(document.readyState === "complete")
-  {
-    var nmarr = new Array();
-    nmarr.push({request: "injecthistorydialog"});
-  var sendhtmlinject = browser.runtime.sendMessage(nmarr);
-  sendhtmlinject.then(result => { injectHistoryDialog(result); }, error => {});
-  }
+    if(document.readyState === "complete") {
+        let nmarr = new Array();
+        nmarr.push({request: "injecthistorydialog"});
+        let sendhtmlinject = browser.runtime.sendMessage(nmarr);
+        sendhtmlinject.then(result => { injectHistoryDialog(result); }, error => {});
+    }
 }
 
 cacheRankParams();
 
-function cacheRankParams()
-{
-  var rnkarr = new Array();
-  rnkarr.push({request: "ranks"});
-  var sendonranks = browser.runtime.sendMessage(rnkarr);
-  sendonranks.then(
-    result => {	showBriefList(result); },
-    error => { console.log(error); });
+function cacheRankParams() {
+    let rnkarr = new Array();
+    rnkarr.push({request: "ranks"});
+    let sendonranks = browser.runtime.sendMessage(rnkarr);
+    sendonranks.then( result => {	showBriefList(result); },
+                      error => { console.log(error); });
 }
 
-function showBriefList(res)
-{
-  if(gRanksParams.size ==  0)
-  {
-    var prm;
-    for(var co = 0; co < res.length; co++)
-    {
-      if(res[co] != null)
-      {
-        prm = createrank(res[co].rank, res[co].bgcolor, res[co].fontcolor);
-        gRanksParams.set(res[co].id, prm);
-      }
+function showBriefList(res) {
+    if(gRanksParams.size ==  0) {
+        let prm;
+        for(let co = 0; co < res.length; co++) {
+            if(res[co] != null) {
+                prm = createrank(res[co].rank, res[co].bgcolor, res[co].fontcolor);
+                gRanksParams.set(res[co].id, prm);
+            }
+        }
     }
-  }
-  let arr = new Array();
-  arr.push({request: "getbrieflist"});
-  let sumres = browser.runtime.sendMessage(arr);
-  sumres.then( result => { tableSummary(result);}, 
-               error => {console.log("Brief list: " + error); });
+    let arr = new Array();
+    arr.push({request: "getbrieflist"});
+    let sumres = browser.runtime.sendMessage(arr);
+    sumres.then( result => { tableSummary(result);}, 
+                 error => {console.log("Brief list: " + error); });
 }
 
 function tableSummary(result)
@@ -87,6 +80,7 @@ function tableSummary(result)
     cellelem = document.createElement('a');
     cellelem.href = "#";
     cellelem.addEventListener("click", function(evt){parent.window.open(lastevent.url)})
+    let evtype_name  = ""
     if(lastevent.type == 1)
         evtype_name = "Комментарий";
     if(lastevent.type == 4 || lastevent.type == 2)
@@ -101,7 +95,7 @@ function tableSummary(result)
     totaldiffusers.innerText = data.size;
     
     tbl.innerHTML = '';
-    usrn = 1
+    let usrn = 1
     for(let h of data.keys())
     {
         let rowmap = data.get(h);
@@ -165,112 +159,112 @@ function tableSummary(result)
     
     buildCloud(tagsul, "#").then(res => { currentTotalTags = res;}); 
 }
-
+/*! \brief \~russian функция, строящая таблицу пользователей и событий, отмеченных тегами из переданного в качестве аргумента списка
+*   \brief \~english build table of events, marked with tags, provided in a list given as argument */
+function listTagged(res) {
+    let outtable = document.getElementById("taggedevents");
+    outtable.innerHTML = '';
+    let usordedevents = new Map();
+    for(let co = 0; co < res.length; co++) {
+        let ukey = new Object();
+        ukey['username'] = res[co].username;
+        ukey['socnet'] = res[co].socnet;
+        userevnts = usordedevents.get(JSON.stringify(ukey));
+        if(userevnts == undefined) {
+            userevnts = new Array()
+        }
+        let newevent = new Object();
+        newevent['alias'] = res[co].alias;              // alias can change from one event to another
+        newevent['title'] = res[co].title;
+        newevent['url'] = res[co].url;
+        newevent['type'] = res[co].type;
+        newevent['time'] = res[co].time;
+        newevent['tags'] = res[co].tags;
+        newevent['descript'] = res[co].descript;
+                
+        userevnts.push(newevent)
+        usordedevents.set(JSON.stringify(ukey), userevnts);
+    }
+    for(const [skey, evntslst] of usordedevents) {
+        let key = JSON.parse(skey)
+        let alias = evntslst[0].alias
+        let singlrow = outtable.insertRow(-1);
+        let curcell = singlrow.insertCell(0);
+        let stitle = KnownSNets.get(key.socnet).Title
+        if(stitle == undefined)
+            stitle = ""
+        let celltext = document.createTextNode(stitle);
+        curcell.appendChild(celltext);
+        curcell = singlrow.insertCell(1);
+        let usrhref = document.createElement("a")
+        usrhref.href = "#"
+        usrhref.addEventListener("click", function(evt){evt.preventDefault(); popupHistoryWindow(key.socnet, key.username)}) 
+        usrhref.innerText = alias + " (" + key.username + ")";
+        curcell.appendChild(usrhref);
+        let detailsrow = outtable.insertRow(-1);
+        curcell = detailsrow.insertCell(0);
+        curcell.colSpan = 2
+        let inttbl = document.createElement("table")
+        inttbl.setAttribute("width", "100%")
+        for(let co = 0; co < evntslst.length; co++) {
+            let evrow = inttbl.insertRow(-1)
+            evrow.className = "light"
+            let evcell = addPlainCell(evrow, 0, evntslst[co].time)
+            evcell.style.width = "15%"
+            evcell = evrow.insertCell(1)
+            let cellelem = document.createElement("a")
+            cellelem.href = "#"
+            let cnam = key.username; 
+            let cnet = key.socnet;
+            let ce = evntslst[co]
+            let calias = evntslst[co].alias;
+            let ctime = evntslst[co].time;
+            let curl = evntslst[co].url;
+            let ctitle = evntslst[co].title;
+            let cdescr = evntslst[co].descript;
+            let ctype = evntslst[co].type
+            let crepost = evntslst[co].repost;
+            let ctags = evntslst[co].tags;
+            cellelem.addEventListener("click", function(evt) {
+                evt.preventDefault();
+                drawHistoryEventDlg(evt, cnet, cnam, calias, ctime.toLocaleString('ru-RU'), curl, ctitle, cdescr, ctype, crepost, ctags, true);
+            })
+            if(ctitle === "")
+                ctitle = " (без заголовка) "
+            cellelem.innerText = ctitle
+            evcell.appendChild(cellelem)
+            evcell = evrow.insertCell(2)
+            extext = document.createTextNode(ctags)
+            evcell.appendChild(extext)
+            evcell = evrow.insertCell(3)
+            cellelem = document.createElement("a")
+            if(evntslst[co].type == 1)
+                evtype_name = "Комментарий";
+            if(evntslst[co].type == 4 || evntslst[co].type == 2)
+                evtype_name = "Запись";
+            cellelem.addEventListener("click", function(evt){evt.preventDefault(); parent.window.open(curl)})
+            cellelem.innerText = evtype_name
+            cellelem.href = "#"
+            evcell.style.width = "10%"
+            evcell.appendChild(cellelem)
+        }
+        curcell.appendChild(inttbl)
+    }
+}
 
 function onSelectedTagsChanged(lst) {
-    let usordedevents = new Map();
     let reqhist = new Array()
     reqhist.push(lst.join("#"))
     reqhist.push({request: "historybytags"})
     let sendreq = browser.runtime.sendMessage(reqhist)
     sendreq.then( 
-        res => {
-            let outtable = document.getElementById("taggedevents");
-            outtable.innerHTML = '';
-            for(let co = 0; co < res.length; co++) {
-                let ukey = new Object();
-                ukey['username'] = res[co].username;
-                ukey['socnet'] = res[co].socnet;
-                userevnts = usordedevents.get(JSON.stringify(ukey));
-                if(userevnts == undefined) {
-                    userevnts = new Array()
-                }
-                let newevent = new Object();
-                newevent['alias'] = res[co].alias;              // alias can change from one event to another
-                newevent['title'] = res[co].title;
-                newevent['url'] = res[co].url;
-                newevent['type'] = res[co].type;
-                newevent['time'] = res[co].time;
-                newevent['tags'] = res[co].tags;
-                newevent['descript'] = res[co].descript;
-                
-                userevnts.push(newevent)
-                usordedevents.set(JSON.stringify(ukey), userevnts);
-            }
-            for(const [skey, evntslst] of usordedevents) {
-                let key = JSON.parse(skey)
-                let alias = evntslst[0].alias
-                let singlrow = outtable.insertRow(-1);
-                let curcell = singlrow.insertCell(0);
-                let stitle = KnownSNets.get(key.socnet).Title
-                if(stitle == undefined)
-                    stitle = ""
-                let celltext = document.createTextNode(stitle);
-                curcell.appendChild(celltext);
-                curcell = singlrow.insertCell(1);
-                let usrhref = document.createElement("a")
-                usrhref.href = "#"
-                usrhref.addEventListener("click", function(evt){evt.preventDefault(); popupHistoryWindow(key.socnet, key.username)}) 
-                usrhref.innerText = alias + " (" + key.username + ")";
-                curcell.appendChild(usrhref);
-                let detailsrow = outtable.insertRow(-1);
-                curcell = detailsrow.insertCell(0);
-                curcell.colSpan = 2
-                let inttbl = document.createElement("table")
-                inttbl.setAttribute("width", "100%")
-                for(let co = 0; co < evntslst.length; co++) {
-                    let evrow = inttbl.insertRow(-1)
-                    evrow.className = "light"
-                    let evcell = addPlainCell(evrow, 0, evntslst[co].time)
-                    evcell.style.width = "15%"
-                    evcell = evrow.insertCell(1)
-                    let cellelem = document.createElement("a")
-                    cellelem.href = "#"
-                    let cnam = key.username; 
-                    let cnet = key.socnet;
-                    let ce = evntslst[co]
-                    let calias = evntslst[co].alias;
-                    let ctime = evntslst[co].time;
-                    let curl = evntslst[co].url;
-                    let ctitle = evntslst[co].title;
-                    let cdescr = evntslst[co].descript;
-                    let ctype = evntslst[co].type
-                    let crepost = evntslst[co].repost;
-                    let ctags = evntslst[co].tags;
-                    cellelem.addEventListener("click", function(evt) {
-                        evt.preventDefault(); 
-                        drawHistoryEventDlg(evt, cnet, cnam, calias, ctime.toLocaleString('ru-RU'), curl, ctitle, cdescr, ctype, crepost, ctags, true);
-                    })
-                    if(ctitle === "")
-                        ctitle = " (без заголовка) "
-                    cellelem.innerText = ctitle
-                    evcell.appendChild(cellelem)
-                    evcell = evrow.insertCell(2)
-                    extext = document.createTextNode(ctags)
-                    evcell.appendChild(extext)
-                    evcell = evrow.insertCell(3)
-                    cellelem = document.createElement("a")
-                    if(evntslst[co].type == 1)
-                        evtype_name = "Комментарий";
-                    if(evntslst[co].type == 4 || evntslst[co].type == 2)
-                        evtype_name = "Запись";
-                    cellelem.addEventListener("click", function(evt){evt.preventDefault(); parent.window.open(curl)})
-                    cellelem.innerText = evtype_name
-                    cellelem.href = "#"
-                    evcell.style.width = "10%"
-                    evcell.appendChild(cellelem)
-                }
-                curcell.appendChild(inttbl)
-            }
-        },
-        err => {
-            console.log("Faild to get tagged events")
-        });
+        res => { listTagged(res) },
+        err => { console.log("Faild to get tagged events") });
 }
 
 function addPlainCell(row, cnum, txt) {
     let c = row.insertCell(cnum)
-    t = document.createTextNode(txt)
+    let t = document.createTextNode(txt)
     c.appendChild(t)
     return c
 }

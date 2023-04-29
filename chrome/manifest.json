@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "User management extension for CONT.ws",
+  "short_name": "CONText",
+  "version": "0.3.1",
+  "description": "Расширение для ведения истории и присвоения статусов пользователям социальной сети cont.ws.",
+  "author": "dmitrevo",
+  "homepage_url": "https://github.com/dmiandr/context",
+
+  "icons": {
+    "48": "icons/context48.png"
+  },
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://*.cont.ws/*"],
+      "css": ["ddmenu.css", "tabs.css"],
+      "js": ["mutation.js", "contextlib.js", "initfirst.js", "contws.js", "content.js"]
+    }
+  ],
+  "incognito": "spanning",
+  "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "web_accessible_resources": [{
+      "resources": ["addhistorydialog.html", "userhistory.html", "contextlib.js"],
+      "matches": ["<all_urls>"],
+      "extension_ids": []
+  }]
+}

@@ -1,5 +1,6 @@
 let ActiveZones = new Map
 const KnownSNets = new Map
+let RefreshTime = new Date() // время последней перезагрузки страницы
 
 // activeZone
 // let actzone = {

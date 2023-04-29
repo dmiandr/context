@@ -22,7 +22,7 @@ var gTagsStat = new Map();
  * \param mode режим работы окна - создание нового или редактирование существующего события
  * 
  * функция drawHistoryEventDlg отображает окна описания события со всеми его параметрами. Заголовок
- * и описание события могут редактироваться в данном коне, также как и признак репоста в случае если событие это запись. 
+ * и описание события могут редактироваться в данном окне, также как и признак репоста в случае если событие это запись. 
  * Значения остальных параметров должны автоматически определятся по тексту html-страницы и не могут редактироваться.
  * 
  * Окно редактирования располагается в пределах клиентской области родительского окна. Если возможно, левая граница 
@@ -267,104 +267,6 @@ function getTagsList() {
     })
 }
 
-
-/*!
-Функция, выделяющая из переданной строки время в стандартном виде, как его возвращает локаль ru-RU. Если на вход передана строка, не содержащая штампа времени в понятном виде
-* возвращается текущий момент времени */
-
-function extractTime(torig)
-{
-  var commtime;
-  commtime = torig;
-
-  if(torig.length == 0)
-    commtime = new Date().toLocaleString('ru-RU');
-  else
-  {
-    var timepart;
-    var hours;    
-    var minutes;
-    var datepart;
-    var tadapted = torig;
-    var tta = tadapted.toLowerCase();
-    var postoday = tadapted.toLowerCase().indexOf("сегодня");
-    if(postoday == -1)
-      postoday = tadapted.toLowerCase().indexOf("cегодня");
-    //Blyad! Ну вот почему в комментариях буква "с" в слове "сегодня" - латинская???!!!
-    var posyesterday = tadapted.toLowerCase().indexOf("вчера");
-    if(postoday !== -1 || posyesterday !== -1)
-    {
-      var tnow = new Date();
-      timepart = tadapted.substring(tadapted.length - 5, tadapted.length);
-      if(/^\d{2}:\d{2}$/.test(timepart))
-      {
-        if(postoday !== -1)
-        {
-	  hours = timepart.split(':')[0];
-	  minutes = timepart.split(':')[1];
-	  tnow.setHours(hours.trim());
-	  tnow.setMinutes(minutes.trim());
-	  tnow.setSeconds(0);
-	  commtime = tnow.toLocaleString('ru-RU');
-        }
-        if(posyesterday !== -1)
-        {
-	  yesterday = new Date(tnow.setDate(tnow.getDate() - 1))
-	  hours = timepart.split(':')[0];
-	  minutes = timepart.split(':')[1];
-	  yesterday.setHours(hours.trim());
-	  yesterday.setMinutes(minutes.trim());
-	  yesterday.setSeconds(0);
-	  commtime = yesterday.toLocaleString('ru-RU');
-        }
-      }
-      else
-	commtime = new Date().toLocaleString('ru-RU');
-    }
-    else
-    {
-      var tm = new Date();
-      var month;
-      var date;
-      var time;
-      var dset = false;
-      for(mn = 0; mn < mothsnamesrod.length; mn++)
-      {
-	if(torig.indexOf(mothsnamesrod[mn]) != -1)
-	{
-	  month = mn;	// why months are counted from 0??
-	  date = torig.split(mothsnamesrod[mn])[0];
-	  time = torig.split(mothsnamesrod[mn])[1];
-	  dset = true;
-	  break;
-	}	
-      }
-      if(/\d{4}/.test(torig))
-      {
-	var year = torig.match(/\d{4}/)[0];
-	tm.setYear(year);
-	time = torig.split(/\d{4}/)[1];
-	var ypos = time.indexOf("г.");
-	time = time.substring(ypos+2, time.length);
-      }
-      if(dset == true)
-      {
-      	tm.setMonth(month);
-      	tm.setDate(date.trim());
-      	hours = time.split(':')[0];
-      	minutes = time.split(':')[1];
-      	tm.setHours(hours.trim());
-      	tm.setMinutes(minutes.trim());
-      	tm.setSeconds(0);
-      	commtime = tm.toLocaleString('ru-RU');
-      }
-      else
-	commtime = new Date().toLocaleString('ru-RU');
-    }
-  }
-  return commtime;
-}
-
 function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript, type, repost, commrecip, tags)
 {
   var setarr = new Array();
@@ -451,7 +353,7 @@ function injectHistoryDialog(res) {
     var backgrnd = document.getElementById('histbackground');
     if(backgrnd == null)
     {
-        tst = document.createElement('iframe');
+        let tst = document.createElement('iframe');
         tst.style.setProperty('height', '0px');
         tst.style.setProperty('width', '0px');
         document.body.appendChild(tst);
@@ -512,8 +414,7 @@ function setUserStatus(socnet, user, userparams) {
         return browser.runtime.sendMessage(usrarr);
     }, error => {
         console.log("Error executing getstatus command")
-    })    
-    return 0;
+    })
 }
 
 function convToLower(str) {
@@ -561,8 +462,8 @@ function buildCloud(tagsul, socusername) {
                     let base = ((maxfontsz + minfontsz) - al*(nmin + nmax))/2;
                     
                     for(let a of tgsmap) {
-                        tagtext = document.createTextNode(a[0]);
-                        tagmult = document.createTextNode(a[1]);
+                        let tagtext = document.createTextNode(a[0]);
+                        let tagmult = document.createTextNode(a[1]);
                         let curfontsz = al * a[1] + base;
                         let curid = "id" + idnum
                         tgsidmap.set(curid, tagtext.data)
