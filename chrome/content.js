@@ -22,6 +22,10 @@ if(gRanksParams.size == 0)
     result => {	handleRanksList(result); },
     error => { handleError(error); });*/
 }
+// обработка изменений, сделанных в свойствах пользователя
+browser.runtime.onMessage.addListener( (message) => {
+    requestActualUsersStauses();    
+})
 
 function handleError(e)
 {
@@ -33,11 +37,11 @@ function handleRanksList(rankslist) {
     if(gRanksParams > 0)
         return; // Запросы могут быть посланы одновременно с нескольких вкладок - но если хотя-бы один уже обработан, остальные обрабатывать уже бессмысленно
     let prm;
-    let mark = rankslist.pop();
+    /*let mark = rankslist.pop();
     if(mark === null) 
         MarkFeed = false;
     else
-        MarkFeed = mark;
+        MarkFeed = mark;*/
 
     for(var co = 0; co < rankslist.length; co++) {
         if(rankslist[co] === null) {
@@ -47,6 +51,7 @@ function handleRanksList(rankslist) {
         prm = createrank(rankslist[co].rank, rankslist[co].bgcolor, rankslist[co].fontcolor);
         gRanksParams.set(rankslist[co].id, prm);
     }
+    
     let tagsarr = new Array()
     tagsarr.push({request: "gettags"})
     let sentontags = browser.runtime.sendMessage(tagsarr, fillTags)
@@ -132,7 +137,7 @@ function addElemsToActiveZone(zone) {
         itma.textContent = zone.username + " (" + uopt.numevents + ")";
         itma.style.background = "#FFFFDD";
         itma.style.color = "#000";
-        itma.addEventListener("click", function(){popupHistoryWindow(zone.socnet, zone.username);});
+        itma.addEventListener("click", function(){popupHistoryWindow(zone.socnet, zone.username, zone.element.innerText);});
         ddown.appendChild(itma);
         
         if(zone.isevent == true && zone.captElement != null)
@@ -148,12 +153,13 @@ function addElemsToActiveZone(zone) {
             itmhst.style.background = "#FFFFDD";
             itmhst.addEventListener("click", function(evt){let itm = zone.element; gCallEvent(itm, evt);});
             ddown.appendChild(itmhst);
-            
+            /*
             itm1 = document.createElement('a');
             itm1.innerHTML = "Убрать статус";
             itm1.style.color = "#000";
             itm1.style.background = "#FFFFDD";
-            itm1.addEventListener("click", function(){let cnam = zone.username; menuevent(-1, zone.socnet, cnam);});
+            itm1.setAttribute("id", "menurmrank")
+            itm1.addEventListener("click", function(){ let cnam = zone.username; menuevent(-1, zone.socnet, cnam); });
             ddown.appendChild(itm1);
 
             for(let[ckey, cvalue] of gRanksParams.entries())
@@ -164,7 +170,7 @@ function addElemsToActiveZone(zone) {
                 itm1.style.color = cvalue.fontcolor;
                 itm1.addEventListener("click", function(){var k = ckey; menuevent(k, zone.socnet, zone.username);} );
                 ddown.appendChild(itm1);
-            }
+            }*/
         }        
     }
 }
@@ -173,6 +179,7 @@ function addElemsToActiveZone(zone) {
  * да - то производится раскраска всех упоминаний этого пользователя на текущей странице. */
 /*! \brief \~english Send message to set user's status in database table. Message returns promice resolved if status is successfully set, than
  * function calls colorising all references to this user on current page */
+ /*
 function menuevent(ev, socnet, nam) {
     let uopt = gUsersCache.get(socnet+"%"+nam)
     uopt.rankid = ev
@@ -182,19 +189,6 @@ function menuevent(ev, socnet, nam) {
     setusrres.then(
             result => { handleChangedRank(result); },
             error => { console.log("Unable to set stats, e=" + error); });
-    
-    
-    /*
-    let setarr = new Array();
-    let userprms = {};
-    userprms['username'] = nam;
-    userprms['userrank'] = ev;
-    setarr.push(userprms);  
-    setarr.push({request: "setstatus"});
-    let sendonrankchange = browser.runtime.sendMessage(setarr); 
-    sendonrankchange.then(
-        result => { handleChangedRank(result); },
-        error => { statushandleError(error); });*/
 }
 
 function handleChangedRank(resuname) {
@@ -209,7 +203,7 @@ function handleChangedRank(resuname) {
         if(v.username == resuname.user && v.socnet == resuname.socnet)
             colorItem(gRanksParams, azitm, newrank);
     }
-}
+}*/
 
 function colorAll() {
     for (let azitm of ActiveZones.keys()) {

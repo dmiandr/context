@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "User management extension for CONT.ws",
   "short_name": "CONText",
-  "version": "0.3.1",
+  "version": "0.4",
   "description": "Расширение для ведения истории и присвоения статусов пользователям социальной сети cont.ws.",
   "author": "dmitrevo",
   "homepage_url": "https://github.com/dmiandr/context",

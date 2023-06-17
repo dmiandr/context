@@ -1,11 +1,13 @@
 let titlelem = document.getElementById("popuptitle")
 let searchstr = document.location.search
-let params = searchstr.split("?")[1] 
-let usr_equity = params.split("&")[1] 
-let soc_equity = params.split("&")[0] 
-let uname = usr_equity.split("=")[1]
-let socname = soc_equity.split("=")[1]
+let prmsmap = getLocationParams(searchstr)
+let socname = prmsmap.get("socnet")
+let uname =  prmsmap.get("username")
+let prmalias = prmsmap.get("alias")
+if(prmalias !== undefined) 
+    prmalias = decodeURI(prmalias) // в противном случае русские имена передаются в % кодировке}
 let tagsul = document.querySelector(".tags")
+var gRanksParams = new Map();
 
 if (typeof globalThis.browser === "undefined")
     browser = chrome
@@ -23,19 +25,6 @@ updatelbtnelem.addEventListener("click", function(evt){ updateContent(); });
 var saveuserdescript = document.getElementById("savebtn");
 saveuserdescript.addEventListener("click", function(evt){ saveUserDescription(); });
 
-function onCompletePageLoad() {
-  if(document.readyState === "complete")
-  {
-    var nmarr = new Array();
-    nmarr.push({request: "injecthistorydialog"});
-  var sendhtmlinject = browser.runtime.sendMessage(nmarr, (result) => { injectHistoryDialog(result); } );
-  /*sendhtmlinject.then(result => 
-    { 
-      injectHistoryDialog(result); 
-    }, error => {});*/
-  }
-}
-
 var gRankId;
 var arr = new Array();
 arr.push({user: uname, socnet: socname});
@@ -51,10 +40,29 @@ var sentondescript = browser.runtime.sendMessage(arr, (result) => {
     if(result.hidden == true) {
         document.getElementById("hidehim").checked = true;
     }
-    updateContent();
+    let rnkarr = new Array();
+    rnkarr.push({request: "ranks"});
+    let sendonranks = browser.runtime.sendMessage(rnkarr, (rankslist) => {
+        for(let co = 0; co < rankslist.length; co++) {
+            prm = createrank(rankslist[co].rank, rankslist[co].bgcolor, rankslist[co].fontcolor);
+            gRanksParams.set(rankslist[co].id, prm);
+        }
+        updateContent();        
+    });
 });
 
 buildCloud(tagsul, socname + "#" + uname)
+
+function onCompletePageLoad() {
+    if(document.readyState === "complete") {
+        let nmarr = new Array();
+        nmarr.push({request: "injecthistorydialog"});
+        let sendhtmlinject = browser.runtime.sendMessage(nmarr, (result) => { injectHistoryDialog(result); } );
+        /*sendhtmlinject.then(result => { 
+            injectHistoryDialog(result); 
+        }, error => {});*/
+    }
+}
 
 function updateContent() {
     let bhistarr = new Array()
@@ -86,6 +94,7 @@ function buildTable(historymap)
     var newelemlink;
     var evtype;
     var evtype_name;
+    let lastalias
 
     function cmptime(obj1, obj2) {
         var d1 = parceDateFromRuLocale(obj1.time)
@@ -146,13 +155,102 @@ function buildTable(historymap)
         newelem.addEventListener("click", function(evt){evt.preventDefault(); parent.window.open(curl)});
         newelem.innerText = evtype_name;
         curcell.appendChild(newelem);
-        var lastalias = rowmap.alias;
+        lastalias = rowmap.alias;
     }
-    titlelem.innerText= KnownSNets.get(socname).Title + ": " + lastalias + " (" + uname + ")"
+    if(lastalias == undefined) {
+        if(prmalias !== undefined)
+            lastalias = prmalias
+        else
+            lastalias = uname        
+    }
+    let soc = KnownSNets.get(socname)
+    if(soc != undefined)
+        soctitle = soc.Title
+    else
+        soctitle = socname
+    titlelem.innerText= soctitle + ": " + lastalias + " (" + uname + ")"
+    
+    if(document.getElementById("rankmenu") == undefined) {
+        let astr = document.createElement('span')
+        astr.className = 'dropdownusr';
+        astr.setAttribute("id", "rankmenu")
+        document.body.insertBefore(astr, titlelem)
+        let ddown = document.createElement('div');
+        ddown.className = 'dropdownusr-content';
+        astr.appendChild(ddown);
+    
+        let itmrm = document.createElement('a');
+        itmrm.innerHTML = "Убрать статус";
+        itmrm.style.color = "#000";
+        itmrm.style.background = "#FFFFDD";
+        itmrm.setAttribute("id", "menurmrank")
+        itmrm.addEventListener("click", function(){changeUserRank(-1); } );
+        ddown.appendChild(itmrm);
+        
+        for(let[ckey, cvalue] of gRanksParams.entries()) {
+            itm1 = document.createElement('a');
+            itm1.textContent = cvalue.rank;
+            itm1.style.background = cvalue.bgcolor;
+            itm1.style.color = cvalue.fontcolor;
+            itm1.addEventListener("click", function(){var k = ckey; changeUserRank(k); } );
+            ddown.appendChild(itm1);
+        }
+    }
+    let currank = gRanksParams.get(gRankId)
+    if(currank !== undefined) {
+        titlelem.style.backgroundColor = currank.bgcolor
+        titlelem.style.color = currank.fontcolor
+        titlelem.title = currank.rank
+    }
 }
 
 function saveUserDescription()
 {
     setUserStatus(socname, uname, {user: uname, rankid: gRankId, description: useroverall.value, hidden: document.getElementById("hidehim").checked})
+    
+    let curtab = browser.tabs.getCurrent()
+    curtab.then( result => {
+        browser.tabs.query({active: true}, (tabs) => {
+            tabs.forEach(function(tab) {
+                if(tab.id != result.id) {
+                    res = browser.tabs.sendMessage(tab.id, {request: "update"})
+                }
+            })
+        });
+    })
 }
 
+function changeUserRank(rnk) {
+    gRankId = rnk
+    if(rnk == -1) {
+        titlelem.style.backgroundColor = "#FFFFFF"
+        titlelem.style.color = "#000000"
+        titlelem.title = undefined
+    }
+    else {
+        let currank = gRanksParams.get(gRankId)
+        titlelem.style.backgroundColor = currank.bgcolor
+        titlelem.style.color = currank.fontcolor
+        titlelem.title = currank.rank
+    }
+}
+
+function getLocationParams(urlstr) {
+    let pmap = new Map()
+    let p = urlstr.split("?")
+    if(p.length == 1)
+        return pmap;
+    
+    let params = urlstr.split("?")[1]
+    let prmsarr = params.split("&")
+    if(prmsarr.length == 1)
+        return pmap;
+        
+    for(let co = 0; co < prmsarr.length; co++) {
+        let paricur = prmsarr[co]
+        let paricurarr = paricur.split("=")
+        if(paricurarr.length == 2) 
+            pmap.set(paricurarr[0], paricurarr[1])
+    }
+    return pmap;
+}

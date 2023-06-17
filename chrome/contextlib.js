@@ -300,15 +300,19 @@ function removeHistoryEvent(url)
   var send = browser.runtime.sendMessage(setarr); 
 }
 
-function popupHistoryWindow(socnet, user)
+function popupHistoryWindow(socnet, user, alias)
 {
-  var histurl = browser.runtime.getURL("userhistory.html");
-  histurl += "?socnet=";
-  histurl += socnet;
-  histurl += "&username=";
-  histurl += user;
-  var popup = window.open(histurl, "", "height=400,width=750");
-  popup.focus();
+    let histurl = browser.runtime.getURL("userhistory.html");
+    histurl += "?socnet=";
+    histurl += socnet;
+    histurl += "&username=";
+    histurl += user;
+    if(alias !== undefined) {
+        histurl += "&alias="
+        histurl += alias
+    }
+    let popup = window.open(histurl, "", "height=400,width=750");
+    popup.focus();
 }
 
 /*! \brief \~russian Расскрасить переданный элемент в соответствии со стилем, идентификатор которого передается в виде параметра
@@ -321,22 +325,19 @@ function popupHistoryWindow(socnet, user)
  * \param rankid rank identifier */
 function colorItem(ranks, itm, rankid)
 {
-  if(rankid == -1)
-  {
-    itm.style.backgroundColor = "white";
-    itm.style.color = "black";
-  }
-  else
-  {
-    var styl = ranks.get(rankid);
-    if(styl != undefined)
-    {
-      itm.style.backgroundColor = styl.bgcolor;
-      itm.style.color = styl.fontcolor;
-      if(itm.title === "")
-          itm.title = styl.rank;                // Если у пользователя есть индивидуальное описание, то будет вывешено оно, если нет - то описание его ранка
+    if(rankid != -1) {
+        let styl = ranks.get(rankid);
+        if(styl != undefined) {
+            itm.style.backgroundColor = styl.bgcolor;
+            itm.style.color = styl.fontcolor;
+            if(itm.title === "")
+                itm.title = styl.rank;                // Если у пользователя есть индивидуальное описание, то будет вывешено оно, если нет - то описание его ранка
+        }
     }
-  }
+    else {
+        itm.style.backgroundColor = "white";
+        itm.style.color = "black";
+    }
 }
 
 function createrank(rank, bgcolor, fontcolor) {
@@ -434,7 +435,7 @@ function buildCloud(tagsul, socusername) {
         let minfontsz = 10;
         let maxfontsz = 20;
         tagsul.innerHTML = '';
-        
+       
         let fragment = document.createDocumentFragment();
         let tagsarr = new Array()
         let idnum = 0

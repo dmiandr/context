@@ -1,8 +1,19 @@
 let currentTotalTags = 0;       // Текущее количество тегов в карте - используется для функции "скинуть все метки"
 let curtagslst = []
+let rankidslst = [] // Список идентификаторов статусов - в результате редактирования они могут быть и не подряд
+let ranksediting = false
+let gPrevrankname = ""
+let gPrevDescr = ""
+let gPrevFcolor
+let gPrevBcolor
 
 var gRanksParams = new Map();
 window.addEventListener("load", onCompletePageLoad, false);
+
+// обработка изменений, сделанных в свойствах пользователя
+browser.runtime.onMessage.addListener( (message) => {
+    // обработчик не реализовывался, но точка получения сообщения необходима чтобы не выдавалось ошибок
+})
 
 function onCompletePageLoad() {
     if(document.readyState === "complete") {
@@ -25,19 +36,233 @@ function cacheRankParams() {
 
 function showBriefList(res) {
     if(gRanksParams.size ==  0) {
+        let totwithstatus = 0; // сюда заносится полная сумма всех пользователей со статусами, отличными от -1
         let prm;
+        let showstatuses = new Array() // список статусов, которые будут отображаться, обновляется при каждом отмеченном чекбоксе
+        let next_id = 0 // идентификатор, на единицу больший самого большого из имеющихся, будет использован при добавлении нового статуса
+        
+        let totalevnts = document.getElementById("totaleventsplace");
+        let totaldiffusers = document.getElementById("totaldiffuserssplace");
+        let stlsttable = document.getElementById("statuslist");
+        let totaldescrs = document.getElementById("totaldescripts");
+        let fltitle = document.getElementById("filtertitle")
+        
+        if(document.getElementById("refreshstatuses") == undefined) {
+            let imgrefresh = document.createElement('img')
+            imgrefresh.setAttribute("id", "refreshstatuses")
+            imgrefresh.title = "Обновить"
+            imgrefresh.src = 'icons/refresh.png'
+            imgrefresh.onclick = function() {
+                gRanksParams.clear()
+                cacheRankParams();
+            }
+            fltitle.parentNode.insertBefore(imgrefresh, fltitle);
+        }
+        
+        stlsttable.innerHTML = '';
+        let row0 = stlsttable.insertRow(-1);
+        let c = row0.insertCell(0)
+        let chbox0 = document.createElement("input");
+        chbox0.setAttribute("id", "worank");
+        chbox0.type = "checkbox"
+        chbox0.addEventListener('change', (event) => { 
+            if(event.currentTarget.checked) {
+                        if(!showstatuses.includes(-1)) {
+                            showstatuses.push(-1)
+                        }                        
+                    } else {
+                        showstatuses = showstatuses.filter(item => item !== -1)
+                    }
+                    let arr = new Array();
+                    let flsts = showstatuses.join(",")
+                    console.log("F = ", flsts)
+                    arr.push(flsts)
+                    arr.push({request: "getbrieflist"});
+                    let sumres = browser.runtime.sendMessage(arr, (result) => { tableSummary(result); });
+        })
+        c.appendChild(chbox0)
+        addPlainCell(row0, 1, "Без статуса")
+        let c2 = row0.insertCell(2)
+        let santsat = document.createElement("label");
+        santsat.setAttribute("id", "santsat");
+        santsat.innerText = "?"
+        c2.appendChild(santsat)
+        
         for(let co = 0; co < res.length; co++) {
             if(res[co] != null) {
+                let row = stlsttable.insertRow(-1);
                 prm = createrank(res[co].rank, res[co].bgcolor, res[co].fontcolor);
                 gRanksParams.set(res[co].id, prm);
+                c = row.insertCell(0)
+                let chbox = document.createElement("input");
+                chbox.setAttribute("id", res[co].id);
+                chbox.type = "checkbox"
+                chbox.addEventListener('change', (event) => { 
+                    let idcur = chbox.id
+                    if(event.currentTarget.checked) {
+                        if(!showstatuses.includes(idcur)) {
+                            showstatuses.push(idcur)
+                        }                        
+                    } else {
+                        showstatuses = showstatuses.filter(item => item !== idcur)                        
+                    }
+                    let arr = new Array();
+                    let flsts = showstatuses.join(",")
+                    arr.push(flsts)
+                    arr.push({request: "getbrieflist"});
+                    let sumres = browser.runtime.sendMessage(arr, (result) => { tableSummary(result);});
+                })
+                c.appendChild(chbox)
+                let cR = addPlainCell(row, 1, res[co].rank)
+                cR.setAttribute("id", "rank"+res[co].id)
+                cR.style.backgroundColor = res[co].bgcolor
+                cR.style.color = res[co].fontcolor
+                
+                let cA = addPlainCell(row, 2, res[co].amount)
+                cA.setAttribute("id", "amount"+res[co].id)
+                let cD = addPlainCell(row, 3, res[co].descript)
+                cD.setAttribute("id", "descr"+res[co].id)
+                let cellbackgr = addPlainCell(row, 4, "")
+                let bcolorinp = createColorPicker(res[co].bgcolor, "bcolor"+res[co].id, true)
+                bcolorinp.title = "Цвет фона"
+                cellbackgr.appendChild(bcolorinp)
+                
+                let cellfont = addPlainCell(row, 5, "")
+                let fcolorinp = createColorPicker(res[co].fontcolor, "fcolor"+res[co].id, true)
+                fcolorinp.title = "Цвет шрифта"
+                cellfont.appendChild(fcolorinp)
+                                                
+                let cedt = row.insertCell(6)
+                let btnedt= document.createElement("button");
+
+                btnedt.textContent = "..."
+                btnedt.title = "Редактировать статус"
+                btnedt.setAttribute("id", "edit"+res[co].id)
+                btnedt.addEventListener("click", function(ev){
+                    let rid = res[co].id;
+                    if(ranksediting == false) {
+                        startRankEdit(rid)
+                        ranksediting = true;
+                    } else {
+                        completeRankEdit(rid, true)
+                        ranksediting = false;
+                    }                    
+                })
+                cedt.appendChild(btnedt)
+                let crm = row.insertCell(7)
+                let btnrm= document.createElement("button");
+                btnrm.textContent = "Удалить"
+                btnrm.setAttribute("id", "rmcnsl"+res[co].id)
+                btnrm.addEventListener("click", function(ev){
+                    if(btnrm.textContent == "Удалить") {
+                        if(ranksediting == false && res[co].amount == 0) {
+                            if(confirm("Вы действительно хотите удалить данный статус?") == true) {
+                                let arrdel = new Array();
+                                arrdel.push(res[co].id)
+                                arrdel.push({request: "deleterank"});
+                                
+                                let resdel = browser.runtime.sendMessage(arrdel, (result) => {
+                                    gRanksParams.clear()
+                                    cacheRankParams(); 
+                                });       
+                            }
+                        }
+                    }
+                    else {
+                        let rid = res[co].id;
+                        completeRankEdit(rid, false)
+                        ranksediting = false;                       
+                    }
+                })
+                crm.appendChild(btnrm)
+                if(res[co].amount !== 0)
+                    btnrm.disabled = true
+
+                totwithstatus += res[co].amount
+                if(next_id <= res[co].id)
+                    next_id = res[co].id + 1
             }
         }
+        
+        let rowplus = stlsttable.insertRow(-1);
+        rowplus.insertCell(0)
+        let cR = rowplus.insertCell(1)
+        cR.setAttribute("id", "rank"+next_id)
+        let cA = rowplus.insertCell(2)
+        cA.setAttribute("id", "amount"+next_id)
+        let cD = rowplus.insertCell(3)
+        cD.setAttribute("id", "descr"+next_id)
+        let cB = rowplus.insertCell(4)
+        let newbckgr = createColorPicker('#ffffff', "bcolor"+next_id, true)
+        newbckgr.title = "Цвет фона"
+        cB.appendChild(newbckgr)
+        let cF = rowplus.insertCell(5)
+        let newfnt = createColorPicker('#000000', "fcolor"+next_id, true)
+        newfnt.title = "Цвет шрифта"
+        cF.appendChild(newfnt)
+        let cE = rowplus.insertCell(6)
+        let btnadd = document.createElement("button");
+        btnadd.setAttribute("id", "addrankbtn")
+        btnadd.style.fontSize = "20px"
+        btnadd.title = "Добавить статус"
+        btnadd.textContent = " + "
+        btnadd.addEventListener("click", (ev)=>{
+            if(ranksediting == false) {
+                btnadd.textContent = "..."
+                btnadd.title = "Сохранить"
+                startRankEdit(next_id)
+                ranksediting = true;
+            } else {
+                btnadd.textContent = " + "
+                btnadd.title = "Добавить статус"
+                completeRankEdit(next_id, true)
+                ranksediting = false;
+            }                    
+        })
+        
+        cE.appendChild(btnadd)
+        let cC = rowplus.insertCell(7)
+        let btncnsl = document.createElement("button");
+        btncnsl.setAttribute("id", "rmcnsl"+next_id)
+        btncnsl.textContent = "Отмена"
+        btncnsl.addEventListener("click", (ev) => {
+                completeRankEdit(next_id, false)
+                ranksediting = false;
+                btnadd.textContent = "+"
+                btnadd.title = "Добавить статус"
+                btncnsl.disabled = true
+        })
+        cC.appendChild(btncnsl)
+        btncnsl.disabled = true
+        
+        // заполнение общего числа пользоваетелей без статуса
+        let a0 = new Array()
+        let emptylst
+        a0.push(emptylst)
+        a0.push({request: "getbrieflist"});
+        let sumres = browser.runtime.sendMessage(a0, (result) => { 
+            let data = new Map(result); 
+            sum = data.get("$"); 
+            let totsanstat = sum.totalusers - totwithstatus; 
+            santsat.innerText = totsanstat; 
+            totalevnts.innerText = sum.totalevents;
+            totaldiffusers.innerText = sum.totalusers;
+            totaldescrs.innerText = sum.totaldescripts
+        });
     }
-    let arr = new Array();
-    arr.push({request: "getbrieflist"});
-    let sumres = browser.runtime.sendMessage(arr, (result) => { tableSummary(result); });
-    /*sumres.then( result => { tableSummary(result);},
-                   error => {console.log("Brief list: " + error); });*/
+    DrawTagsTab()
+}
+
+function createColorPicker(color, pid, disabled) {
+    let bcolorinp = document.createElement("input")
+    bcolorinp.setAttribute("type", "color")
+    bcolorinp.setAttribute("value", color)
+    bcolorinp.setAttribute("id", pid)
+    bcolorinp.style.border = "none"
+    bcolorinp.style.padding = "0px"
+    bcolorinp.style.width = "20px"
+    bcolorinp.disabled = disabled
+    return bcolorinp    
 }
 
 function tableSummary(result)
@@ -47,7 +272,6 @@ function tableSummary(result)
     var curcell;
     var celltext;
     var cellelem;  
-    let numdesc = 0
   
     var lastevent = data.get("$")
     data.delete("$")
@@ -88,13 +312,8 @@ function tableSummary(result)
     cellelem.innerText = evtype_name
     curcell.appendChild(cellelem);
     } 
-    let totalevnts = document.getElementById("totaleventsplace");
-    totalevnts.innerText = lastevent.totalevents;
     
-    let totaldiffusers = document.getElementById("totaldiffuserssplace");
-    totaldiffusers.innerText = data.size;
-    
-    tbl.innerHTML = '';
+    tbl.innerHTML = '<th>N</th><th>Имя</th><th>Псевдоним</th><th>Количество событий</th>';
     let usrn = 1
     for(let h of data.keys())
     {
@@ -114,15 +333,13 @@ function tableSummary(result)
         colorItem(gRanksParams, c2, rowmap.rankid)
         if(rowmap.description != undefined) {
             c2.title = rowmap.description
-            numdesc++;
         }
         addPlainCell(row, 3, rowmap.numevents)
         usrn++
-    }  
-    
-    let totaldescrs = document.getElementById("totaldescripts");
-    totaldescrs.innerText = numdesc
+    }
+}
 
+function DrawTagsTab() {
     const tagsul = document.querySelector(".tags")
     let tab2section = document.getElementById('tab2section')
     
@@ -139,19 +356,21 @@ function tableSummary(result)
     let btn1 = toolbarrow.insertCell(0)
     let imgrefresh = document.createElement('img')
     imgrefresh.src = 'icons/refresh.png'
+    imgrefresh.title = "Обновить"
     imgrefresh.onclick = function() {
         tagsul.innerHTML=''; 
         curtagslst = []; 
         buildCloud(tagsul, "#").then(res => { currentTotalTags = res;}); 
         let outtable = document.getElementById("taggedevents"); 
         outtable.innerHTML = '';
-        };
+    };
     btn1.appendChild(imgrefresh)
     btn1.width = '40px'
     let mid = toolbarrow.insertCell(1)
     let btn2 = toolbarrow.insertCell(2)
     let imgunmark = document.createElement('img')
     imgunmark.src = 'icons/unmark.png'
+    imgunmark.title = "Снять все отметки"
     imgunmark.onclick = function() { removeAllMarks(); let outtable = document.getElementById("taggedevents"); outtable.innerHTML = '';}
     btn2.appendChild(imgunmark)
     btn2.width = '40px'
@@ -285,4 +504,130 @@ function removeAllMarks() {
         curchk.checked = false
     }
     curtagslst = []
+}
+
+function startRankEdit(rankid) {   
+    let cellid = "rank"+rankid
+    rcell = document.getElementById(cellid);
+    gPrevrankname = rcell.innerText
+    redit = document.createElement("input");
+    redit.setAttribute("type", "text");
+    redit.setAttribute("id", "rankname"+rankid);
+    redit.style.width = "100%"
+    redit.value = gPrevrankname       
+    rcell.innerHTML = ''
+    rcell.appendChild(redit)
+    
+    let descrcellid = "descr"+rankid
+    dcell = document.getElementById(descrcellid);
+    gPrevDescr = dcell.innerText
+    dedit = document.createElement("input");
+    dedit.setAttribute("type", "text");
+    dedit.setAttribute("id", "descrname"+rankid);
+    dedit.style.width = "100%"
+    dedit.value = gPrevDescr
+    dcell.innerHTML = ''
+    dcell.appendChild(dedit)
+    
+    let rmbtn = document.getElementById("rmcnsl"+rankid)
+    rmbtn.disabled = false;
+    rmbtn.textContent = "Отмена"
+    
+    let bcolorinp = document.getElementById("bcolor"+rankid);
+    bcolorinp.disabled = false
+    gPrevBcolor = bcolorinp.value
+    let fcolorinp = document.getElementById("fcolor"+rankid);
+    fcolorinp.disabled = false
+    gPrevFcolor = fcolorinp.value
+    
+    blockButtons(rankid, true)   
+}
+
+function completeRankEdit(rankid, apply) {
+    let cellid = "rank"+rankid
+    let descrcellid = "descr"+rankid
+    rcell = document.getElementById(cellid);
+    dcell = document.getElementById(descrcellid);
+    let erank = document.getElementById("rankname"+rankid);
+    let edescr = document.getElementById("descrname"+rankid);
+    let newrankname = ""
+    let newdescr = ""
+    if(erank != undefined)
+        newrankname = erank.value
+    if(edescr != undefined)
+        newdescr = edescr.value
+
+    let bcolorinp = document.getElementById("bcolor"+rankid);
+    bcolorinp.disabled = true
+    let fcolorinp = document.getElementById("fcolor"+rankid);
+    fcolorinp.disabled = true
+
+    if(newrankname !== "" && apply == true) {
+        rcell.innerHTML = ''
+        let t = document.createTextNode(newrankname)
+        rcell.appendChild(t) 
+        rcell.style.backgroundColor = bcolorinp.value
+        rcell.style.color = fcolorinp.value
+        dcell.innerHTML = ''
+        dcell.appendChild(document.createTextNode(newdescr)) 
+    }
+    else {
+        rcell.innerHTML = ''
+        let t = document.createTextNode(gPrevrankname)
+        rcell.appendChild(t)
+        dcell.innerHTML = ''
+        dcell.appendChild(document.createTextNode(gPrevDescr)) 
+    }
+    
+    let amountcell = document.getElementById("amount"+rankid)
+    let numusers = amountcell.innerText
+    let rmbtn = document.getElementById("rmcnsl"+rankid)
+    if(numusers == 0)
+        rmbtn.disabled = false
+    else
+        rmbtn.disabled = true
+    
+    rmbtn.textContent = "Удалить"
+    
+    if(apply == false) {
+        bcolorinp.value = gPrevBcolor
+        fcolorinp.value = gPrevFcolor
+    }
+    
+    if(newrankname !== "" && apply == true) { // само сохранение статуса происходит здесь
+        let newrank = {id: 0, rank: '',  descript: '', bgcolor: '', fontcolor: '', bold: false, italic: false }
+        newrank.id = rankid
+        newrank.rank = newrankname
+        newrank.descript = newdescr
+        newrank.bgcolor = bcolorinp.value
+        newrank.fontcolor = fcolorinp.value
+        let setarr = new Array();
+        setarr.push(newrank);
+        setarr.push({request: "addrank"});
+        let sendonaddingrank = browser.runtime.sendMessage(setarr, (res) => {
+            gRanksParams.clear()
+            cacheRankParams();
+        });
+    }
+
+    blockButtons(rankid, false)   
+}
+
+function blockButtons(excetpid, block) {
+    gRanksParams.forEach( function(val, key, map) {
+        let curid = `${key}`
+        if(curid != excetpid) {
+            let eid = "edit"+ `${key}`
+            let ebtn = document.getElementById(eid)
+            if(block)
+                ebtn.disabled = true
+            else
+                ebtn.disabled = false
+        }
+    })
+    let addbtn = document.getElementById("addrankbtn")
+    if(block)
+        addbtn.disabled = true
+    else
+        addbtn.disabled = false
 }

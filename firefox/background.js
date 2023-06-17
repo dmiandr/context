@@ -128,6 +128,7 @@ Handlers.set("histatuses", histatuses_handler);
 Handlers.set("setstatus", setstatus_handler);
 Handlers.set("getstatus", getstatus_handler);
 Handlers.set("addrank", addrank_handler);
+Handlers.set("deleterank", deleterank_handler);
 Handlers.set("eraseall", eraseall_handler);
 Handlers.set("injecthistorydialog", injecthistorydialog_handler);
 Handlers.set("addhistoryevent", addhistoryevent_handler);
@@ -139,25 +140,44 @@ Handlers.set("gettags", gettags_handler);
 Handlers.set("historybytags", historybytags_handler);
 
 function ranks_handler(msg, db, resolve) {
-    var tr = db.transaction("ranks");
-    var objstore = tr.objectStore("ranks");
-    var numranks_tmp = 0;
+    let tr = db.transaction(["users", "ranks"]);
+    let obju = tr.objectStore("users");
+    let ocu = obju.openCursor();
+    let stacounter = new Map(); // карта статусов с количеством пользователей
     rankspossible = [];
-    objstore.openCursor().onsuccess = function(event)
-    {
-        var cur = event.target.result;
-        if(cur)
-        {
-            var rcur = new createrank_withid(cur.value.id, cur.value.rank, cur.value.bgcolor, cur.value.fontcolor);
-            rankspossible.push(rcur);
-            cur.continue();
+    ocu.onsuccess = function(event) {
+        let c = event.target.result;
+        if(c) {
+            let r = c.value.rankid
+            let t = stacounter.get(r);
+            if(t != undefined) 
+                stacounter.set(r, t+1)
+            else
+                stacounter.set(r, 1)
+            
+            c.continue();
         }
-        else
-        {
-            //rankspossible.push(localStorage.getItem('markinfeed'));
-            resolve(rankspossible);
+        else {
+            let objr = tr.objectStore("ranks");
+            objr.openCursor().onsuccess = function(event) {
+                var cur = event.target.result;
+                if(cur) {
+                    let rcur = new createrank_withid(cur.value.id, cur.value.rank, cur.value.bgcolor, cur.value.fontcolor, cur.value.descript);
+                    let t = stacounter.get(cur.value.id)
+                    if(t != undefined)
+                        rcur.amount = t
+                    else
+                        rcur.amount = 0
+                    
+                    rankspossible.push(rcur);
+                    cur.continue();
+                }
+                else  {
+                    resolve(rankspossible);
+                }
+            }
         }
-    }    
+    }
 }
 
 function histatuses_handler(msg, db, resolve) {
@@ -341,6 +361,20 @@ function addrank_handler(msg, db, resolve) {
     }    
 }
 
+function deleterank_handler(msg, db, resolve) {
+    let reqdel;
+    let delrnkprms = msg.pop();
+    console.log("DELETEING rank = ", delrnkprms);
+    let objset = db.transaction("ranks", "readwrite").objectStore("ranks");
+    reqdel = objset.delete(delrnkprms);
+    reqdel.onsuccess = function(event) {
+        resolve("");
+    }
+    reqdel.onerror = function(event) {
+        resolve("ERROR deleteing rank");
+    }    
+}
+
 function eraseall_handler(msg, db, resolve) {
     let exclranks = msg.pop();
     let reqallkeys, reqdel;
@@ -393,7 +427,7 @@ function addhistoryevent_handler(msg, db, resolve) {
     }
 }
 
-function removehistoryevent_handler(msg, resolve) {
+function removehistoryevent_handler(msg, db, resolve) {
     let reqremoved;
     let reqprms = msg.pop();
     let objremoved = db.transaction("history", "readwrite").objectStore("history");
@@ -462,13 +496,20 @@ function gethistoryitem_handler(msg, db, resolve) {
 
 function getbrieflist_handler(msg, db, resolve) {
     let umap = new Map();
+    let umapflt = new Map(); //users filtered by status
+    let paramrnks = msg.pop(); // список статусов, используемых при фильтрации возвращаемого списка пользователей
     let tr = db.transaction(["users", "history"]);
     let objh = tr.objectStore("history");
     let oc = objh.openCursor();
     let lastmodf = undefined;
     let lastevent = {}
     let totalevents = 0;
-        
+    let totaldescripts = 0
+    let rnklst
+    
+    if(paramrnks != undefined)
+        rnklst = paramrnks.split(",")
+    
     oc.onsuccess = function(event) {
         let cur = event.target.result
         if(cur) {
@@ -497,6 +538,7 @@ function getbrieflist_handler(msg, db, resolve) {
                 }
             }
             newopts['alias'] = cur.value.alias;
+            newopts['rankid'] = -1
             umap.set(xusr, newopts);
             cur.continue();
         }
@@ -509,34 +551,50 @@ function getbrieflist_handler(msg, db, resolve) {
                 if(c) {
                     let un = c.value.user.toLowerCase()
                     let net = c.value.socnet
-                    let d = c.value.description
-                    let r = c.value.rankid
                     let x = net + "%" + un
                     let o = umap.get(x)
+                    let r = c.value.rankid;
+                    let d = c.value.description;
+                    if(!!d)
+                        totaldescripts++
                     let o2 = {}
-                    if(o != undefined) {
+                    if(o === undefined) {
+                        o2['rankid'] = -1;
+                        o2['numevents'] = 0;
+                        o2['alias'] = un;
+                        o2['rankid'] = r;
+                        o2['description'] = d;
+                        o2['hidden'] = c.value.hidden;
+                        umap.set(x, o2)                        
+                    }
+                    else {
                         o['rankid'] = r;
-                        if(c.value.hidden == true)
-                            o['hidden'] = true;
+                        o['hidden'] = c.value.hidden
                         o['description'] = d;
                         umap.set(x, o);
                     }
-                    else {
-                        o2['numevents'] = 0;
-                        o2['alias'] = un;
-                        o2['rankid'] = -1;
-                        o2['description'] = d;
-                        if(c.value.hidden == true)
-                            o2['hidden'] = true;
-                        umap.set(x, o2);
-                    }
-                    c.continue();
+                    c.continue()
                 }
                 else {
                     lastevent['time'] = lastmodf;
                     lastevent['totalevents'] = totalevents
-                    umap.set("$", lastevent); 
-                    resolve([...umap]);
+                    lastevent['totalusers'] = umap.size
+                    lastevent['totaldescripts'] = totaldescripts;
+                    if(rnklst != undefined) {
+                        umap.forEach(function(val, key) {
+                            if(rnklst.includes(val.rankid.toString())) {
+                                umapflt.set(key, val);
+                            }
+                        })
+                        umapflt.set("$", lastevent);
+                        resolve([...umapflt]);
+                    }
+                    else
+                    {
+                        umap.set("$", lastevent); 
+                        resolve([...umap]);                        
+                    }
+                    
                 }
             }
         }
@@ -645,22 +703,23 @@ function onContentMessage(msg, sender, handleResponse)
 browser.runtime.onInstalled.addListener(onInstallInit);
 browser.runtime.onMessage.addListener(onContentMessage);
 
-function createrank_withid(id, rank, bgcolor, fontcolor) {
-	this.id = id;
-	this.rank = rank;
-	this.bgcolor = bgcolor;
-	this.fontcolor = fontcolor;
-	this.bold = false;
-	this.italic = false;
-	return this;
+function createrank_withid(id, rank, bgcolor, fontcolor, descript) {
+    this.id = id;
+    this.rank = rank;
+    this.bgcolor = bgcolor;
+    this.fontcolor = fontcolor;
+    this.bold = false;
+    this.italic = false;
+    this.descript = descript;
+    return this;
 };
 
 function getEquivalentLink(link) {
-    var pos = link.search("#comment");
+    let pos = link.search("#comment");
     if(pos == -1)
         return link;
     
-    var fpos = link.search("\/full")
+    let fpos = link.search("\/full")
     if(fpos == -1) {
         return link.slice(0, pos) + "/full" + link.slice(pos);
     }
