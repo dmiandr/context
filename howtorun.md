@@ -8,21 +8,14 @@
 
 ### Шаг 2. 
 Так как плагин предназначен для двух семейств браузеров, то некоторые файлы являются универсальными, а некоторые - специфичны для Mozilla и Chrome. Создайте отдельную директорию для файлов плагина, скопируйте туда - в зависимости от вашего браузера, содержимое директории chrome — для Chrome и браузеров на его основе, и firefox — для Mozilla Firefox и его потомков.
-Туда-же скопируйте из основной директории проекта следующие файлы:
-
-FileSaver.js 
-
-addhistorydialog.html
-
-contws.js
-
-ddmenu.css
-
-initfirst.js 
-
-mutation.js
-
-tabs.css
+Туда-же скопируйте из основной директории проекта следующие файлы:<br>
+FileSaver.js <br>
+addhistorydialog.html <br>
+contws.js <br>
+ddmenu.css <br>
+initfirst.js <br> 
+mutation.js <br>
+tabs.css <br>
 
 В эту же директорию скопируйте всю папку icons из корня проекта.
 
