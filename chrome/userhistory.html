@@ -4,12 +4,31 @@
 <title></title>
 <link rel="stylesheet" type="text/css" href="ddmenu.css">
 <link rel="stylesheet" type="text/css" href="tabs.css">
+<style>
+.footer {
+   position: fixed;
+   bottom: 30px;
+   width: 100%;
+}
+.sideby {
+  display:inline-block;
+  width:24%;
+}
+</style>
 </head>
 <body>
-<label style="font-size:20px; font-weight:bold;" id="popuptitle">username</label>
-<textarea class="dialogfieldedit" id="useroverall" placeholder="Общая характеристика автора" style="width: 85%; height: 70px; resize: none; opacity: 1;"></textarea>
-<p>
-<label style="position: relative; top: -20; right: 0" class="contbutton" id="hidehimlbl"><input id="hidehim" type="checkbox"/>скрыть данного пользователя</label></p>
+<label style="font-size:20px; font-weight:bold;" id="popuptitle">username</label><span id="numevents" class="badge" style="opacity: 80%; border-radius: 12px; font-size: 16px;">144</span>
+<p style="overflow: hidden;">
+<label>Статус: </label>
+<select name="Статус" id="statuselector">
+</p>
+</select>
+<textarea class="dialogfieldedit" id="useroverall" placeholder="Общая характеристика автора" style="width: 100%; height: 70px; resize: none; opacity: 1; margin-bottom: 1; margin-left: 0"></textarea>
+<p style="overflow: hidden;margin-top: -10">
+<label style="position: relative; float: left; top: 0;"></label>
+<label style="position: relative; float: right; top: 0;" class="contbutton" id="hidehimlbl"><input id="hidehim" type="checkbox"/>скрыть данного пользователя</label>
+</p>
+
 <ul class="tags">
 </ul>
 <table class="histable" id="historytabid">
@@ -23,19 +42,29 @@
 <tbody id="tablebody">
 </tbody>
 </table>
-<div style="position: fixed; top: 0; right: 0">
-<span class="contbutton" id="closebtn" style="align: right">
+<br>
+<br>
+<br>
+<div class="footer">
+<div class="sideby">
+<span class="contbutton" style="padding-top: 20px; padding-bottom: 20px; opacity: 80%;" id="closebtn">
+<!-- background: #bd484d; --> 
 Закрыть
 </span>
-<br>
-<span class="contbutton" id="updatelbtn" style="align: right">
+</div>
+<div class="sideby">
+<span class="contbutton" style="padding-top: 20px; padding-bottom: 20px; opacity: 80%;" id="updatelbtn">
 Обновить
 </span>
-<br>
-<br>
-<span class="contbutton" id="savebtn" style="align: right">
+</div>
+<div class="sideby">
+</div>
+<div class="sideby">
+<span class="contbutton" style="padding-top: 20px; padding-bottom: 20px; opacity: 80%;" id="savebtn">
+<!--  border: 2px solid #FF0070; --> 
 Сохранить
 </span>
+</div>
 </div>
 <script defer="" type="text/javascript" src="initfirst.js"></script>
 <script defer="" type="text/javascript" src="contws.js"></script>

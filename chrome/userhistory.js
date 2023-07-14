@@ -1,5 +1,6 @@
 let titlelem = document.getElementById("popuptitle")
 let searchstr = document.location.search
+let selectdefbkgcolor = undefined;
 let prmsmap = getLocationParams(searchstr)
 let socname = prmsmap.get("socnet")
 let uname =  prmsmap.get("username")
@@ -8,6 +9,7 @@ if(prmalias !== undefined)
     prmalias = decodeURI(prmalias) // в противном случае русские имена передаются в % кодировке}
 let tagsul = document.querySelector(".tags")
 var gRanksParams = new Map();
+let optchanged = false; // признак того, что параметры пользователя изменялись
 
 if (typeof globalThis.browser === "undefined")
     browser = chrome
@@ -37,6 +39,9 @@ var sentondescript = browser.runtime.sendMessage(arr, (result) => {
         gRankId = result.rankid;
             
     document.getElementById("useroverall").textContent = descr;
+    document.getElementById("useroverall").addEventListener("input", function(){ optchanged = true; saveuserdescript.style = "border: 2px solid #FF0070; padding-top: 20px; padding-bottom: 20px; opacity: 80%;"})
+    document.getElementById("hidehim").addEventListener("input", function(){ optchanged = true; saveuserdescript.style = "border: 2px solid #FF0070; padding-top: 20px; padding-bottom: 20px; opacity: 80%;"})
+    
     if(result.hidden == true) {
         document.getElementById("hidehim").checked = true;
     }
@@ -81,11 +86,15 @@ function updateContent() {
 function buildTable(historymap)
 {
     let htable = document.getElementById("historytabid");
+    let statuselector = document.getElementById("statuselector")
+    let numholder = document.getElementById("numevents")
+    let ranksreverce = new Map([...gRanksParams].reverse());
+    let lastid = 0
     let rowcount = htable.rows.length;
     for (let i = rowcount - 1; i > 0; i--) {
         htable.deleteRow(i);
     }
-    
+    selectdefbkgcolor = statuselector.style.background;
     let data = new Map(historymap);
     let numcell;
     var curcell;
@@ -111,6 +120,7 @@ function buildTable(historymap)
         histarray.push(rowmap);    
     }
     histarray.sort(cmptime);
+    numholder.innerText = Object.keys(histarray).length
     
     for(let h of histarray)
     {
@@ -170,6 +180,7 @@ function buildTable(historymap)
         soctitle = socname
     titlelem.innerText= soctitle + ": " + lastalias + " (" + uname + ")"
     
+    /*
     if(document.getElementById("rankmenu") == undefined) {
         let astr = document.createElement('span')
         astr.className = 'dropdownusr';
@@ -195,12 +206,36 @@ function buildTable(historymap)
             itm1.addEventListener("click", function(){var k = ckey; changeUserRank(k); } );
             ddown.appendChild(itm1);
         }
+    }*/
+    
+    if(statuselector.options.length == 0) {
+        for(let[ckey, cvalue] of ranksreverce.entries()) {
+            let stopt = document.createElement('option')
+            stopt.text = cvalue.rank
+            stopt.value = ckey
+            stopt.style.background = cvalue.bgcolor;
+            stopt.style.color = cvalue.fontcolor;
+            statuselector.add(stopt, 0)
+            if(lastid < ckey)
+                lastid = ckey;
+        }
+        let opt0 = document.createElement('option')
+        opt0.text = ""
+        opt0.value = -1//lastid+1
+        statuselector.add(opt0, 0)
+        statuselector.addEventListener("change", function(){var k = Number(this.value); changeUserRank(k);}) 
     }
     let currank = gRanksParams.get(gRankId)
     if(currank !== undefined) {
-        titlelem.style.backgroundColor = currank.bgcolor
-        titlelem.style.color = currank.fontcolor
-        titlelem.title = currank.rank
+        //titlelem.style.backgroundColor = currank.bgcolor
+        //titlelem.style.color = currank.fontcolor
+        //titlelem.title = currank.rank
+        statuselector.style.background = currank.bgcolor
+        statuselector.style.color = currank.fontcolor
+        statuselector.value  = gRankId
+    }
+    else {
+        statuselector.value  = -1
     }
 }
 
@@ -214,6 +249,7 @@ function saveUserDescription()
             tabs.forEach(function(tab) {
                 if(tab.id != result.id) {
                     res = browser.tabs.sendMessage(tab.id, {request: "update"})
+                    res.then( r => {    window.opener=null; window.close(); })
                 }
             })
         });
@@ -222,17 +258,24 @@ function saveUserDescription()
 
 function changeUserRank(rnk) {
     gRankId = rnk
+    let statuselector = document.getElementById("statuselector")
     if(rnk == -1) {
-        titlelem.style.backgroundColor = "#FFFFFF"
-        titlelem.style.color = "#000000"
-        titlelem.title = undefined
+        //titlelem.style.backgroundColor = "#FFFFFF"
+        //titlelem.style.color = "#000000"
+        //titlelem.title = undefined
+        statuselector.style.background = selectdefbkgcolor
+        statuselector.style.color = "#000000"
     }
     else {
         let currank = gRanksParams.get(gRankId)
-        titlelem.style.backgroundColor = currank.bgcolor
-        titlelem.style.color = currank.fontcolor
-        titlelem.title = currank.rank
+        //titlelem.style.backgroundColor = currank.bgcolor
+        //titlelem.style.color = currank.fontcolor
+        //titlelem.title = currank.rank
+        statuselector.style.background = currank.bgcolor
+        statuselector.style.color = currank.fontcolor        
     }
+    optchanged = true; 
+    saveuserdescript.style = "border: 2px solid #FF0070; padding-top: 20px; padding-bottom: 20px; opacity: 80%;"
 }
 
 function getLocationParams(urlstr) {

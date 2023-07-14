@@ -351,10 +351,10 @@ function createrank(rank, bgcolor, fontcolor) {
 };
 
 function injectHistoryDialog(res) {
-    var backgrnd = document.getElementById('histbackground');
+    let backgrnd = document.getElementById('histbackground');
     if(backgrnd == null)
     {
-        let tst = document.createElement('iframe');
+        /*let tst = document.createElement('iframe');
         tst.style.setProperty('height', '0px');
         tst.style.setProperty('width', '0px');
         document.body.appendChild(tst);
@@ -363,7 +363,9 @@ function injectHistoryDialog(res) {
         frmrange.selectNode(win.document.firstChild);
         if(res.length != 0)
             var frg = frmrange.createContextualFragment(res);
-        document.body.appendChild(frg);
+        document.body.appendChild(frg);*/
+        
+        document.body.insertAdjacentHTML('beforeend', res)
         backgrnd = document.getElementById('histbackground');
         backgrnd.style.setProperty('display', "none");
     }
