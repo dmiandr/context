@@ -1,17 +1,17 @@
 
 .dropdownusr {
-  position: relative;
-  display: inline-block;
-  width: 0;
-  height: 0;
-  margin-left: 2px;
-  vertical-align: middle;
-  border-top: 4px dashed;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  margin-top: 0px;
-  cursor: pointer;
-  z-index: 2147483646;
+    position: relative;
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 2px;
+    vertical-align: top;
+    border-top: 4px dashed;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    margin-top: 0px;
+    cursor: pointer;
+    z-index: 2147483646;
 }
 
 .dropdownusr-content {
@@ -170,15 +170,14 @@
 
 .continvbutton:hover,
 .continvbutton:focus {
-  color: #aa0000;
-  border: 0px solid #1a4870;
-  cursor: pointer;
+    color: #aa0000;
+    border: 0px solid #1a4870;
+    cursor: pointer;
 }
 
 .contbutton {
     color: #ffffff;
     background: #326891;
-    border: 0px solid #1a4870;
     border-radius: 4px;
     position: relative;
     top: 5px;
@@ -188,9 +187,9 @@
 
 .contbutton:hover,
 .contbutton:focus {
-  color: #aa0000;
-  border: 0px solid #1a4870;
-  cursor: pointer;
+    color: #aa0000;
+    border: 0px solid #1a4870;
+    cursor: pointer;
 }
 
 .firstline {
@@ -260,11 +259,12 @@ table.histable td {
 
 .badge {
     position: relative;
-    top: -10px;
-    left: -5px;
+    top: -5px;
+    left: -10px;
     background: #111111;
     color: rgba(255,255,255,0.8);
     border: 1px solid black;
     border-radius: 8px;
     font-size: 10px;
+    opacity: 40%;
 }

@@ -309,7 +309,7 @@ function popupHistoryWindow(socnet, user, alias)
     histurl += user;
     if(alias !== undefined) {
         histurl += "&alias="
-        histurl += alias
+        histurl += encodeURI(alias)
     }
     let popup = window.open(histurl, "", "height=400,width=750");
     popup.focus();

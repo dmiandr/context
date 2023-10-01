@@ -30,7 +30,6 @@ function handleError(e)
 }
 
 function handleRanksList(rankslist) {
-    console.log(rankslist.length + " ranks got.");
     if(gRanksParams > 0)
         return; // Запросы могут быть посланы одновременно с нескольких вкладок - но если хотя-бы один уже обработан, остальные обрабатывать уже бессмысленно
     let prm;
@@ -106,15 +105,11 @@ function addElemsToActiveZone(zone) {
     if(alrex.length > 0)
         return;
     if(uopt.numevents > 0 && zone.attachBadge != null) {
-        let badgelems = zone.attachBadge.getElementsByClassName('badge');
-        if(badgelems.length == 0) {
-            badgelem = document.createElement('span');
-            badgelem.className = 'badge';
-            badgelem.textContent = uopt.numevents;
-            zone.attachBadge.append(badgelem);
+        let badgelem = zone.getBadge()
+        if(badgelem == null) {
+            let t = zone.setBadge(uopt.numevents)
         }
         else {
-            badgelem = badgelems[0];
             badgelem.textContent = uopt.numevents;
         }
     }
@@ -153,24 +148,6 @@ function addElemsToActiveZone(zone) {
             itmhst.style.background = "#FFFFDD";
             itmhst.addEventListener("click", function(evt){let itm = zone.element; gCallEvent(itm, evt);});
             ddown.appendChild(itmhst);
-            /*
-            itm1 = document.createElement('a');
-            itm1.innerHTML = "Убрать статус";
-            itm1.style.color = "#000";
-            itm1.style.background = "#FFFFDD";
-            itm1.setAttribute("id", "menurmrank")
-            itm1.addEventListener("click", function(){ let cnam = zone.username; menuevent(-1, zone.socnet, cnam); });
-            ddown.appendChild(itm1);
-
-            for(let[ckey, cvalue] of gRanksParams.entries())
-            {
-                itm1 = document.createElement('a');
-                itm1.textContent = cvalue.rank;
-                itm1.style.background = cvalue.bgcolor;
-                itm1.style.color = cvalue.fontcolor;
-                itm1.addEventListener("click", function(){var k = ckey; menuevent(k, zone.socnet, zone.username);} );
-                ddown.appendChild(itm1);
-            }*/
         }        
     }
 }
@@ -221,6 +198,7 @@ function colorAll() {
 
 /* Проверяет принадлежность родительского элемента к заданному классу */
 function isParentElementBelobgsToClass(item, classname) {
+    if(item == null) return false;
     let p = item.parentElement;
     if(p == null)
         return false;
@@ -235,8 +213,26 @@ function isParentElementBelobgsToClass(item, classname) {
         return isParentElementBelobgsToClass(p, classname);
     }
 }
+// То-же, что и предыдущая, но проверяется на принадлженость хоть ко одному классу из переданного списка
+function isParentElementBelobgsToClasses(item, classnames) {
+    if(item == null) return false;
+    let p = item.parentElement;
+    if(p == null)
+        return false;
+    if('classList' in p) {
+        for( let c of classnames) {
+            if(p.classList.contains(c))
+                return true;
+        }
+        return isParentElementBelobgsToClasses(p, classnames);
+    }
+    else {
+        return isParentElementBelobgsToClasses(p, classnames);
+    }
+}
 
 function getParentElementBelobgsToClass(item, classname) {
+    if(item == null) return null;
     let p = item.parentElement;
     if(p == null)
         return null;
@@ -256,12 +252,35 @@ function getParentElementBelobgsToClass(item, classname) {
  * 
 */
 function getChildElementBelongsToClass(item, classname) {
+    if(item == null) return null;
+    if(item.children == undefined)
+        return null;
     for(const c of item.children) {
         if(c.classList.contains(classname)) {
             return c
         }
     }
     return null;
+}
+
+/*! Выбирается первый найденый тег, принаддежащий к заданному классу */
+function getIndirectChildElementBelongsToClass(item, classname) {
+    if(item == null) return null;
+    /*console.log("TAG= "+ item.tagName + ", class = "+ item.classList)
+    if(item.tagName == "HEADER")
+        console.log(item.children)*/
+    let ind = getChildElementBelongsToClass(item, classname)
+    if(ind == null) {
+        if(item.children == undefined)
+            return null;
+        for(const c of item.children) {
+            ind = getIndirectChildElementBelongsToClass(c, classname)
+            if(ind != null)
+                return ind
+        }        
+        return null;
+    }
+    return ind;
 }
 
 function injectHistoryDialog(dlgcode) {
@@ -306,6 +325,7 @@ function requestActualUsersStauses() {
         itmdata['username'] = v.username
         itmdata['url'] = v.url
         itmdata['socnet'] = v.socnet
+        itmdata['urlequivs'] = v.urlequivs
         nmarr.push(itmdata)
     }
     nmarr.push({request: "histatuses"})
@@ -318,6 +338,7 @@ function requestActualUsersStauses() {
 /*! \brief \~russian Вызов функции поиска активных зон для всех известных сетей, по-очереди 
 /*! \brief \~english Calling search for active zones in all social networks fromats known */
 function analysePageAllSNets() {
+    //ActiveZones.clear();      //!!! Не могу объяснить, но почему-то если чистить кеш перед повторным анализом - то часть событий исчезает..
     for( let a of KnownSNets.keys()) {
         let snet = KnownSNets.get(a);
         let mark = snet.Mark
@@ -358,6 +379,9 @@ function handleActualUsersStatuses(itmsmap) {
             
             if(convToLower(v.url) == convToLower(k) & opt.isevent == true) {
                 v.isevent = true;
+                if(typeof opt.alturl !== 'undefined') {
+                    v['alturl'] = opt.alturl
+                }
                 ActiveZones.set(azitm, v)
                 break;
             }
@@ -367,7 +391,7 @@ function handleActualUsersStatuses(itmsmap) {
     for ( let azitm of ActiveZones.keys()) {
         v = ActiveZones.get(azitm);
         //v.element.style['border-style'] = 'solid';
-        //if(v.eventype == 1 || v.eventype == 2)
+        if(v.eventype != 4)     // 4 - это внешние ссылки на события без оформления как стандартные блоки, в них нет даже имени пользователя, к которому надо было бы цеплять меню. Пока они находятся, но не размечаются.
             addElemsToActiveZone(v)
     }
     colorAll();
@@ -376,20 +400,21 @@ function handleActualUsersStatuses(itmsmap) {
 function gCallEvent(itm, evt)
 {
     v = ActiveZones.get(itm)
-    onHistoryEvent(v.isevent, v.socnet, v.username, evt, itm, v.eventype, v.url);
+    //onHistoryEvent(v.isevent, v.socnet, v.username, evt, itm, v.eventype, v.url);
+    onHistoryEvent(v, evt, itm);
 }
 
 /*! Функция выбирает, откуда взять данные для заполнения диалога события - в зависимости от первого параметра, если он true,
  * то данные запрашиваются из БД для этого события, в противном случае - беруться из данных страницы. */
-function onHistoryEvent(loaddb, socname, cname, mouseevent, commentitem, type, url)
+function onHistoryEvent(az, mouseevent, commentitem)
 {
-  if(loaddb)
+  if(az.isevent)
   {
-    fillHistoryDialogFromDb(url, mouseevent, socname, cname, type);
+    fillHistoryDialogFromDb(az, mouseevent);
   }
   else
   {
-    fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type);
+    fillHistoryDialogFromPage(az.socnet, az.username, mouseevent, commentitem, az.eventype);
   }
 }
 
@@ -397,17 +422,21 @@ function onHistoryEvent(loaddb, socname, cname, mouseevent, commentitem, type, u
 * относительное расположение и характеные значения атрибутов, на основе которых определяются параметры, жестко зашиты в код данной функции. В частности, для событий POSTAUTHOR
 дата может располагаться как на одном уровне с тегом имеющим класс class="m_author", так и на уровень выше. Оба варианта должны быть рассмотрены при поиске поля Дата */
 function fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type) {
+    z = ActiveZones.get(commentitem)
+    if(z == null)
+        return;
+    
     let evtime = gCurrnetNet.GetTimestamp(commentitem, type);
-    let ualias = commentitem.innerText;
+    let ualias = gCurrnetNet.GetUserAlias(commentitem); //commentitem.innerText;
     let uopt = gUsersCache.get(socname+"%"+cname)
     if(uopt != undefined) {
         let bdg = uopt.numevents.toString()
         if(uopt.numevents != 0 && ualias.endsWith(bdg)) {
-            ualias = ualias.slice(0, ualias.length - bdg.length)
+            ualias = ualias.slice(0, ualias.length - bdg.length) //Это ситуативная правка, для удаления ранее ошибочно прицепленного количества событий к имени, может сработать и в обратную сторону! Разобраться и убрать!
         }
     }    
     let ev = gCurrnetNet.GetEventText(commentitem, type);
-    let evurl =  gCurrnetNet.GetEventUrl(commentitem, type);
+    let evurl =  z['url'] //gCurrnetNet.GetEventUrl(commentitem, type);
     let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, ualias, evtime, evurl, ev.evtitle, ev.evtext, type, false, "", false);
     return dlgres.then(result => {
         addEventMark(evurl, socname, cname);
@@ -415,21 +444,25 @@ function fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type
     });
 }
 
-function fillHistoryDialogFromDb(url, mouseevent, socname, cname, type)
+function fillHistoryDialogFromDb(az, mouseevent)
 {
     let nmarr = new Array();
+    let url = az.url;
+    if(az.alturl)
+        url = az.alturl; // если событие было найдено не по точному url, а по эквивалентному - то отображать надо его и редактировать/удалять надо используя его
+    
     nmarr.push(url);
     nmarr.push({request: "gethistoryitem"});
     let sendongeth = browser.runtime.sendMessage(nmarr);
     return sendongeth.then(result => {
         let r = new Map(result);
-        let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, r.get("alias"), r.get("time"), url, r.get("title"), r.get("descript"), type, r.get("repost"), r.get("tags"), true);
+        let dlgres = drawHistoryEventDlg(mouseevent, az.socnet, az.username, r.get("alias"), r.get("time"), url, r.get("title"), r.get("descript"), az.eventype, r.get("repost"), r.get("tags"), true);
         dlgres.then( result => {
             if(result == "rmbtn") {
-                removeEventMark(url, socname, cname);
+                removeEventMark(url, az.socnet, az.username);
                 requestActualUsersStauses();
             }
-        });      
+        });
     });
 }
 
@@ -444,7 +477,7 @@ function addEventMark(url, socname, uname)
     let uopt = gUsersCache.get(socname+"%"+uname)
     if(uopt == undefined) {
         uopt = { numevents: 0, rankid: -1, hidden: false }
-        console.log("Logic error. gUsersCache has no member for " + v.username);
+        console.log("Logic error. gUsersCache has no member for " + socname+"%"+uname);
     }
     uopt.numevents = uopt.numevents + 1;
     gUsersCache.set(socname+"%"+uname, uopt)
@@ -457,15 +490,12 @@ function addEventMark(url, socname, uname)
                 m0 = mencont.childNodes[0];
             
             if(uopt.numevents == 1) {   // 1 значит первое событие было только что добавлено, нужно добавть бадж
-                let badgelem = document.createElement('span');
-                badgelem.className = 'badge';
-                badgelem.textContent = uopt.numevents;
-                v.attachBadge.append(badgelem);       
+                v.setBadge(1)
             }            
             if(uopt.numevents > 1) {
-                badgelems = v.attachBadge.getElementsByClassName('badge');
-                if(badgelems.length > 0)
-                    badgelems[0].textContent = uopt.numevents;
+                let badge = v.getBadge()
+                if(badge != null)
+                    badge.textContent = uopt.numevents;
             }
             if(mencont != null)
                 m0.textContent = uname + " (" + uopt.numevents + ")";
@@ -496,7 +526,7 @@ function removeEventMark(url, socname, uname) {
     let uopt = gUsersCache.get(socname+"%"+uname)
     if(uopt == undefined) {
         uopt = { numevents: 0, rankid: -1, hidden: false }
-        console.log("Logic error. gUsersCache has no member for " + v.username);
+        console.log("Logic error. gUsersCache has no member for " + socname+"%"+uname);
         return;
     }
     uopt.numevents = uopt.numevents - 1;
@@ -508,15 +538,15 @@ function removeEventMark(url, socname, uname) {
         if(v.username == uname) {
             if(mencont != null)
                 m0 = mencont.childNodes[0];
-            let badgelems = v.attachBadge.getElementsByClassName('badge');
+            let badge = v.getBadge()
             
             if(uopt.numevents > 0) {
-                if(badgelems.length > 0)
-                    badgelems[0].textContent = uopt.numevents;
+                if(badge != null)
+                    badge.textContent = uopt.numevents;
             }
             if(uopt.numevents == 0) {
-                if(badgelems.length > 0)
-                    badgelems[0].remove();
+                if(badge != null)
+                    badge.remove();
             }
             if(uopt.numevents >= 0) {
                 if(mencont != null)

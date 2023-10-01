@@ -199,6 +199,7 @@ function histatuses_handler(msg, db, resolve) {
     let histcount = 0;
     oc.onsuccess = function(event) {
         let cur = event.target.result;
+        
         if(cur) {
             let u = cur.value.username.toLowerCase()
             let n = cur.value.socnet
@@ -215,6 +216,7 @@ function histatuses_handler(msg, db, resolve) {
         }
         else {
             if(lstevents.length == 0) {         // DEBUG
+                console.log("0 history read")
                 stsmap.set("$", "0 history read");
             }
             let obju = tr.objectStore("users");
@@ -244,12 +246,30 @@ function histatuses_handler(msg, db, resolve) {
                         let curusr = curitm.username.toLowerCase();
                         let curnet = curitm.socnet
                         let curx = curnet + "%" + curusr
-                        if(typeof curitm.url !== 'string') continue;  // Вообще-то стоит сделать явную проверку типов везде, а не только там где оно протекло
-                        let cururl = curitm.url;
-                        let cururlequiv = getEquivalentLink(cururl); // /full added or removed - ЭТО НАДО УНЕСТИ В contws!!
+                        let cururlequiv = ""
+                        let cururl = ""
+                        if(!!curitm.url) {
+                            cururl = curitm.url
+                            cururlequiv = curitm.urlequivs
+                        }
+                        else
+                            cururl = crypto.randomUUID()
+                            
+                        optstoadd['alturl'] = ""
                         optstoadd['username'] = curusr
                         optstoadd['socnet'] = curnet
-                        optstoadd['isevent'] = lstevents.includes(cururl.toLowerCase()) || lstevents.includes(cururlequiv.toLowerCase());
+                        optstoadd['isevent'] = lstevents.includes(cururl.toLowerCase())
+                        if(!optstoadd['isevent'] && !!cururlequiv) {
+                            let altrexp = new RegExp(cururlequiv)
+                            for(let cosamp = 0; cosamp < lstevents.length; cosamp++) {
+                                let cursamp = lstevents[cosamp]
+                                if(altrexp.test(cursamp) == true) {
+                                    optstoadd['isevent'] = true;
+                                    optstoadd['alturl'] = cursamp
+                                    break;
+                                }
+                            }
+                        }
                         let numev = evcounter.get(curx);
                         if(numev == undefined)
                             numev = 0;
@@ -467,7 +487,10 @@ function getuserhistory_handler(msg, db, resolve) {
         console.log("getuserhistory error");
     }
 }
-
+// В текущей версии все ссылки должны автоматически приводиться к нижнему регистру, поэтому достаточно сделать вызов get(url)
+// Но если в базе находятся события, сформированные в предыдущих версиях, в них могут оказаться и заглавные буквы в именах 
+// пользователей. На этот случай, если событие не было найдено предыдущим, быстрым запросом - производится повторный поиск, медленный
+// с полным перебором всех событий и их сравненем с предворительным принудительным изменением регистра
 function gethistoryitem_handler(msg, db, resolve) {
     let url = msg.pop();
     let objh = db.transaction("history").objectStore("history");
@@ -475,18 +498,43 @@ function gethistoryitem_handler(msg, db, resolve) {
     geth.onsuccess = function(event) {
         let d = geth.result;
         if(d === undefined) {
-            console.log("gethistoryitem undefined before resolve");
-            resolve("");
+            let tr = db.transaction("history")
+            let sth = tr.objectStore("history")
+            let cu = sth.openCursor()
+            cu.onsuccess = function(event) {
+                let cur = event.target.result;
+                if(cur) {
+                    let cururl = cur.value.url;
+                    if(cururl.toLowerCase() == url.toLowerCase()) {
+                        let cmap = new Map();
+                        cmap.set("time", cur.value.time);
+                        cmap.set("title", cur.value.title);
+                        cmap.set("type", cur.value.type);
+                        cmap.set("alias", cur.value.alias);
+                        cmap.set("descript", cur.value.descript);
+                        cmap.set("repost", cur.value.repost);
+                        cmap.set("tags", cur.value.tags);
+                        resolve([...cmap]);
+                    }
+                    cur.continue();
+                }
+                else {
+                    console.log("gethistoryitem undefined before resolve");
+                    resolve("");
+                }
+            }
         }
-        let itmap = new Map();
-        itmap.set("time", d.time);
-        itmap.set("title", d.title);
-        itmap.set("type", d.type);
-        itmap.set("alias", d.alias);
-        itmap.set("descript", d.descript);
-        itmap.set("repost", d.repost);
-        itmap.set("tags", d.tags);
-        resolve([...itmap]);
+        else {
+            let itmap = new Map();
+            itmap.set("time", d.time);
+            itmap.set("title", d.title);
+            itmap.set("type", d.type);
+            itmap.set("alias", d.alias);
+            itmap.set("descript", d.descript);
+            itmap.set("repost", d.repost);
+            itmap.set("tags", d.tags);
+            resolve([...itmap]);
+        }
     }
     geth.onerror = function(err) {
         console.log("gethistoryitem error: " + err);

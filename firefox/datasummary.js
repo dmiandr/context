@@ -10,6 +10,10 @@ let gPrevBcolor
 var gRanksParams = new Map();
 window.addEventListener("load", onCompletePageLoad, false);
 
+// Вызов сетеспецифичного файла здесь осуществляется за счет его упоминания в options.html - там идет ссылка на скрипт, благодаря чему вызывается заполнение 
+// элемента в KnownSNets, с соответствующими специфическими функциями и значеними. Вообще-то это безобразие - надо придумать, как добиться что-бы описяния 
+// сетей подключались только в одном месте
+
 // обработка изменений, сделанных в свойствах пользователя
 browser.runtime.onMessage.addListener( (message) => {
     // обработчик не реализовывался, но точка получения сообщения необходима чтобы не выдавалось ошибок
@@ -75,7 +79,6 @@ function showBriefList(res) {
                     }
                     let arr = new Array();
                     let flsts = showstatuses.join(",")
-                    console.log("F = ", flsts)
                     arr.push(flsts)
                     arr.push({request: "getbrieflist"});
                     let sumres = browser.runtime.sendMessage(arr);
@@ -289,59 +292,61 @@ function tableSummary(result)
     if(lastevent.totalevents > 0) {
         celltext = document.createTextNode(lastevent.time.toLocaleString('ru-RU'));
         curcell.appendChild(celltext);
-    curcell = singlrow.insertCell(1);
-    cellelem = document.createElement('a');
-    cellelem.href = "#";
-    cellelem.addEventListener("click", function(evt){popupHistoryWindow(lastevent.socnet, lastevent.username);});
-    cellelem.innerText = lastevent.alias + " (" + lastevent.username + ")";
-    if(lastevent.hidden == true)
-        cellelem.style.fontStyle = "italic"
-    curcell.appendChild(cellelem);
-    curcell = singlrow.insertCell(2);
-    cellelem = document.createElement('a');
-    cellelem.href = "#";
-    cellelem.addEventListener("click", function(evt){
+        curcell = singlrow.insertCell(1);
+        cellelem = document.createElement('a');
+        cellelem.href = "#";
+        cellelem.addEventListener("click", function(evt){popupHistoryWindow(lastevent.socnet, lastevent.username);});
+        cellelem.innerText = lastevent.alias + " (" + lastevent.username + ")";
+        if(lastevent.hidden == true)
+            cellelem.style.fontStyle = "italic"
+        curcell.appendChild(cellelem);
+        curcell = singlrow.insertCell(2);
+        cellelem = document.createElement('a');
+        cellelem.href = "#";
+        cellelem.addEventListener("click", function(evt){
             drawHistoryEventDlg(evt, lastevent.socnet, lastevent.username, lastevent.alias, lastevent.time.toLocaleString('ru-RU'), lastevent.url, lastevent.title, lastevent.descript, lastevent.type, lastevent.repost, lastevent.tags, true);
         });
-    if(lastevent.title === "")
-        lastevent.title = " (без заголовка) "
-    cellelem.innerText = lastevent.title;        
-    curcell.appendChild(cellelem);
-    curcell = singlrow.insertCell(3);
-    cellelem = document.createElement('a');
-    cellelem.href = "#";
-    cellelem.addEventListener("click", function(evt){parent.window.open(lastevent.url)})
-    let evtype_name  = ""
-    if(lastevent.type == 1)
-        evtype_name = "Комментарий";
-    if(lastevent.type == 4 || lastevent.type == 2)
-        evtype_name = "Запись";
-    cellelem.innerText = evtype_name
-    curcell.appendChild(cellelem);
+        if(lastevent.title === "")
+            lastevent.title = " (без заголовка) "
+        cellelem.innerText = lastevent.title;        
+        curcell.appendChild(cellelem);
+        curcell = singlrow.insertCell(3);
+        cellelem = document.createElement('a');
+        cellelem.href = "#";
+        cellelem.addEventListener("click", function(evt){parent.window.open(lastevent.url)})
+        let evtype_name  = ""
+        if(lastevent.type == 1)
+            evtype_name = "Комментарий";
+        if(lastevent.type == 4 || lastevent.type == 2)
+            evtype_name = "Запись";
+        cellelem.innerText = evtype_name
+        curcell.appendChild(cellelem);
     } 
     
-    tbl.innerHTML = '<th>N</th><th>Имя</th><th>Псевдоним</th><th>Количество событий</th>';
+    tbl.innerHTML = '<th>N</th><th>Сеть</th><th>Имя</th><th>Псевдоним</th><th>Количество событий</th>';
     let usrn = 1
     for(let h of data.keys())
     {
-        let rowmap = data.get(h);
-        let ualias = rowmap.alias;
+        let rowmap = data.get(h)
+        let ualias = rowmap.alias
         let socnet = h.split("%")[0]
         let uname = h.split("%")[1]
-        let row = tbl.insertRow(-1);
+        let row = tbl.insertRow(-1)
+        let socname = KnownSNets.get(socnet).Title
         
         addPlainCell(row, 0, usrn)
-        let aelem = addHrefCell(row, 1, uname, "#")
+        addPlainCell(row, 1, socname)
+        let aelem = addHrefCell(row, 2, uname, "#")
         aelem.addEventListener("click", function(evt){evt.preventDefault(); popupHistoryWindow(socnet, uname); });
         if(rowmap.hidden == true)
             aelem.style.fontStyle = "italic"        
 
-        let c2 = addPlainCell(row, 2, ualias)
+        let c2 = addPlainCell(row, 3, ualias)
         colorItem(gRanksParams, c2, rowmap.rankid)
         if(rowmap.description != undefined) {
             c2.title = rowmap.description
         }
-        addPlainCell(row, 3, rowmap.numevents)
+        addPlainCell(row, 4, rowmap.numevents)
         usrn++
     }
 }

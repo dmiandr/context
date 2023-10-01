@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "User management extension for CONT.ws",
-  "short_name": "CONText",
-  "version": "0.4",
-  "description": "Расширение для ведения истории и присвоения статусов пользователям социальной сети cont.ws.",
+  "name": "Context - reputation tracker for social networks users",
+  "short_name": "Context RepuTracker",
+  "version": "0.5",
+  "description": "Расширение для отслеживания репутации пользователей социальных сетей",
   "author": "dmitrevo",
   "homepage_url": "https://github.com/dmiandr/context",
 
@@ -18,9 +18,9 @@
 
   "content_scripts": [
     {
-      "matches": ["*://*.cont.ws/*"],
+      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*"],
       "css": ["ddmenu.css", "tabs.css"],
-      "js": ["mutation.js", "contextlib.js", "initfirst.js", "contws.js", "content.js"]
+      "js": ["mutation.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "content.js"]
     }
   ],
   "incognito": "spanning",
