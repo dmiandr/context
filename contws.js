@@ -8,7 +8,7 @@ for (d of contwsurls) {
     }
 }
 
-let contobj = {Mark: 0, IsPub: IsContPub, Title: "КОНТ", ListActiveZones: ListContActiveZones2, GetTimestamp: GetContTimestamp, GetEventText: GetContEventText, GetEventUrl: GetContEventUrl, GetUserAlias: GetContUserAlias};
+let contobj = {Mark: 0, IsPub: IsContPub, Title: "КОНТ", ListActiveZones: ListContActiveZones, GetTimestamp: GetContTimestamp, GetEventText: GetContEventText, GetEventUrl: GetContEventUrl, GetUserAlias: GetContUserAlias};
 if (IsCont == 1)
     contobj.Mark = 1
 
@@ -37,7 +37,7 @@ function IsContPub() {
 // Отображать у этого пользователя меню, видимо, не надо - он и так уже раскрашен над и под постом, а тут это перегружает страницу,
 // кроме того там есть небольшие проблемы с отображением баджа..
 
-function ListContActiveZones2(zmap, ishome) {
+function ListContActiveZones(zmap, ishome) {
     // cont.ws/@username, with or without /, followed by post id at the end and with or without & followed by params
     let testurlre = new RegExp("cont.ws\\/@([^\\/\\&]+)\\/*(\\d*)*\\&*.*$")
     let testurlnonpostre = new RegExp("cont.ws\\/@([^\\/\\&]+)\\/*(\\S*)*\\&*.*$")  // выражение, отсекающее служебные линки, где вместо идентификатора публикации (числовой) идет буквенное или цифробуквенное сочетание
@@ -397,204 +397,6 @@ function ListContActiveZones2(zmap, ishome) {
         }
     }
 }
-
-function ListContActiveZones(zmap, ishome) {
-    allelems = document.querySelectorAll('a[href*="cont.ws"],a[href*="/@"]');
-    for(var co = 0; co < allelems.length; co++) {
-        let actzone = {};
-        let itm = allelems[co];
-        let res = extractContUsername(itm);
-        if(res == null)
-            continue;
-        let username = res.name;
-            
-        //if(itm.parentElement.classList.contains("media-body"))
-            //console.log("COUNT media-body = ", co)
-        
-        let article = res.article
-        if(article.length != 0) // eliminates all publication and service links? such as @username/following.
-            continue;
-        if(itm.innerText === "")
-            continue;
-        if(isParentElementBelobgsToClass(itm, "notifications-list") === true)
-            continue;
-        if(isParentElementBelobgsToClass(itm, "post_toolbar") === true)
-            continue;
-        if(isParentElementBelobgsToClass(itm, "post-bottom-panel") === true)
-            continue;
-        //if(itm.classList.contains("new_m_author"))
-            //continue;
-        if(isParentElementBelobgsToClass(itm, "comment-body")) // это автоматически проставляемое упоминание автора родительского комментария в отвечающем комментарии
-            continue;
-            
-        if(username == "krestianin")
-            console.log("krestianin")        
-            
-        initazone(actzone, itm, username, "contws");
-        actzone['captElement'] = null;
-        
-        //if(getParentElementBelobgsToClass(itm, "author-bar") != null)
-        //    console.log("TEST full")
-        
-        /*if(isParentElementBelobgsToClass(itm, "new_author_bar")) {          // FEED
-            actzone['captElement'] = getContFeedElement(itm)
-            let loclink = actzone['captElement'].getAttribute('href')
-            if(loclink[0] == '/')
-                actzone['url'] = "https://cont.ws" + loclink
-            else
-                actzone['url'] = loclink
-            
-            //actzone['url'] = captElement.href; //getContFeedURL(actzone['captElement'])
-            //console.log("URL new_author_bar  = ", actzone['url'])
-            actzone['eventype'] = 2
-            //let prntblock = getParentElementBelobgsToClass(itm, "new_author_bar")
-            //console.log("prntblock = ", prntblock);
-            //if(prntblock != null)
-                //actzone['totalblock'] = prntblock.parentElement // почему-то при каждой перемотке публикация возвращается в ленту, в результате она то появляется, то исчезает, х.з. как это исправить, пока отключу.
-        //}
-        /*else*/ if(itm.classList.contains("post_jr")) {                        // FEED
-            actzone['captElement'] = getContFeedElement(itm)
-            actzone['url'] = getContFeedURL(actzone['captElement'])
-            actzone['eventype'] = 2
-            //console.log("URL post_jr  = ", actzone['url'])
-        }
-        else if(itm.classList.contains("m_author")) {                       // Post page
-            if(itm.parentElement.classList.contains("topblock_author")) {   // первый пост в шапке ленты
-                actzone['isModifiable'] = false;
-                actzone['captElement'] = itm.parentElement.previousElementSibling;
-                actzone['eventype'] = 2
-                actzone['url'] = getContFeedURL(actzone['captElement'])
-                //console.log("URL topblock_author  = ", actzone['url'])
-            }
-            /*else if(itm.parentElement.classList.contains("author-bar")) {
-                
-                
-            }*/
-            else {
-                actzone['isModifiable'] = true;
-                actzone['eventype'] = 2
-                actzone['captElement'] = getPostCaption(itm)
-                actzone['url'] = convToLower(window.location.href.split('#')[0]);
-                //console.log("URL NOT topblock_author  = ", actzone['url'])
-            }
-        }
-        else if(itm.classList.contains("topblock_author")) {                // остальные посты шапки ленты
-            let pp = itm.parentElement
-            let ch = pp.firstElementChild;
-            while( ch != null && ch != undefined) {
-                if(ch.classList.contains("topblock_title")) {
-                    actzone['isModifiable'] = false;
-                    actzone['captElement'] = ch
-                    actzone['eventype'] = 2
-                    actzone['url'] = getContFeedURL(ch)
-                    //console.log("URL шапка  = ", actzone['url'])
-                    break;
-                }
-                ch = ch.nextElementSibling
-            }            
-        }
-        else if(itm.classList.contains("user-card__login")) {               // Footer on post page
-        }
-        else if(isParentElementBelobgsToClass(itm, "post_toolbar")) {       // Lower bar with link to user Кстати, сейчас он почему-то не снабжается меню.
-        }
-        else if(itm.classList.contains("inline-posts-preview__author_link")) {
-            let pp = itm.parentElement.parentElement;
-            let ppsib = pp.previousElementSibling;
-            if(ppsib != undefined) {
-                if(ppsib.classList.contains("inline-posts-preview__title")) {
-                    actzone['captElement'] = ppsib
-                    actzone['url'] = "https://cont.ws" + ppsib.getAttribute("href"); //getContFeedURL(ppsib);
-                    //console.log("URL inline-posts-preview__author_link  = ", actzone['url'])
-                    actzone['eventype'] = 2
-                }
-            }
-        }
-        else {  // почему-то ссылки на комментарий я ищу методом исключения.. Надо поглядеть, нельзя ли это как-то поправить.
-            //let timestampss = itm.parentElement.parentElement.getElementsByClassName("comment-date")[0];
-            //actzone['datetime'] = extractContTime(timestampss.innerText);
-            actzone['captElement'] = itm
-            let prntblock = getParentItemWithAttribute(itm, "comment-author-login") // это является признаком комментария 
-            actzone['totalblock'] = null;
-            if(prntblock != null) {
-                actzone['isModifiable'] = true 
-                actzone['url'] = getCommentURL(itm)
-                actzone['eventype'] = 1
-                for(const ch of prntblock.children) {
-                    if(ch.tagName.toLowerCase() == "div" && ch.className == "media") {
-                        actzone['totalblock'] = ch;
-                        break;
-                    }
-                }   
-            }
-        }
-        // Построение альтернативных линков: 
-        // Если это запись, то у нее возможны три варианта - короткий, оканчивающийся на id публикации,
-        // развернутый - с добавлением /full и с добавлением далее #comments, с добавлением только comments. Так что в помещаются остальные три, кроме найденного.
-        // Если это комментарий, то у него возможен вариант с /full перед # и без (причем использовать для открытия надо первый, но это не здесь).
-        
-        let resregexp = ""
-        let resregexp2 = ""
-        let u = actzone['url']
-        
-        //let cid = getParentItemWithAttribute(itm, "comment-id");
-        let postid = ""
-        if(actzone['eventype'] == 2) {
-            let postre = new RegExp("\\/(\\d+)")
-            let mtch = u.match(postre, "g");
-            if(mtch != null) {
-                postid = mtch[1]
-                resregexp = "(?=" + postid + ")(?!.*comment\\d+)"
-            }
-            
-        }
-        /*
-        if(mtch != null) {
-            postid = mtch[1]
-            let postrxstr = "(?=" + postid + ")(?!.*comment\\d+)"
-            let postrx = new RegExp(postrxstr)
-            console.log("url = ", u)
-            console.log("postrxstr = ", postrxstr)
-            
-            console.log("RE = ", postrx.test(u))
-            
-            let str = "https://cont.ws/@id359426210/1001000/full#comment23963301"
-            regex = /(?=1001000)(?!.*comment\d+)/g
-            console.log("CONTR TEST= ", regex.test(str));
-            
-        }*/
-       /*
-        let pos = u.search("/full")
-        const commrx = /#comments$/;
-        if(u.match(commrx) != null) { // пост с фокусировкой на комментариях
-            if(pos == -1)
-                resregexp = u.substr(0, u.length-9) + "/full#comments|" + u.substr(0, u.length-9); // resregexp = "(" + u.substr(0, u.length-9) + "/full#comments)|(" + u.substr(0, u.length-9) + ")";
-                
-            else
-                resregexp = u.substr(0, pos) + "#comments|" + u.substr(0, pos); // = "(" + u.substr(0, pos) + "#comments)|(" + u.substr(0, pos) + ")";
-        } else if(u.match(/#comment\d+$/) != null) { // комментарий
-            let posc = u.search(/#comment\d+$/)
-            if(pos == -1)
-                resregexp = u.substr(0, posc) + "/full/" + u.substr(posc, u.length);
-            else
-                resregexp = u.substr(0, pos) + u.substr(posc, u.length);
-            
-        } else { // пост без фокусировки на комментариях
-            if(u.match(/\/\d+/) != null) { // если то, что идет в качестве линка удовлетворяет минимальному условию - наличию фрагмента /X, где X - любая цифра
-                if(pos == -1)
-                    resregexp = u + "/full|" + u + "/full#comments"; //"(" + u + "/full)|(" + u + "/full#comments)";
-                else
-                    resregexp = u.substr(0, pos) + "#comments|" + u + "#comments|" + u.substr(0, pos); //"(" + u.substr(0, pos) + "#comments)|(" + u + "#comments)";
-            }
-        }
-        */
-        //resregexp = resregexp.replaceAll('/', '\\/')
-        
-        console.log("EVURL = ", u)
-        actzone['urlequivs'] = resregexp;
-        zmap.set(itm, actzone)
-    }
-}
-
 
 /*! \brief \~russian Выделение имени пользователя из ссылки на его профиль. Если ссылка на статью, то вернет null */
 function extractContUsername(h) {

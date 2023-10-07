@@ -76,6 +76,32 @@ function ListVkActiveZones(zmap, ishome) {
         actzone['url'] = GetVkEventUrl(itm, actzone['eventype'])
         zmap.set(itm, actzone)
     }
+    let allvids = []
+    if(ishome != 0)
+        allvids = document.querySelectorAll('a[class="mem_link"]');
+    for(let co = 0; co < allvids.length; co++) {
+        let actzone = {}
+        let itm = allvids[co]
+        let username = extractVkUsername(itm)
+        if(username == null)
+            continue;
+        
+        let vidtitl = null
+        let vidbl = getParentElementBelobgsToClass(itm, "VideoLayerInfo")
+        if(vidbl != null)
+            vidtitl = getIndirectChildElementBelongsToClass(vidbl, "mv_title")
+        let vidmenuitm = getParentElementBelobgsToClass(itm, "VideoLayerInfo__authorInfo")
+        if(vidmenuitm == null)
+            vidmenuitm = itm        
+        
+        initazone(actzone, itm, username, "vkcom");
+        actzone['eventype'] = 2
+        actzone['isModifiable'] = true
+        actzone['captElement'] = vidtitl
+        actzone['attachMenuDomElement'] = vidmenuitm;
+        actzone['url'] = GetVkEventUrl(itm, actzone['eventype'])
+        zmap.set(itm, actzone)        
+    }
     
     let allrefs
     if(ishome != 0)
@@ -92,7 +118,7 @@ function ListVkActiveZones(zmap, ishome) {
             continue;
         
         //исключить повторное включение уже найденных по классу линков плюс не размечать ссылки на предыдущий комментарий в дискуссиях. copy_post_image - к этому классу принадлежит юзерпик цитируемого пользователя
-        if(itm.classList.contains("author") || itm.classList.contains("PostHeaderTitle__authorLink") || itm.classList.contains("reply_to") || itm.classList.contains("AvatarRich") || itm.classList.contains("copy_post_image")) {
+        if(itm.classList.contains("author") || itm.classList.contains("PostHeaderTitle__authorLink") || itm.classList.contains("reply_to") || itm.classList.contains("AvatarRich") || itm.classList.contains("copy_post_image")  || itm.classList.contains("mem_link")) {
             continue;
         }
         usernamealt = ""
@@ -153,18 +179,18 @@ function GetVkUserAlias(item) {
     resname = alias
            
     if(tagname == null) {
-        if(refname != alias) {
+        if(refname != alias && refname != null) {
             resname += " ("
             resname += refname
             resname += "}"
         }
     }
     else {
-        if(refname != tagname && refname != tagnamealt) {
+        if(refname != tagname && refname != tagnamealt && refname != null) {
             resname += " ("
             resname += refname
-            resname += "}"
-        }        
+            resname += ")"
+        }     
     }
     return resname;
 }
@@ -203,7 +229,7 @@ function GetVkUsernameByHref(h) {
     if(href.slice(0, 1) == '/')
         href = href.substring(1, href.length)
         
-    if(/(\\?|\\&)/.test(href) == true)
+    if(/(\?|\&)/.test(href) == true)
         return null;
     
     return href.toLowerCase();
@@ -215,35 +241,49 @@ function GetVkTimestamp(item, type) {
     let seconds = 0
     let isam
     let ispm
+    let res
     
     if(type == 1) {
         let comblock = getParentElementBelobgsToClass(item, 'reply_content')
         let footblock = getChildElementBelongsToClass(comblock, 'reply_footer')
         let dateblock = getChildElementBelongsToClass(footblock, 'reply_date')
         let linkblock = getChildElementBelongsToClass(dateblock, 'wd_lnk')
-        let datespan = getChildElementBelongsToClass(linkblock, 'rel_date')
-        if(datespan == null)
-            return new Date().toLocaleString('ru-RU');
-        
-        let res = getTimeFromElement(datespan)
-        return res;        
+        if(linkblock == null) { // в случае видео
+            res = getTimeFromElement(dateblock)
+            return res;
+        }
+        else {
+            let datespan = getChildElementBelongsToClass(linkblock, 'rel_date')
+            if(datespan == null)
+                return new Date().toLocaleString('ru-RU');
+            res = getTimeFromElement(datespan)
+            return res;
+        }
     }
     if(type == 2) {
-        let comblock = getParentElementBelobgsToClass(item, 'PostHeaderInfo')
-        let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
-        let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
-        let dateblock = getChildElementBelongsToClass(linkblock, 'PostHeaderSubtitle__item')
-        let datespan = getChildElementBelongsToClass(dateblock, 'rel_date')
-        if(datespan == null) {
-            if(dateblock == null)
-                return new Date().toLocaleString('ru-RU');
+        let mvinfo = getParentElementBelobgsToClass(item, 'mv_info')
+        if(mvinfo == null) {
+            let comblock = getParentElementBelobgsToClass(item, 'PostHeaderInfo')
+            let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
+            let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
+            let dateblock = getChildElementBelongsToClass(linkblock, 'PostHeaderSubtitle__item')
+            let datespan = getChildElementBelongsToClass(dateblock, 'rel_date')
+            if(datespan == null) {
+                if(dateblock == null)
+                    return new Date().toLocaleString('ru-RU');
+                else {
+                    res = getTimeFromElement(dateblock)
+                    return res
+                }
+            }
             else {
-                let res = getTimeFromElement(dateblock)
+                res = getTimeFromElement(datespan)
                 return res
             }
         }
         else {
-            let res = getTimeFromElement(datespan)
+            let datespan = getIndirectChildElementBelongsToClass(mvinfo, 'VideoLayerInfo__date')
+            res = getTimeFromElement(datespan)
             return res
         }
     }
@@ -262,18 +302,28 @@ function GetVkEventText(item, type) {
         }
     }
     if(type == 2) {
-        let postblock = getParentElementBelobgsToClass(item, 'wl_post') // при открытии поста поверх ленты
-        if(postblock == null)
-            postblock = getParentElementBelobgsToClass(item, '_post_content') // пост внутри ленты
-        let textblock = getIndirectChildElementBelongsToClass(postblock, 'wall_post_text')
-        evmain = ""
-        if(textblock != null) {
-            evmain = textblock.innerText
+        let mvinfo = getParentElementBelobgsToClass(item, 'mv_info')
+        if(mvinfo != null) { // публикация ВК видео 
+            let captblock = getIndirectChildElementBelongsToClass(mvinfo, 'mv_title')
+            let vtextblock = getIndirectChildElementBelongsToClass(mvinfo, 'cant_edit')
+            evtitle = captblock.innerText
+            evmain = vtextblock.innerText            
         }
         else {
-            let imgblock = getIndirectChildElementBelongsToClass(postblock, 'MediaGrid__imageSingle')
-            if(imgblock != null)
-                evmain = imgblock.getAttribute('src')
+            let postblock = getParentElementBelobgsToClass(item, 'wl_post') // при открытии поста поверх ленты
+            if(postblock == null)
+                postblock = getParentElementBelobgsToClass(item, '_post_content') // пост внутри ленты
+                
+            let textblock = getIndirectChildElementBelongsToClass(postblock, 'wall_post_text')
+            evmain = ""
+            if(textblock != null) {
+                evmain = textblock.innerText
+            }
+            else {
+                let imgblock = getIndirectChildElementBelongsToClass(postblock, 'MediaGrid__imageSingle')
+                if(imgblock != null)
+                    evmain = imgblock.getAttribute('src')
+            }            
         }
     }
     
@@ -285,29 +335,65 @@ function GetVkEventText(item, type) {
 
 function GetVkEventUrl(item, type) {
     if(type == 1) {
-        let comblock = getParentElementBelobgsToClass(item, 'reply_content')
-        let footblock = getChildElementBelongsToClass(comblock, 'reply_footer')
-        let dateblock = getChildElementBelongsToClass(footblock, 'reply_date')
-        let linkblock = getChildElementBelongsToClass(dateblock, 'wd_lnk')
-        
-        if(linkblock != null)
-            return linkblock.href;
+        if(getParentElementBelobgsToClass(item, 'mv_comments') != null) {
+            let vcomblock = getParentElementBelobgsToClass(item, 'reply_dived')
+            let commid = vcomblock.getAttribute("id")
+            if(commid == null) return null;
+            let res = window.location.href
+            let rescomps = ""
+            if(res.includes("#")) {
+                rescomps = res.split("#")
+                res = rescomps[0]
+            }
+            if(res.includes("?")) {
+                rescomps = res.split("?")
+                res = rescomps[0]
+            }
+            res += "#"
+            res += commid
+            return res;
+        }
+        else {
+            let comblock = getParentElementBelobgsToClass(item, 'reply_content')
+            let footblock = getChildElementBelongsToClass(comblock, 'reply_footer')
+            let dateblock = getChildElementBelongsToClass(footblock, 'reply_date')
+            let linkblock = getChildElementBelongsToClass(dateblock, 'wd_lnk')
+            if(linkblock != null)
+                return linkblock.href;
+        }
     }
     if(type == 2) {
-        let comblock = getParentElementBelobgsToClass(item, 'PostHeaderInfo')
-        let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
-        let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
-        if(linkblock != null)
-            return linkblock.href;
+        let mv = getParentElementBelobgsToClass(item, 'mv_info')
+        if(mv == null) {
+            let comblock = getParentElementBelobgsToClass(item, 'PostHeaderInfo')
+            let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
+            let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
+            if(linkblock != null)
+                return linkblock.href;
+        }
+        else {
+            let res = window.location.href
+            let rescomps = ""
+            if(res.includes("#")) {
+                rescomps = res.split("#")
+                res = rescomps[0]
+            }
+            if(res.includes("?")) {
+                rescomps = res.split("?")
+                res = rescomps[0]
+            }
+            return res;
+        }
     }
     return null;
 }
 
 function getTimeFromElement(elem) {
-    let dateregexp = /(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Okt|Nov|Dec)\sat\s/g 
-    let dateyearregexp = /(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Okt|Nov|Dec)\s(\d{4})/i 
+    let dateregexp = /(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\sat\s/g 
+    let dateyearregexp = /(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(\d{4})/i 
     let ampmregexp = /(am|pm)/g
     let timeregexp = /(\d{1,2}):(\d{2})\s(am|pm)/g 
+    let agoregexp = /(\d{1,2})\s(hour\s|hours|day\s|days|month\s|months|year\s|years)/g
     
     let curdate = new Date()
     let tmpl = elem.getAttributeNames()
@@ -361,14 +447,42 @@ function getTimeFromElement(elem) {
             msecs = Date.parse(fmtstr)
             resdate.setUTCMilliseconds(msecs)
         }
-        if(msecs == 0) {
-            resdate.setMonth(month) // так как в дате месяц содержится числом, а в строке - слогом, единственный способ превратить слог в месяц в дате - это Date.parse
-            resdate.setFullYear(year)
-            resdate.setDate(date)
+        if(dtxt.includes("ago")) {
+            let agocomp = agoregexp.exec(dtxt)
+            if(agocomp != null) {
+                let minus = agocomp[1]
+                let units = agocomp[2]
+                resdate = curdate
+                if(units.includes("second")) {
+                    resdate.setSeconds(curdate.getSeconds() - minus)
+                }
+                if(units.includes("minute")) {
+                    resdate.setMinutes(curdate.getMinutes() - minus)
+                }
+                if(units.includes("hour")) {
+                    resdate.setHours(curdate.getHours() - minus)
+                }
+                if(units.includes("day")) {
+                    resdate.setDate(curdate.getDate() - minus)
+                }
+                if(units.includes("month")) {
+                    resdate.setMonth(curdate.getMonth() - minus)
+                }
+                if(units.includes("year")) {
+                    resdate.setFullYear(curdate.getFullYear() - minus)
+                }
+            }
         }
-        resdate.setSeconds(0)
-        resdate.setMinutes(mnts)
-        resdate.setHours(hrs)
+        else {
+            if(msecs == 0) {
+                resdate.setMonth(month) // так как в дате месяц содержится числом, а в строке - слогом, единственный способ превратить слог в месяц в дате - это Date.parse
+                resdate.setFullYear(year)
+                resdate.setDate(date)
+            }
+            resdate.setSeconds(0)
+            resdate.setMinutes(mnts)
+            resdate.setHours(hrs)
+        }
     }
     return resdate.toLocaleString('ru-RU');
 }

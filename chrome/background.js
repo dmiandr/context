@@ -193,7 +193,7 @@ function histatuses_handler(msg, db, resolve) {
     let evcounter = new Map();  //!< Карта соответствий имен пользователей и количества событий в их истории, составляется по анализу полного списка событий
     let numusrs = msg.length;
     let usrscopy = [];
-    
+
     for(let i = 0; i < numusrs; i++) {
         let r = msg.pop();
         usrscopy.push(r);
