@@ -101,6 +101,8 @@ function addElemsToActiveZone(zone) {
     if(uopt.description != undefined)
         zone.element.title = uopt.description
     
+    if(zone.attachMenuDomElement.parentNode == null) // по идее такого никогда не должно быть, но иногда это вдруг всплывает по непонятной причине
+        return;
     let alrex = zone.attachMenuDomElement.parentNode.getElementsByClassName("dropdownusr");
     if(alrex.length > 0)
         return;
@@ -287,7 +289,7 @@ function injectHistoryDialog(dlgcode) {
     
     let backgrnd = document.getElementById('histbackground');
     if(backgrnd == null) {
-        /*tst = document.createElement('iframe');
+        tst = document.createElement('iframe');
         document.body.appendChild(tst);
         let win = tst.contentWindow;
         let frmrange = win.document.createRange();
@@ -295,10 +297,10 @@ function injectHistoryDialog(dlgcode) {
         let frg = frmrange.createContextualFragment(dlgcode);
         document.body.appendChild(frg);
         backgrnd = document.getElementById('histbackground');
-        backgrnd.style.setProperty('display', "none");*/
-        document.body.insertAdjacentHTML('beforeend', dlgcode)
-        backgrnd = document.getElementById('histbackground');
         backgrnd.style.setProperty('display', "none");
+        /*document.body.insertAdjacentHTML('beforeend', dlgcode)
+        backgrnd = document.getElementById('histbackground');
+        backgrnd.style.setProperty('display', "none");*/
     }
 }
 

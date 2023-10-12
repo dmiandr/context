@@ -85,6 +85,8 @@ function ListVkActiveZones(zmap, ishome) {
         let username = extractVkUsername(itm)
         if(username == null)
             continue;
+        if(isParentElementBelobgsToClass(itm, 'reply_text')) // удаление из рассмотрения цитируемых имен авторов
+            continue;
         
         let vidtitl = null
         let vidbl = getParentElementBelobgsToClass(itm, "VideoLayerInfo")
