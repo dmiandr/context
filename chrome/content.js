@@ -194,7 +194,9 @@ function colorAll() {
             curranc = -1
         else 
             curranc = uopts.rankid
-        colorItem(gRanksParams, azitm, curranc);
+        
+        if(curranc != -1)
+            colorItem(gRanksParams, azitm, curranc);
     }
 }
 
@@ -268,9 +270,6 @@ function getChildElementBelongsToClass(item, classname) {
 /*! Выбирается первый найденый тег, принаддежащий к заданному классу */
 function getIndirectChildElementBelongsToClass(item, classname) {
     if(item == null) return null;
-    /*console.log("TAG= "+ item.tagName + ", class = "+ item.classList)
-    if(item.tagName == "HEADER")
-        console.log(item.children)*/
     let ind = getChildElementBelongsToClass(item, classname)
     if(ind == null) {
         if(item.children == undefined)

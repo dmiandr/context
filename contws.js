@@ -114,6 +114,11 @@ function ListContActiveZones(zmap, ishome) {
             username = convToLower(tresalt[1])
         }
         
+        if(username == null) {
+            console.log("Unable to extract username from url: ", uri)
+            continue;
+        }
+        
         if(itm.innerText === "")
             continue;
         if(isParentElementBelobgsToClasses(itm, prntexcludeclss))

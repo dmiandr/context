@@ -243,6 +243,14 @@ function histatuses_handler(msg, db, resolve) {
                     for(let co = 0; co < usrscopy.length; co++) {
                         let optstoadd = {};
                         let curitm = usrscopy[co];
+                        if(curitm == null) {
+                            console.log("Error: got null value from page users list")
+                            continue;
+                        }
+                        if(curitm.username == null) {
+                            console.log("Error: got null username in list of page users")
+                            continue;
+                        }                            
                         let curusr = curitm.username.toLowerCase();
                         let curnet = curitm.socnet
                         let curx = curnet + "%" + curusr

@@ -24,7 +24,9 @@ function ListVkActiveZones(zmap, ishome) {
     let allcomms = []
     let username = ""
     if(ishome != 0)
-        allcomms = document.querySelectorAll('a[class="author "],a[class="author"]'); // комментарии
+        allcomms = document.querySelectorAll('a[class~="author"]')
+        //allcomms = document.querySelectorAll('a[class="author "],a[class="author"]'); // комментарии
+        //allcomms = document.querySelectorAll('a[class="author "],a[class="author"]'); // комментарии
         
     for(let co = 0; co < allcomms.length; co++) {
         let actzone = {}
@@ -119,8 +121,11 @@ function ListVkActiveZones(zmap, ishome) {
         if(uri.includes("away.php"))
             continue;
         
+        if(zmap.get(itm) != undefined)
+            continue;
+        
         //исключить повторное включение уже найденных по классу линков плюс не размечать ссылки на предыдущий комментарий в дискуссиях. copy_post_image - к этому классу принадлежит юзерпик цитируемого пользователя
-        if(itm.classList.contains("author") || itm.classList.contains("PostHeaderTitle__authorLink") || itm.classList.contains("reply_to") || itm.classList.contains("AvatarRich") || itm.classList.contains("copy_post_image")  || itm.classList.contains("mem_link")) {
+        if(itm.classList.contains("author") || itm.classList.contains("author ") || itm.classList.contains("PostHeaderTitle__authorLink") || itm.classList.contains("reply_to") || itm.classList.contains("AvatarRich") || itm.classList.contains("copy_post_image")  || itm.classList.contains("mem_link")) {
             continue;
         }
         usernamealt = ""
@@ -155,7 +160,7 @@ function ListVkActiveZones(zmap, ishome) {
         initazone(actzone, itm, usernamealt, "vkcom");
         actzone['captElement'] = null;
         zmap.set(itm, actzone)
-    }    
+    }
 }
 
 // Функция, возвращающая уникальное имя пользователя - для внутренних ссылок ВК (если есть доп. аттрибуты data-from-id 
@@ -192,7 +197,7 @@ function GetVkUserAlias(item) {
             resname += " ("
             resname += refname
             resname += ")"
-        }     
+        }
     }
     return resname;
 }
