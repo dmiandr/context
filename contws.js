@@ -72,7 +72,7 @@ function ListContActiveZones(zmap, ishome) {
             if(postid != undefined) {
                 actzone['eventype'] = 4
                 actzone['url'] = "https://cont.ws/@" + username + "/" + postid
-                actzone['urlequivs'] = "(?=" + postid + ")(?!.*comment\\d+)"
+                actzone['urlequivs'] = "(?<!comment)(?=" + postid + ")(?!.*comment\\d+)"
             }
             else {
                 actzone['eventype'] = 0
@@ -140,7 +140,7 @@ function ListContActiveZones(zmap, ishome) {
                     else
                         actzone['captElement'] = itm // не понятно, когда, но такое случается в режиме /full
                     actzone['url'] = "https://cont.ws/@" + username + "/" + postid
-                    actzone['urlequivs'] = "(?=" + postid + ")(?!.*comment\\d+)"  // фактически, подходит любое упоминиание id поста в линке - если только далее нет commentXXXX
+                    actzone['urlequivs'] = "(?<!comment)(?=" + postid + ")(?!.*comment\\d+)"  // фактически, подходит любое упоминиание id поста в линке - если только далее нет commentXXXX
                     zmap.set(itm, actzone)
                     continue;
                 }
