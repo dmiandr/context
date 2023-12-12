@@ -97,17 +97,12 @@ function buildTable(historymap)
     selectdefbkgcolor = statuselector.style.background;
     let data = new Map(historymap);
     let numcell;
-    var curcell;
-    var newtext;
-    var newelem;
-    var newelemlink;
-    var evtype;
-    var evtype_name;
+    let evtype_name;
     let lastalias
 
     function cmptime(obj1, obj2) {
-        var d1 = parceDateFromRuLocale(obj1.time)
-        var d2 = parceDateFromRuLocale(obj2.time)
+        let d1 = parceDateFromRuLocale(obj1.time)
+        let d2 = parceDateFromRuLocale(obj2.time)
         return d1 < d2 ? -1 : 1;
     }
   
@@ -124,22 +119,22 @@ function buildTable(historymap)
     
     for(let h of histarray)
     {
-        var rowmap = h;
-        var row = htable.insertRow(-1);
-        var curtitle = rowmap.title;
+        let rowmap = h;
+        let row = htable.insertRow(-1);
+        let curtitle = rowmap.title;
 
-        evtype = rowmap.type;
+        let evtype = rowmap.type;
         if(evtype == 1)
             evtype_name = "Комментарий";
         if(evtype == 4 || evtype == 2)
             evtype_name = "Запись";
-
-        curcell = row.insertCell(0);
-        newtext = document.createTextNode(rowmap.time);
+            
+        let curcell = row.insertCell(0);
+        let newtext = document.createTextNode(rowmap.time);
         curcell.appendChild(newtext);
 
         curcell = row.insertCell(1);
-        newelem = document.createElement('a');
+        let newelem = document.createElement('a');
         newelem.href = "#";
         let cnam = uname; 
         let calias = rowmap.alias;
@@ -149,9 +144,15 @@ function buildTable(historymap)
         let cdescr = rowmap.descript;
         let crepost = rowmap.repost;
         let tags = rowmap.tags;
+        
         newelem.addEventListener("click", function(evt){ 
-            evt.preventDefault(); 
-            drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, tags, true);
+            evt.preventDefault();
+            let dlgres = drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, tags, true);
+            dlgres.then(result => {
+                if(result == "okbtn") {
+                    updateContent();
+                }
+            })
         });
         if(rowmap.title == "")
             newelem.innerText = "(без заголовка)";

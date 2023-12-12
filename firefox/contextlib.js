@@ -103,6 +103,7 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
   var repostlbl = document.getElementById('repostlbl');
   repostlbl.style.display = "none";
   var evselector = document.getElementById('eventypeselector');
+  evselector.disabled = true
   if(type == 1) // Comment
   {
     evselector.value = "comment";
@@ -112,8 +113,11 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
     repostlbl.style.display = "inline";
     evselector.value = "post";
   }
-  else
+  else {
+    console.log("UNknown event type: ", type)
     evselector.value = "unknown";
+    evselector.disabled = false     // Если сохранен тип события недопустимый (не коммент и не пост) - то его можно поменять вручную
+  }
 
   if(repost == true)
     repostchkbox.checked = true;
@@ -207,6 +211,11 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
     {
       let tcnt = titlefld.value;
       let mcnt = fldmain.value;
+      if(evselector.value == "comment")
+          type = 1
+      if(evselector.value == "post")
+          type = 2
+      
       addHistoryEvent(socname, uname, fldalias.textContent, evtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, "", tagslistfdl.tags)
       eventbkgrnd.style.display = "none"; 
       resolve("okbtn");
