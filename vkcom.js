@@ -90,17 +90,21 @@ function ListVkActiveZones(zmap, ishome) {
         if(isParentElementBelobgsToClass(itm, 'reply_text')) // удаление из рассмотрения цитируемых имен авторов
             continue;
         
-        let vidtitl = null
-        let vidbl = getParentElementBelobgsToClass(itm, "VideoLayerInfo")
-        if(vidbl != null)
-            vidtitl = getIndirectChildElementBelongsToClass(vidbl, "mv_title")
-        let vidmenuitm = getParentElementBelobgsToClass(itm, "VideoLayerInfo__authorInfo")
-        if(vidmenuitm == null)
-            vidmenuitm = itm        
-        
         initazone(actzone, itm, username, "vkcom");
         actzone['eventype'] = 2
-        actzone['isModifiable'] = true
+        
+        let vidtitl = itm
+        let vidmenuitm = itm
+        let vidbl = getParentElementBelobgsToClass(itm, "VideoLayerInfo")
+        if(vidbl == null)
+            actzone['eventype'] = 0 // если нет VideoLayerInfo - значит это не автор на странице видео ВК
+        else {
+            actzone['isModifiable'] = true
+            vidtitl = getIndirectChildElementBelongsToClass(vidbl, "mv_title")
+            vidmenuitm = getParentElementBelobgsToClass(itm, "VideoLayerInfo__authorInfo")
+            if(vidmenuitm == null)
+                vidmenuitm = itm
+        }
         actzone['captElement'] = vidtitl
         actzone['attachMenuDomElement'] = vidmenuitm;
         actzone['url'] = GetVkEventUrl(itm, actzone['eventype'])
