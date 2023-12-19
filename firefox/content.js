@@ -148,7 +148,7 @@ function addElemsToActiveZone(zone) {
                 itmhst.innerHTML = "Добавить к истории";
             itmhst.style.color = "#000";
             itmhst.style.background = "#FFFFDD";
-            itmhst.addEventListener("click", function(evt){let itm = zone.element; gCallEvent(itm, evt);});
+            itmhst.addEventListener("click", function(evt){let itm = zone.element; let isev = zone.isevent; gCallEvent(itm, isev, evt);});
             ddown.appendChild(itmhst);
         }        
     }
@@ -398,10 +398,13 @@ function handleActualUsersStatuses(itmsmap) {
     colorAll();
 }
 
-function gCallEvent(itm, evt)
+function gCallEvent(itm, isev, evt)
 {
     v = ActiveZones.get(itm)
-    //onHistoryEvent(v.isevent, v.socnet, v.username, evt, itm, v.eventype, v.url);
+    if(isev == true && v.isevent == false) {
+        console.log("Existed event not found in ActiveZone list")
+        return;        
+    }
     onHistoryEvent(v, evt, itm);
 }
 
@@ -427,8 +430,9 @@ function fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type
     if(z == null)
         return;
     
-    let evtime = gCurrnetNet.GetTimestamp(commentitem, type);
-    let ualias = gCurrnetNet.GetUserAlias(commentitem); //commentitem.innerText;
+    let timeoptions = gCurrnetNet.GetTimestamp(commentitem, type);
+    let evtime = timeoptions.parcedtime
+    let ualias = gCurrnetNet.GetUserAlias(commentitem)
     let uopt = gUsersCache.get(socname+"%"+cname)
     if(uopt != undefined) {
         let bdg = uopt.numevents.toString()
@@ -438,7 +442,7 @@ function fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type
     }    
     let ev = gCurrnetNet.GetEventText(commentitem, type);
     let evurl =  z['url'] //gCurrnetNet.GetEventUrl(commentitem, type);
-    let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, ualias, evtime, evurl, ev.evtitle, ev.evtext, type, false, "", false);
+    let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, ualias, evtime, evurl, ev.evtitle, ev.evtext, type, false, "", false, timeoptions.origtime, timeoptions.success);
     return dlgres.then(result => {
         addEventMark(evurl, socname, cname);
         requestActualUsersStauses(); // этот вызов нужен затем, чтобы в EventListener пункта меню "добавить/изменить событие" обновилась переменная - а конкретнее, ее поле isevent. Можно оптимизировать, убрав добавление классов и записей из addEventMark
@@ -457,7 +461,7 @@ function fillHistoryDialogFromDb(az, mouseevent)
     let sendongeth = browser.runtime.sendMessage(nmarr);
     return sendongeth.then(result => {
         let r = new Map(result);
-        let dlgres = drawHistoryEventDlg(mouseevent, az.socnet, az.username, r.get("alias"), r.get("time"), url, r.get("title"), r.get("descript"), az.eventype, r.get("repost"), r.get("tags"), true);
+        let dlgres = drawHistoryEventDlg(mouseevent, az.socnet, az.username, r.get("alias"), r.get("time"), url, r.get("title"), r.get("descript"), az.eventype, r.get("repost"), r.get("tags"), true, r.get("time"), true);
         dlgres.then( result => {
             if(result == "rmbtn") {
                 removeEventMark(url, az.socnet, az.username);

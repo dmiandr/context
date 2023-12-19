@@ -304,7 +304,7 @@ function tableSummary(result)
         cellelem = document.createElement('a');
         cellelem.href = "#";
         cellelem.addEventListener("click", function(evt){
-            drawHistoryEventDlg(evt, lastevent.socnet, lastevent.username, lastevent.alias, lastevent.time.toLocaleString('ru-RU'), lastevent.url, lastevent.title, lastevent.descript, lastevent.type, lastevent.repost, lastevent.tags, true);
+            drawHistoryEventDlg(evt, lastevent.socnet, lastevent.username, lastevent.alias, lastevent.time.toLocaleString('ru-RU'), lastevent.url, lastevent.title, lastevent.descript, lastevent.type, lastevent.repost, lastevent.tags, true, lastevent.time, true);
         });
         if(lastevent.title === "")
             lastevent.title = " (без заголовка) "
@@ -458,7 +458,7 @@ function listTagged(res) {
             let ctags = evntslst[co].tags;
             cellelem.addEventListener("click", function(evt) {
                 evt.preventDefault();
-                drawHistoryEventDlg(evt, cnet, cnam, calias, ctime.toLocaleString('ru-RU'), curl, ctitle, cdescr, ctype, crepost, ctags, true);
+                drawHistoryEventDlg(evt, cnet, cnam, calias, ctime.toLocaleString('ru-RU'), curl, ctitle, cdescr, ctype, crepost, ctags, true, ctime, true);
             })
             if(ctitle === "")
                 ctitle = " (без заголовка) "

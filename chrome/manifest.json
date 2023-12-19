@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Context users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.5",
+  "version": "0.51",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
   "author": "dmitrevo",
   "homepage_url": "https://github.com/dmiandr/context",
@@ -18,7 +18,7 @@
 
   "content_scripts": [
     {
-      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*"],
+      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*"],  
       "css": ["ddmenu.css", "tabs.css"],
       "js": ["mutation.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "content.js"]
     }

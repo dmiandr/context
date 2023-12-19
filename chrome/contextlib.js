@@ -56,7 +56,7 @@ if (typeof globalThis.browser === "undefined")
  * 
  * Dialog can work in two modes - "ADD NEW EVENT" and "EDIT EXISTED EVENT". In the later mode button "add" is
  * renamed to "Save" and "Erase" button is added. */
-function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, tags, mode) {
+function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, tags, mode, timeorig, time_parced) {
     let resY;
     let eventbkgrnd = document.getElementById("histbackground"); 
     var dlg = document.getElementById('histdialog');
@@ -129,9 +129,32 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
   fldname.textContent = uname;
   var fldalias = document.getElementById('fldalias');
   fldalias.textContent = ualias;
-  var fldtime = document.getElementById('fldtime');
-  fldtime.textContent = evtime; 
-  var fldmain = document.getElementById('fldmain');
+  
+  let useDTLoc = true
+  let flddatetimecover = document.getElementById('fldtime');
+  let flddatetime = document.getElementById('inpdatetime');
+  
+  if(useDTLoc) {
+    flddatetime.style.backgroundColor = "#ffffff"
+    if(timeorig != "")
+        flddatetime.setAttribute("title", timeorig)
+    if(time_parced) {
+        flddatetime.disabled = true;
+        flddatetime.style.backgroundColor = "#a1a1a1"
+    }
+
+    let isotime = parceDateFromRuLocale(evtime, true)
+    flddatetime.value = isotime    
+    flddatetimecover.ondblclick = function() {
+        flddatetime.disabled = false;
+        flddatetime.style.backgroundColor = "#ffffff"
+    }
+  }
+  else {
+      flddatetimecover.textContent = evtime
+  }
+  
+  let fldmain = document.getElementById('fldmain');
   titlefld.value = evtitle;
   fldmain.value = evmain; 
   fldmain.textContent = evmain; // some firefox versions requires setting textContent instead of value
@@ -218,8 +241,12 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
           type = 1
       if(evselector.value == "post")
           type = 2
+          
+      let unpdatedtime = convTimedateToRuLocale(flddatetime.value)
+      if(flddatetime.disabled == true)
+          unpdatedtime = evtime
       
-      addHistoryEvent(socname, uname, fldalias.textContent, evtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, "", tagslistfdl.tags)
+      addHistoryEvent(socname, uname, fldalias.textContent, unpdatedtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, "", tagslistfdl.tags)
       eventbkgrnd.style.display = "none"; 
       resolve("okbtn");
     };
@@ -380,26 +407,59 @@ function injectHistoryDialog(res) {
     }
 }
 
-function parceDateFromRuLocale(strdateru) {
-    var d;
-    var dta = strdateru.split(",");
+
+/*! Function converts time-date string to Date type (by default) or ISO string (like 2017-06-02T08:20) if optional
+ * flag is true. */
+function parceDateFromRuLocale(strdateru, parse_to_timedate = false) {
+    let d;
+    let dta = strdateru.split(",");
     if(dta.length != 2) {
         d = new Date(strdateru) // Почему-то для инициализированной даты setHours не устанавливает время
-        return d
+        if(!parse_to_timedate) {
+            return d
+        }
+        else {
+            return "0001-01-01T00:00"
+        }
     }
     else
         d = new Date
-    var ta = dta[1].split(":");
-    if(ta.length != 3)
-        return d
-    var da = dta[0].split(".");
-    if(da.length != 3)
-        return d
+    let ta = dta[1].split(":");
+    if(ta.length != 3) {
+        if(!parse_to_timedate)
+            return d
+        else
+            return "0001-01-01T00:00"
+    }
+    let da = dta[0].split(".");
+    if(da.length != 3) {
+        if(!parse_to_timedate)
+            return d
+        else
+            return "0001-01-01T00:00"
+    }
     d.setHours(ta[0], ta[1], ta[2]);
     d.setFullYear(da[2], da[1]-1, da[0]);
     
-    return d
+    if(!parse_to_timedate)
+        return d;
+        
+    let isowozone = da[2].trim()+"-"+da[1].trim()+"-"+da[0].trim()+"T"+ta[0].trim()+":"+ta[1].trim()+":"+ta[2].trim()
+    return isowozone;
 }
+
+function convTimedateToRuLocale(timedate) {
+    let dta = timedate.split("T");
+    let ta = dta[1].split(":");
+    let da = dta[0].split("-");
+    let rulocale = da[2].trim()+"."+da[1].trim()+"."+da[0].trim()+", "+ta[0].trim()+":"+ta[1].trim()
+    if(ta.length == 3)
+        rulocale += ":"+ta[2].trim()
+    else
+        rulocale += ":00"
+    
+    return rulocale;
+} 
 
 /*! Функция представляет собой оболочку для вызова запроса setstatus. Именно здесь жестко зашиты имена для переменных 
  * все посторонние члены userparams игнорируются, если определенный параметр не задан, то считается что его значение должно

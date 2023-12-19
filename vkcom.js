@@ -253,6 +253,7 @@ function GetVkTimestamp(item, type) {
     let isam
     let ispm
     let res
+    let overres = {}
     
     if(type == 1) {
         let comblock = getParentElementBelobgsToClass(item, 'reply_content')
@@ -261,14 +262,12 @@ function GetVkTimestamp(item, type) {
         let linkblock = getChildElementBelongsToClass(dateblock, 'wd_lnk')
         if(linkblock == null) { // в случае видео
             res = getTimeFromElement(dateblock)
-            return res;
         }
         else {
             let datespan = getChildElementBelongsToClass(linkblock, 'rel_date')
             if(datespan == null)
-                return new Date().toLocaleString('ru-RU');
+                res = new Date().toLocaleString('ru-RU');
             res = getTimeFromElement(datespan)
-            return res;
         }
     }
     if(type == 2) {
@@ -281,23 +280,24 @@ function GetVkTimestamp(item, type) {
             let datespan = getChildElementBelongsToClass(dateblock, 'rel_date')
             if(datespan == null) {
                 if(dateblock == null)
-                    return new Date().toLocaleString('ru-RU');
+                    res = new Date().toLocaleString('ru-RU')
                 else {
                     res = getTimeFromElement(dateblock)
-                    return res
                 }
             }
             else {
                 res = getTimeFromElement(datespan)
-                return res
             }
         }
         else {
             let datespan = getIndirectChildElementBelongsToClass(mvinfo, 'VideoLayerInfo__date')
             res = getTimeFromElement(datespan)
-            return res
         }
     }
+    overres['parcedtime'] = res
+    overres['origtime'] = res
+    overres['success'] = true
+    return overres;
 }
 
 function GetVkEventText(item, type) {

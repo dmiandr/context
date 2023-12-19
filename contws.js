@@ -268,9 +268,10 @@ function ListContActiveZones(zmap, ishome) {
                 let bestpostid = tres[2]
                 actzone['url'] = "https://cont.ws/@" + username + "/" + bestpostid
                 actzone['eventype'] = 2
+                let authoritm = getIndirectChildElementBelongsToClass(blk, "sidebar_author")
                 actzone['captElement'] = itm
-                actzone['attachBadge'] = getIndirectChildElementBelongsToClass(blk, "sidebar_author")
-                actzone['attachMenuDomElement'] = getIndirectChildElementBelongsToClass(blk, "sidebar_author")
+                actzone['attachBadge'] = authoritm
+                actzone['attachMenuDomElement'] = authoritm
                 //actzone['menuAttachBefore'] = false       // Этот режим не работает, надо поправиь!
                 zmap.set(itm, actzone)
                 continue;
@@ -572,10 +573,12 @@ function GetContUserAlias(item) {
 * возвращается текущий момент времени. Пока функция заточена под строку времени из КОНТа, но надо будет сделать ее более универсальной */
 
 function extractContTime(torig) {
-    let commtime;
+    let commtime = "";
+    let overres = {}
+    overres['success'] = true
     commtime = torig;
     if(torig.length == 0)
-        commtime = new Date().toLocaleString('ru-RU');
+        overres['success'] = false
     else {
         var timepart;
         var hours; 
@@ -606,11 +609,12 @@ function extractContTime(torig) {
                     minutes = timepart.split(':')[1];
                     yesterday.setHours(hours.trim());
                     yesterday.setMinutes(minutes.trim());
-                    yesterday.setSeconds(0);commtime = yesterday.toLocaleString('ru-RU');
+                    yesterday.setSeconds(0);
+                    commtime = yesterday.toLocaleString('ru-RU');
                 }
             }
             else
-                commtime = new Date().toLocaleString('ru-RU');
+                overres['success'] = false
         }
         else { 
             let tm = new Date();
@@ -645,8 +649,10 @@ function extractContTime(torig) {
                 commtime = tm.toLocaleString('ru-RU');
             }
             else
-                commtime = new Date().toLocaleString('ru-RU');
+                overres['success'] = false
         }
     }
-    return commtime;
+    overres['parcedtime'] = commtime
+    overres['origtime'] = torig
+    return overres;
 }

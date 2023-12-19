@@ -147,7 +147,7 @@ function buildTable(historymap)
         
         newelem.addEventListener("click", function(evt){ 
             evt.preventDefault();
-            let dlgres = drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, tags, true);
+            let dlgres = drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, tags, true, ctime, true);
             dlgres.then(result => {
                 if(result == "okbtn") {
                     updateContent();
