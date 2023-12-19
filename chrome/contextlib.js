@@ -242,9 +242,11 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
       if(evselector.value == "post")
           type = 2
           
-      let unpdatedtime = convTimedateToRuLocale(flddatetime.value)
-      if(flddatetime.disabled == true)
-          unpdatedtime = evtime
+      let unpdatedtime = evtime
+      if(useDTLoc == true) {
+        if(flddatetime.disabled == false)
+            unpdatedtime = convTimedateToRuLocale(flddatetime.value)
+      }
       
       addHistoryEvent(socname, uname, fldalias.textContent, unpdatedtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, "", tagslistfdl.tags)
       eventbkgrnd.style.display = "none"; 

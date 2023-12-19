@@ -325,7 +325,9 @@ function tableSummary(result)
         let socnet = h.split("%")[0]
         let uname = h.split("%")[1]
         let row = tbl.insertRow(-1)
-        let socname = KnownSNets.get(socnet).Title
+        let socname = socnet
+        if(KnownSNets.has(socnet))
+            socname = KnownSNets.get(socnet).Title
         
         addPlainCell(row, 0, usrn)
         addPlainCell(row, 1, socname)
