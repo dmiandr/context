@@ -81,6 +81,7 @@ function updateContent() {
     /*sendhistorybrief.then( , error => { 
         console.log("History overview: " + error); 
     })*/
+    //buildCloud(tagsul, socname + "#" + uname)
 }
 
 function buildTable(historymap)

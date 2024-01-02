@@ -187,6 +187,14 @@ function GetVkUserAlias(item) {
     if(tagname.startsWith("public"))
         tagnamealt = tagname.replace("public", "club"); // второй вариант получается преобразованием к club, так как GetVkUsernameByTags принудительно преобразует в обратную сторону
     let alias = item.innerText;
+    if(item.children != null) {
+        for(const c of item.children)
+            if(c.classList.contains("badge")) {     // если счетчик событий помещен внутрь элемента с имененм, так размечаются комментарии
+                alias = item.firstChild.nodeValue
+                break;
+            }
+    }
+    
     resname = alias
            
     if(tagname == null) {

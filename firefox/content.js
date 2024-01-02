@@ -24,6 +24,10 @@ browser.runtime.onMessage.addListener( (message) => {
     requestActualUsersStauses();    
 })
 
+browser.runtime.connect().onDisconnect.addListener( function() { 
+    console.log("DISCONNECTION detected")
+})
+
 function handleError(e)
 {
    console.log("ERROR HANDLED: " + e);
@@ -252,6 +256,44 @@ function getParentElementBelobgsToClass(item, classname) {
     }    
 }
 
+function getParentElementWithId(item, id) {
+    if(item == null) return null;
+    let p = item.parentElement;
+    if(p == null)
+        return null;
+    curid = p.getAttribute('id')
+    if(curid != null) {
+        if(typeof id === 'string')
+            if(curid == id)
+                return p;
+        if(typeof id === 'object')
+            if(id.test(curid) == true)
+                return p;
+            
+        return getParentElementWithId(p, id);
+    }
+    else
+        return getParentElementWithId(p, id);
+}
+
+function getChildElementWithId(item, id) {
+    if(item == null) return null;
+    if(item.children == undefined)
+        return null;
+    for(const c of item.children) {
+        curid = c.getAttribute('id')
+        if(curid == null)
+            continue;
+        if(typeof id === 'string')
+            if(curid == id)
+                return c;
+        if(typeof id === 'object')
+            if(id.test(curid) == true)
+                return c;
+    }
+    return null;
+}
+
 /*! Просматриваются только непосредственно подчиненные элементы 
  * 
 */
@@ -265,6 +307,22 @@ function getChildElementBelongsToClass(item, classname) {
         }
     }
     return null;
+}
+
+function getIndirectChildElementWithId(item, id) {
+    if(item == null) return null;
+    let ind = getChildElementWithId(item, id)
+    if(ind == null) {
+        if(item.children == undefined)
+            return null;
+        for(const c of item.children) {
+            ind = getIndirectChildElementWithId(c, id)
+            if(ind != null)
+                return ind
+        }
+        return null;
+    }
+    return ind;
 }
 
 /*! Выбирается первый найденый тег, принаддежащий к заданному классу */
@@ -282,6 +340,70 @@ function getIndirectChildElementBelongsToClass(item, classname) {
         return null;
     }
     return ind;
+}
+
+function getAllIndirectChildElementsBelongsToClass(item, classname) {
+    let allelems = []
+    if(item == null) return null;
+    let e = getAllChildElementsBelongsToClass(item, classname)
+    if(e != null)
+        allelems.push(...e)
+
+    if(item.children == undefined)
+        return allelems;
+    
+    for(const c of item.children) {
+        e = getAllIndirectChildElementsBelongsToClass(c, classname)
+        if(e != null)
+            allelems.push(...e)
+    }
+    return allelems;
+}
+// if classname is null, all children are listed
+function getAllChildElementsBelongsToClass(item, classname) {
+    let elems = []
+    if(item == null) return null;
+    if(item.children == undefined)
+        return null;
+    for(const c of item.children) {
+        if(classname == null)
+            elems.push(c)
+        else if(c.classList.contains(classname)) {
+            elems.push(c)
+        }
+    }
+    return elems;
+}
+
+function getAllIndirectChildElementsOfType(item, rtype) {
+    let allelems = []
+    if(item == null) return null;
+    let e = getAllChildElementsOfType(item, rtype)
+    if(e != null)
+        allelems.push(...e)
+
+    if(item.children == undefined)
+        return allelems;
+    
+    for(const c of item.children) {
+        e = getAllIndirectChildElementsOfType(c, rtype)
+        if(e != null)
+            allelems.push(...e)
+    }
+    return allelems;
+}
+
+function getAllChildElementsOfType(item, rtype) {
+    let elems = []
+    if(item == null) return null;
+    if(item.children == undefined)
+        return null;
+    for(const c of item.children) {
+        if(c.nodeName.toLowerCase() == rtype) {
+            elems.push(c)
+        }
+    }
+    return elems;
 }
 
 function injectHistoryDialog(dlgcode) {

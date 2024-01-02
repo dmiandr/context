@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Context users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.51",
+  "version": "0.5.2",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
 
   "developer": {
@@ -28,9 +28,9 @@
 
   "content_scripts": [
     {
-      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*"],
-      "css": ["ddmenu.css", "tabs.css"],
-      "js": ["browser-polyfill.js", "mutation.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "content.js"]
+      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*", "*://*.livejournal.com/*"],  
+      "css": ["ddmenu.css"],
+      "js": ["browser-polyfill.js", "mutation.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "ljcom.js", "content.js"]
     }
   ],
   "incognito": "spanning",
