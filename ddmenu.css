@@ -91,6 +91,7 @@
     padding-right: 5px;
     margin: 5px;
     display: inline-block;   
+    text-align: left;
 }
 
 .dialogfield input {
@@ -197,6 +198,7 @@
     align: justify;
     border: 0px solid #FFF;
     width: 100%;
+    text-align: left;
 }
 
 .hide-overlay .overlay {

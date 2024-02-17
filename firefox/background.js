@@ -554,6 +554,7 @@ function getbrieflist_handler(msg, db, resolve) {
     let umap = new Map();
     let umapflt = new Map(); //users filtered by status
     let paramrnks = msg.pop(); // список статусов, используемых при фильтрации возвращаемого списка пользователей
+    let paramsocnets = msg.pop();
     let tr = db.transaction(["users", "history"]);
     let objh = tr.objectStore("history");
     let oc = objh.openCursor();
@@ -561,10 +562,21 @@ function getbrieflist_handler(msg, db, resolve) {
     let lastevent = {}
     let totalevents = 0;
     let totaldescripts = 0
-    let rnklst
+    let rnklst = undefined
+    let socnetlst = undefined
+    let snetlst
     
     if(paramrnks != undefined)
         rnklst = paramrnks.split(",")
+        
+    if(paramsocnets != undefined) {
+        socnetlst = paramsocnets.split(",")
+        console.log("SOCNETs = ", socnetlst.join('|'))
+    }
+    else
+        console.log("NO SOCNET PROVIDED")
+      
+        
     
     oc.onsuccess = function(event) {
         let cur = event.target.result
@@ -636,7 +648,19 @@ function getbrieflist_handler(msg, db, resolve) {
                     lastevent['totalevents'] = totalevents
                     lastevent['totalusers'] = umap.size
                     lastevent['totaldescripts'] = totaldescripts;
-                    if(rnklst != undefined) {
+                    
+                    if(rnklst == undefined && socnetlst != undefined) {
+                        umap.forEach(function(val, key) {
+                            keycomps = key.split('%')
+                            curnet = keycomps[0]
+                            if(socnetlst.includes(curnet)) {
+                                umapflt.set(key, val);
+                            }
+                        })
+                        umapflt.set("$", lastevent);
+                        resolve([...umapflt]);
+                    }
+                    if(rnklst != undefined && socnetlst == undefined) {
                         umap.forEach(function(val, key) {
                             if(rnklst.includes(val.rankid.toString())) {
                                 umapflt.set(key, val);
@@ -645,12 +669,21 @@ function getbrieflist_handler(msg, db, resolve) {
                         umapflt.set("$", lastevent);
                         resolve([...umapflt]);
                     }
-                    else
-                    {
+                    if(rnklst != undefined && socnetlst != undefined) {
+                        umap.forEach(function(val, key) {
+                            keycomps = key.split('%')
+                            curnet = keycomps[0]
+                            if(socnetlst.includes(curnet) && rnklst.includes(val.rankid.toString())) {
+                                umapflt.set(key, val);
+                            }
+                        })
+                        umapflt.set("$", lastevent);
+                        resolve([...umapflt]);
+                    }
+                    if(rnklst == undefined && socnetlst == undefined) {
                         umap.set("$", lastevent); 
                         resolve([...umap]);                        
                     }
-                    
                 }
             }
         }
@@ -739,19 +772,17 @@ function historybytags_handler(msg, db, resolve) {
 function onContentMessage(msg, sender, handleResponse)
 {
     return new Promise(resolve => {
-    let reqs = msg.pop();
-    
-    if(reqs == undefined) {
-        let stsmap = new Map();
-        console.log("incoming map does not contain any command");
-        stsmap.set("$", "incoming map does not contain any command");
-        resolve([...stsmap]);
-    }
-    
-    indexedDB.open("contest", 3).onsuccess = function(event) {
-        let db = this.result;
-        let handler = Handlers.get(reqs.request)
-        handler(msg, db, resolve)
+        let reqs = msg.pop();
+        if(reqs == undefined) {
+            let stsmap = new Map();
+            console.log("incoming map does not contain any command");
+            stsmap.set("$", "incoming map does not contain any command");
+            resolve([...stsmap]);
+        }
+        indexedDB.open("contest", 3).onsuccess = function(event) {
+            let db = this.result;
+            let handler = Handlers.get(reqs.request)
+            handler(msg, db, resolve)
         }
     })
 }

@@ -30,7 +30,7 @@
   </nav>
 <section>
 <div class="tab1">
-<a href="#" id="expbtn" download="file.json"><button>Экспорт</button></a><br>
+<a href="#" id="expbtn"><button>Экспорт</button></a><br>
 <br>
 <br>Импорт:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт"><label><input type="checkbox" id="erasebeforeimport"/>Удалить данные перед импортом новых</label>
 <br>
@@ -45,6 +45,10 @@
 </table>
 <br>
 <hr>
+<label>Поддерживаемые соцсети:</label><br>
+<form id="socnets">
+<select id="socnetselection" multiple>
+</select>
 <br>
 <label id="filtertitle">Статусы пользователей:</label><br>
 <table class="histable" id="statuslist">

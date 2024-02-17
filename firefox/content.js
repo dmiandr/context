@@ -83,7 +83,7 @@ function onCompletePageLoad() {
     }
     
     requestActualUsersStauses();
-    let obs = new MutationObserverThin(mutationCallback, window);
+    let obs = new MutationObserverThin(mutationCallback, window, 5000);
     obs.observe(document.body, config);
 }
 
@@ -103,14 +103,15 @@ function addElemsToActiveZone(zone) {
     }
     
     if(uopt.description != undefined)
-        zone.element.title = uopt.description
+        if(uopt.description.length !== 0)
+            zone.element.title = uopt.description
     
     if(zone.attachMenuDomElement.parentNode == null) // по идее такого никогда не должно быть, но иногда это вдруг всплывает по непонятной причине
         return;
     let alrex = zone.attachMenuDomElement.parentNode.getElementsByClassName("dropdownusr");
     if(alrex.length > 0)
         return;
-    if(uopt.numevents > 0 && zone.attachBadge != null) {
+    if(uopt.numevents > 0 && zone.attachBadge != null && zone.eventype != 5) {
         let badgelem = zone.getBadge()
         if(badgelem == null) {
             let t = zone.setBadge(uopt.numevents)
@@ -119,9 +120,14 @@ function addElemsToActiveZone(zone) {
             badgelem.textContent = uopt.numevents;
         }
     }
+    if(zone.eventype == 5) {
+        if(zone.isevent == true && zone.captElement != null) { // тип 5 - это упоминание события с очевидным автором. Ему не нужно меню - только пометить известные события
+            zone.captElement.classList.add('history')
+        }
+        return;
+    }
     
     if(uopt.numevents > 0 || zone.isModifiable == true) { // меню имеет смысл только если можно использовать его функции - добавлять новые или просматривать существующие события
-
         let astr = document.createElement('span');
         astr.className = 'dropdownusr';
         if(zone.menuAttachBefore == true)
@@ -152,7 +158,11 @@ function addElemsToActiveZone(zone) {
                 itmhst.innerHTML = "Добавить к истории";
             itmhst.style.color = "#000";
             itmhst.style.background = "#FFFFDD";
-            itmhst.addEventListener("click", function(evt){let itm = zone.element; let isev = zone.isevent; gCallEvent(itm, isev, evt);});
+            itmhst.addEventListener("click", function(evt) {
+                let itm = zone.element; 
+                let isev = zone.isevent; 
+                gCallEvent(itm, isev, evt);
+            });
             ddown.appendChild(itmhst);
         }        
     }
@@ -523,10 +533,10 @@ function handleActualUsersStatuses(itmsmap) {
 function gCallEvent(itm, isev, evt)
 {
     v = ActiveZones.get(itm)
-    if(isev == true && v.isevent == false) {
+    /*if(isev == true && v.isevent == false) {
         console.log("Existed event not found in ActiveZone list")
         return;        
-    }
+    }*/
     onHistoryEvent(v, evt, itm);
 }
 

@@ -6,6 +6,8 @@ let gPrevrankname = ""
 let gPrevDescr = ""
 let gPrevFcolor
 let gPrevBcolor
+let selectednets = []
+let showstatuses = new Array() // список статусов, которые будут отображаться, обновляется при каждом отмеченном чекбоксе
 
 var gRanksParams = new Map();
 window.addEventListener("load", onCompletePageLoad, false);
@@ -30,6 +32,32 @@ function onCompletePageLoad() {
 
 cacheRankParams();
 
+let socnetlist = document.getElementById("socnetselection")
+socnetlist.innerHTML = ''
+for(let a of KnownSNets.keys()) {
+    let optelem = document.createElement('option')
+    optelem.value = a
+    optelem.innerText = KnownSNets.get(a).Title
+    optelem.selected = true
+    socnetlist.appendChild(optelem)    
+}
+checksocnet_filter()
+
+socnetlist.onchange = function() {
+    checksocnet_filter()
+    listUsersByCondition()
+    //alert(selectednets.join(","))
+}
+
+function checksocnet_filter() {
+    selectednets.length = 0
+    for( const opt of socnetlist.options) {
+        if(opt.selected) {
+            selectednets.push(opt.value)
+        }
+    }
+}
+
 function cacheRankParams() {
     let rnkarr = new Array();
     rnkarr.push({request: "ranks"});
@@ -38,11 +66,22 @@ function cacheRankParams() {
                       error => { console.log(error); });
 }
 
+function listUsersByCondition() {
+    let arr = new Array();
+    let flsts = showstatuses.join(",")
+    arr.push(selectednets.join(","))
+    arr.push(flsts)
+    arr.push({request: "getbrieflist"});
+    let sumres = browser.runtime.sendMessage(arr);
+    sumres.then( result => { tableSummary(result);}, 
+        error => {console.log("Brief list: " + error); });
+}
+
+
 function showBriefList(res) {
     if(gRanksParams.size ==  0) {
         let totwithstatus = 0; // сюда заносится полная сумма всех пользователей со статусами, отличными от -1
         let prm;
-        let showstatuses = new Array() // список статусов, которые будут отображаться, обновляется при каждом отмеченном чекбоксе
         let next_id = 0 // идентификатор, на единицу больший самого большого из имеющихся, будет использован при добавлении нового статуса
         
         let totalevnts = document.getElementById("totaleventsplace");
@@ -79,6 +118,7 @@ function showBriefList(res) {
                     }
                     let arr = new Array();
                     let flsts = showstatuses.join(",")
+                    arr.push(selectednets.join(","))
                     arr.push(flsts)
                     arr.push({request: "getbrieflist"});
                     let sumres = browser.runtime.sendMessage(arr);
@@ -114,6 +154,7 @@ function showBriefList(res) {
                     }
                     let arr = new Array();
                     let flsts = showstatuses.join(",")
+                    arr.push(selectednets.join(","))
                     arr.push(flsts)
                     arr.push({request: "getbrieflist"});
                     let sumres = browser.runtime.sendMessage(arr);

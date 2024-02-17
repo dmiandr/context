@@ -11,6 +11,9 @@ let tagsul = document.querySelector(".tags")
 var gRanksParams = new Map();
 let optchanged = false; // признак того, что параметры пользователя изменялись
 
+// Внимание! Подключение описаний конкретных сетей здесь происходит за счет упоминания всего списка описывающих соцсети скриптов в 
+// userhistory.html!
+
 if (typeof globalThis.browser === "undefined")
     browser = chrome
 

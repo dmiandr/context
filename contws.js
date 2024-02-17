@@ -46,9 +46,6 @@ function ListContActiveZones(zmap, ishome) {
     let testalterurl = new RegExp("([^\\/\\&]+)\\.cont.ws")
     let commre = new RegExp("\\#comment(\\d+)")
     
-    //if(zmap.size != 0)
-        //console.log("NON empty map on input, size = ", zmap.size)
-    
     if(!ishome) {
         contelems = document.querySelectorAll('a[href*="cont.ws"]');
         for(let co = 0; co < contelems.length; co++) {
@@ -170,7 +167,6 @@ function ListContActiveZones(zmap, ishome) {
                 continue;
             }
             else if(getParentItemWithAttribute(itm, "comment-author-login") != null) {
-                //console.log("COmment = ", itm)
                 //if(isParentElementBelobgsToClass(itm, "media-left") != null) // userpic on comment is a separate link, often in format username.cont.ws
                     //continue;
                 if(itm.children != null)
@@ -562,7 +558,6 @@ function GetContEventUrl(item, type) {
 }
 
 function GetContUserAlias(item) {
-    //console.log("GOT: ", item.innerText)
     if(!!item == false)
         return ""
     return item.innerText;
