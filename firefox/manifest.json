@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "Context RepuTracker - users reputation tracker",
+  "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.5.2",
+  "version": "0.52",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
 
   "developer": {
