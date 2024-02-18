@@ -257,7 +257,8 @@ function saveUserDescription()
             tabs.forEach(function(tab) {
                 if(tab.id != result.id) {
                     res = browser.tabs.sendMessage(tab.id, {request: "update"})
-                    res.then( r => {    window.opener=null; window.close(); })
+                    // Это костыль - я на понимаю, почему закрытие окна приводит к тому, что сообщение setstatus не успевает послаться. Надо будет переделать нормально
+                    res.then( r => {    console.log("Updated then");   setTimeout(() => {window.opener=null; window.close();}, 500) })
                 }
             })
         });

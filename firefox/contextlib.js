@@ -495,6 +495,7 @@ function setUserStatus(socnet, user, userparams) {
             }
         mustuserparams['user'] = user
         mustuserparams['socnet'] = socnet
+        usrarr.length = 0
         usrarr.push(mustuserparams);
         usrarr.push({request: "setstatus"});
         return browser.runtime.sendMessage(usrarr);

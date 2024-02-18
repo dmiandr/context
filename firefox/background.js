@@ -647,7 +647,9 @@ function getbrieflist_handler(msg, db, resolve) {
                     lastevent['time'] = lastmodf;
                     lastevent['totalevents'] = totalevents
                     lastevent['totalusers'] = umap.size
-                    lastevent['totaldescripts'] = totaldescripts;
+                    lastevent['totaldescripts'] = totaldescripts
+                    let keycomps = ""
+                    let curnet = ""
                     
                     if(rnklst == undefined && socnetlst != undefined) {
                         umap.forEach(function(val, key) {

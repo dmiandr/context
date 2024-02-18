@@ -96,8 +96,14 @@ function showBriefList(res) {
             imgrefresh.title = "Обновить"
             imgrefresh.src = 'icons/refresh.png'
             imgrefresh.onclick = function() {
+                showstatuses.length = 0
                 gRanksParams.clear()
                 cacheRankParams();
+                let arr = new Array();
+                arr.push(selectednets.join(","))
+                arr.push("")
+                arr.push({request: "getbrieflist"});
+                let sumres = browser.runtime.sendMessage(arr, (result) => { tableSummary(result); });
             }
             fltitle.parentNode.insertBefore(imgrefresh, fltitle);
         }
