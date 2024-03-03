@@ -133,7 +133,8 @@ function addElemsToActiveZone(zone) {
         if(zone.menuAttachBefore == true)
             zone.attachMenuDomElement.parentNode.insertBefore(astr, zone.attachMenuDomElement)
         else
-            zone.attachMenuDomElement.parentNode.insertAfter(astr, zone.attachMenuDomElement)
+            zone.attachMenuDomElement.parentNode.insertBefore(astr, zone.attachMenuDomElement.nextSibling)
+            //zone.attachMenuDomElement.parentNode.insertAfter(astr, zone.attachMenuDomElement)
         
         let ddown = document.createElement('div');
         ddown.className = 'dropdownusr-content';

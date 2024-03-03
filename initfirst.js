@@ -47,14 +47,14 @@ function initazone(z, itm, u, soc) {
                 return null;
                 
             if(this.attachBadgeMode == "child") {
-                let badgelems = this.attachBadge.getElementsByClassName('badge');
+                let badgelems = this.attachBadge.getElementsByClassName('repubadge');
                 if(badgelems.length != 0)
                     return badgelems[0]
             }
             if(this.attachBadgeMode == "after") {
                 let badgee = this.attachBadge.nextElementSibling
                 if(!!badgee)
-                    if(badgee.classList.contains('badge'))
+                    if(badgee.classList.contains('repubadge'))
                         return badgee;
             }
             return null;
@@ -64,7 +64,7 @@ function initazone(z, itm, u, soc) {
             if(!!this.attachBadge == false)
                 return null;
             let badgelem = document.createElement('span');
-            badgelem.className = 'badge';
+            badgelem.className = 'repubadge';
             badgelem.textContent = num;
             if(this.attachBadgeMode == "child") 
                 this.attachBadge.append(badgelem);

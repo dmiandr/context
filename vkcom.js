@@ -189,7 +189,7 @@ function GetVkUserAlias(item) {
     let alias = item.innerText;
     if(item.children != null) {
         for(const c of item.children)
-            if(c.classList.contains("badge")) {     // если счетчик событий помещен внутрь элемента с имененм, так размечаются комментарии
+            if(c.classList.contains("repubadge")) {     // если счетчик событий помещен внутрь элемента с имененм, так размечаются комментарии
                 alias = item.firstChild.nodeValue
                 break;
             }
