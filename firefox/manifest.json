@@ -28,9 +28,9 @@
 
   "content_scripts": [
     {
-      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*", "*://*.livejournal.com/*", "*://*.youtube.com/*"],
+      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*", "*://*.livejournal.com/*", "*://*.youtube.com/*", "*://*.habr.com/*"],
       "css": ["ddmenu.css"],
-      "js": ["browser-polyfill.js", "mutation.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "ljcom.js", "youtubecom.js", "content.js"]
+      "js": ["browser-polyfill.js", "mutation.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "ljcom.js", "youtubecom.js", "habrcom.js", "content.js"]
     }
   ],
   "incognito": "spanning",

@@ -565,7 +565,7 @@ function fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type
     
     let timeoptions = gCurrnetNet.GetTimestamp(commentitem, type);
     let evtime = timeoptions.parcedtime
-    let ualias = gCurrnetNet.GetUserAlias(commentitem)
+    let ualias = gCurrnetNet.GetUserAlias(commentitem, type)
     let uopt = gUsersCache.get(socname+"%"+cname)
     if(uopt != undefined) {
         let bdg = uopt.numevents.toString()

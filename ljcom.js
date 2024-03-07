@@ -775,7 +775,7 @@ function GetLjEventUrl(item, type) {
     return ""
 }
 
-function GetLjUserAlias(item) {
+function GetLjUserAlias(item, type) {
     let res = item.innerText
     let namitm = getParentElementBelobgsToClass(item, "b-singlepost-author-user-screen")
     if(namitm != null) {

@@ -179,7 +179,7 @@ function extractVkUsername(h, mode) {
 }
 
 // Возвращает отображаемое имя пользователя - берет текст из тега, далее проверяет совпадение имени из href и из доп. тегов, если не совпадает - то имя из href в скобках добавляется к концу.
-function GetVkUserAlias(item) {
+function GetVkUserAlias(item, type) {
     let resname = "";
     let refname = GetVkUsernameByHref(item)
     let tagname = GetVkUsernameByTags(item)

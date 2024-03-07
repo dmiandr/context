@@ -557,7 +557,7 @@ function GetContEventUrl(item, type) {
     return clearurl;
 }
 
-function GetContUserAlias(item) {
+function GetContUserAlias(item, type) {
     if(!!item == false)
         return ""
     return item.innerText;
