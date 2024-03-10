@@ -133,7 +133,8 @@ function addElemsToActiveZone(zone) {
         if(zone.menuAttachBefore == true)
             zone.attachMenuDomElement.parentNode.insertBefore(astr, zone.attachMenuDomElement)
         else
-            zone.attachMenuDomElement.parentNode.insertAfter(astr, zone.attachMenuDomElement)
+            zone.attachMenuDomElement.parentNode.insertBefore(astr, zone.attachMenuDomElement.nextSibling)
+            //zone.attachMenuDomElement.parentNode.insertAfter(astr, zone.attachMenuDomElement)
         
         let ddown = document.createElement('div');
         ddown.className = 'dropdownusr-content';
@@ -561,7 +562,7 @@ function fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type
     
     let timeoptions = gCurrnetNet.GetTimestamp(commentitem, type);
     let evtime = timeoptions.parcedtime
-    let ualias = gCurrnetNet.GetUserAlias(commentitem)
+    let ualias = gCurrnetNet.GetUserAlias(commentitem, type)
     let uopt = gUsersCache.get(socname+"%"+cname)
     if(uopt != undefined) {
         let bdg = uopt.numevents.toString()

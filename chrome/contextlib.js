@@ -486,7 +486,6 @@ function setUserStatus(socnet, user, userparams) {
         usrarr.length = 0
         usrarr.push(mustuserparams);
         usrarr.push({request: "setstatus"});
-        console.log("going to sent ", usrarr)
         return browser.runtime.sendMessage(usrarr);
     }
 }

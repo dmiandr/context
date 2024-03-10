@@ -18,6 +18,8 @@ mutation.js <br>
 tabs.css <br>
 vkcom.js <br>
 ljcom.js <br>
+youtubecom.js <br>
+habrcom.js <br>
 
 В эту же директорию скопируйте всю папку icons из корня проекта.
 

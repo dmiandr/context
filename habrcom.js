@@ -24,23 +24,63 @@ function ListHabrActiveZones(zmap, ishome) {
     let allcomms = []
     let username = ""
     let curl = window.location.href
-    const articleregexp = /\.*(articles|posts)\/\d+\/\.*/
+    const articleregexp = /\.*(articles|posts|news)\/\d+\/\.*/
     let utst = curl.match(articleregexp, "g")
-    if(utst == null)
-        return;
-    
     const extrunamefromlink = /\.*\/(\w+)\/$/
+    
+    if(utst == null) {
+        allcomms = document.querySelectorAll('a[class~="tm-user-info__username"]')
+        for(let co = 0; co < allcomms.length; co++) {
+            let actzone = {}
+            let itmh = allcomms[co]
+            let prnt = getParentElementBelobgsToClass(itmh, "tm-article-snippet")
+            let titlelem = getIndirectChildElementBelongsToClass(prnt, "tm-title__link")
+            let refloc =  itmh.getAttribute("href")
+            let reuname = refloc.match(extrunamefromlink, "g")
+            if(reuname != null)
+                username = reuname[1].toLowerCase()
+            else
+                username = itmh.innerText.toLowerCase()
+            
+            initazone(actzone, itmh, username, "habrcom");
+            actzone['isModifiable'] = false
+            actzone['eventype'] = 2
+            if(titlelem != null) {
+                let evurlrel = titlelem.getAttribute("href")
+                let resurl = new URL(evurlrel, document.baseURI).href
+                actzone['url'] = resurl
+                if(titlelem.children.length == 1) {
+                    actzone['captElement'] = titlelem.children[0]
+                }
+                else
+                    actzone['captElement'] = titlelem
+            }
+            else {
+                
+            }
+            zmap.set(itmh, actzone)
+        }
+        return;
+    }
         
-    if(utst[1] == "articles") {
+    if(utst[1] == "articles" || utst[1] == "news") {
         let posthead = document.querySelector('.tm-article-snippet__author')
         let headelem = getIndirectChildElementBelongsToClass(posthead, "tm-user-info__username")
         if(headelem != null) {
             let actzone = {}
-            username = headelem.innerText
+            username = headelem.innerText.toLowerCase()
             initazone(actzone, headelem, username, "habrcom");
             actzone['isModifiable'] = true;
             actzone['eventype'] = 2
             actzone['url'] = curl
+            let atitle = document.querySelector('.tm-title_h1')
+            if(atitle != null) {
+                if(atitle.children.length == 1) {
+                    actzone['captElement'] = atitle.children[0]
+                }
+                else
+                    actzone['captElement'] = atitle
+            }
             
             zmap.set(headelem, actzone)
         }
@@ -55,17 +95,21 @@ function ListHabrActiveZones(zmap, ishome) {
             let refloc =  itmh.getAttribute("href")
             let reuname = refloc.match(extrunamefromlink, "g")
             if(reuname != null)
-                username = reuname[1]
+                username = reuname[1].toLowerCase()
             else
-                username = itmh.innerText
+                username = itmh.innerText.toLowerCase()
 
             let itmprnt = itmh.parentElement
-            let menuancor = getParentElementBelobgsToClass(itmprnt, "tm-comment__header-inner")
+            let menuancor = getParentElementBelobgsToClass(itmprnt, "tm-comment__header")
             initazone(actzone, itmh, username, "habrcom");
             actzone['isModifiable'] = true;
             actzone['eventype'] = 1
             actzone['attachMenuDomElement'] = menuancor
-            
+            let hidelem = getParentElementBelobgsToClass(menuancor, "tm-comment-thread__comment")
+            if(hidelem == null) 
+                hidelem = getParentElementBelobgsToClass(menuancor, "tm-comment-thread__children")
+                
+            actzone['totalblock'] = hidelem
             let linkelem = getIndirectChildElementBelongsToClass(itmprnt, "tm-comment-thread__comment-link")
             let u = linkelem.getAttribute("href")
             actzone['url'] = new URL(u, document.baseURI).href
@@ -78,7 +122,7 @@ function ListHabrActiveZones(zmap, ishome) {
         let headelem = getIndirectChildElementBelongsToClass(posthead, "tm-user-info__username")
         if(headelem != null) {
             let actzone = {}
-            username = headelem.innerText
+            username = headelem.innerText.toLowerCase()
             initazone(actzone, headelem, username, "habrcom");
             actzone['isModifiable'] = true;
             actzone['eventype'] = 2
@@ -99,7 +143,7 @@ function ListHabrActiveZones(zmap, ishome) {
             if(reuname != null)
                 username = reuname[1]
             else
-                username = itmh.innerText
+                username = itmh.innerText.toLowerCase()
             
             let menuancor = getParentElementBelobgsToClass(itmprnt, "tm-comment__header-inner")
             initazone(actzone, itmh, username, "habrcom");
@@ -113,24 +157,35 @@ function ListHabrActiveZones(zmap, ishome) {
             
             zmap.set(itmh, actzone)
         }
-        
     }
 }
 
 function GetHabrTimestamp(item, type) {
     let overres = {}
     let resdate = new Date()
+    let tmstmp = ""
+    overres['success'] = false
     
     if(type == 1) {
+        let hd = getParentElementBelobgsToClass(item, "tm-user-info__user")
+        let timehlem = getIndirectChildElementBelongsToClass(hd, "tm-comment-thread__comment-link")
+        let timelem = timehlem.children[0]
+        tmstmp = timelem.getAttribute("datetime")
+        resdate = new Date(tmstmp)
+        overres['success'] = true
     }
     if(type == 2) {
+        let hd = getParentElementBelobgsToClass(item, "tm-article-snippet__meta")
+        let timehlem = getIndirectChildElementBelongsToClass(hd, "tm-article-datetime-published")
+        let timelem = timehlem.children[0]
+        tmstmp = timelem.getAttribute("datetime")
+        resdate = new Date(tmstmp)
+        overres['success'] = true
     }
     
-    res = resdate.toLocaleString('ru-RU');
-    
+    let res = resdate.toLocaleString('ru-RU');
     overres['parcedtime'] = res
-    overres['origtime'] = "tmstmp"
-    overres['success'] = false
+    overres['origtime'] = tmstmp
     return overres;    
 }
 
