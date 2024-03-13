@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.53",
+  "version": "0.54",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
 
   "developer": {
@@ -24,6 +24,13 @@
 
   "background": {
     "scripts": ["browser-polyfill.js", "contextlib.js", "background.js"]
+  },
+  
+  "commands": {
+      "store-all-events": {
+          "suggested_key": { "default": "Ctrl+Shift+1" },
+          "description": "Add all events on page to events base"
+      }
   },
 
   "content_scripts": [

@@ -169,18 +169,22 @@ function GetHabrTimestamp(item, type) {
     if(type == 1) {
         let hd = getParentElementBelobgsToClass(item, "tm-user-info__user")
         let timehlem = getIndirectChildElementBelongsToClass(hd, "tm-comment-thread__comment-link")
-        let timelem = timehlem.children[0]
-        tmstmp = timelem.getAttribute("datetime")
-        resdate = new Date(tmstmp)
-        overres['success'] = true
+        if(timehlem != null) {
+            let timelem = timehlem.children[0]
+            tmstmp = timelem.getAttribute("datetime")
+            resdate = new Date(tmstmp)
+            overres['success'] = true
+        }
     }
     if(type == 2) {
         let hd = getParentElementBelobgsToClass(item, "tm-article-snippet__meta")
         let timehlem = getIndirectChildElementBelongsToClass(hd, "tm-article-datetime-published")
-        let timelem = timehlem.children[0]
-        tmstmp = timelem.getAttribute("datetime")
-        resdate = new Date(tmstmp)
-        overres['success'] = true
+        if(timehlem != null) {
+            let timelem = timehlem.children[0]
+            tmstmp = timelem.getAttribute("datetime")
+            resdate = new Date(tmstmp)
+            overres['success'] = true
+        }
     }
     
     let res = resdate.toLocaleString('ru-RU');

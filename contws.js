@@ -500,6 +500,7 @@ function getCommentURL(item) {
 }
 
 function GetContTimestamp(item, type) {
+    let timestampss = ''
     if(type == 2) {     //post
         let chn  = item.parentElement.parentElement.childNodes;
         for(let i = 0; i <chn.length; i++) {
@@ -522,8 +523,8 @@ function GetContTimestamp(item, type) {
         evtime = extractContTime(timestampss.innerText);
     } 
     else {
-        timestampss = '';
-        evtime = extractContTime('');
+        timestampss = ''
+        evtime = extractContTime('')
     }    
     return evtime;
 }

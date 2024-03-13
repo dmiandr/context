@@ -336,10 +336,11 @@ function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript,
   setarr.push({request: "addhistoryevent"});
   
   var sendonrankchange = browser.runtime.sendMessage(setarr); 
-  
+  return sendonrankchange;
+  /*
   sendonrankchange.then(
 		result => { },
-		error => { alert("addHistoryEvent: " + error); });
+		error => { alert("addHistoryEvent: " + error); });*/
 }
 
 function removeHistoryEvent(url)

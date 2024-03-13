@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.53",
+  "version": "0.54",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
   "author": "dmitrevo",
   "homepage_url": "https://github.com/dmiandr/context",
@@ -14,6 +14,13 @@
   "background": {
     "service_worker": "background.js",
     "type": "module"
+  },
+  
+  "commands": {
+    "store-all-events": {
+        "suggested_key": { "default": "Ctrl+Shift+1" },
+        "description": "Add all events on page to events base"
+    }
   },
 
   "content_scripts": [

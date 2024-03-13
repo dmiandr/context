@@ -824,3 +824,11 @@ function getEquivalentLink(link) {
     else
         return link.replace("\/full", "");   
 }
+
+browser.commands.onCommand.addListener((cmd) => {
+    browser.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        let currentTab = tabs[0];
+        console.log(currentTab.id);
+        browser.tabs.sendMessage(currentTab.id, cmd)
+    });
+});

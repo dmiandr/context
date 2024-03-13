@@ -193,6 +193,7 @@ function ListLjActiveZones(zmap, ishome) {
                         if(comtext != null) {
                             actzone['isModifiable'] = true;
                             actzone['eventype'] = 1
+                            actzone['totalblock'] = commbar
                         }
                         let commlinks = getAllIndirectChildElementsBelongsToClass(commbar, "b-pseudo")
                         if(commlinks != null) {
@@ -214,7 +215,11 @@ function ListLjActiveZones(zmap, ishome) {
                         let timeelem = getIndirectChildElementBelongsToClass(commbar, "comment-permalink")
                         if(timeelem != null)
                             actzone['url'] = timeelem.href
-                    }                    
+                    }
+                    let rexcommtotal = new RegExp('^ljcmt*')
+                    let commblock = getParentElementWithId(itm, rexcommtotal)
+                    if(commblock != null)
+                        actzone['totalblock'] = commblock
                 }
                 if(lyres.type == 3)  {
                     let comhead = getParentElementBelobgsToClass(itm, "mdspost-comment__inner")
@@ -237,6 +242,9 @@ function ListLjActiveZones(zmap, ishome) {
                             }
                         }
                     }
+                    let commblock = getParentElementBelobgsToClass(itm, "mdspost-thread")
+                    if(commblock != null) 
+                        actzone['totalblock'] = commblock
                 }
                 if(lyres.type == 4)  {
                     let comhead = getParentElementBelobgsToClass(itm, "comment-inner")
@@ -248,6 +256,10 @@ function ListLjActiveZones(zmap, ishome) {
                             actzone['url'] = commlinks.getAttribute("href")                            
                         }
                     }
+                    let rexcommtotal = new RegExp('^ljcmt*')
+                    let commblock = getParentElementWithId(itm, rexcommtotal)
+                    if(commblock != null)
+                        actzone['totalblock'] = commblock
                 }
                 if(lyres.type == 5) {
                     let rexcommtotal = new RegExp('^ljcmt*')

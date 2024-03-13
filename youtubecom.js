@@ -93,7 +93,6 @@ function GetYtTimestamp(item, type) {
     
     if(type == 1) {
         let headerauthorelem = getParentElementWithId(item, "header-author")
-        let headerauthorelem1 = getIndirectChildElementWithId(item, "header-author")
         let comrefelem = getIndirectChildElementBelongsToClass(headerauthorelem, "published-time-text")
         tmstmp = comrefelem.innerText
     }

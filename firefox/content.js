@@ -21,7 +21,15 @@ if(gRanksParams.size == 0)
 }
 // обработка изменений, сделанных в свойствах пользователя
 browser.runtime.onMessage.addListener( (message) => {
-    requestActualUsersStauses();    
+    if(message == "store-all-events") {
+        let allevs = addAllPotentialEvents()
+        allevs.then(() => {
+            console.log("Refreshing elements...");
+            requestActualUsersStauses();
+        });
+    }
+    else
+        requestActualUsersStauses();
 })
 
 browser.runtime.connect().onDisconnect.addListener( function() { 
@@ -718,4 +726,27 @@ function locateMenuElement(item) {
         return null;
   
   return menu;
+}
+
+/* функция для тестирования нагрузки - добавляет все потенциальные события на текущецй странице в базу событий с текстом по-умолчанию */
+function addAllPotentialEvents() {
+    console.log("going to ADD ALL EVENTS")
+    let prs = []
+    let addedev = 0;
+    for ( let azitm of ActiveZones.keys()) {
+        v = ActiveZones.get(azitm);
+        if(v.eventype == 1 || v.eventype == 2) {
+            if(v.isevent == false && v.isModifiable == true) {
+                let timeoptions = gCurrnetNet.GetTimestamp(azitm, v.eventype);
+                let evtime = timeoptions.parcedtime
+                let ev = gCurrnetNet.GetEventText(azitm, v.eventype);
+                let ualias = gCurrnetNet.GetUserAlias(azitm, v.eventype)
+                let pr = addHistoryEvent(v.socnet, v.username, ualias, evtime, v['url'], ev.evtitle, ev.evtext, v.eventype, false, "", "")
+                addedev += 1
+                prs.push(pr)
+            }
+        }
+    }
+    alert("С текущей страницы добавлено событий: " + addedev.toString())
+    return Promise.all(prs);
 }
