@@ -1,6 +1,6 @@
 # Context RepuTracker
 
-## [![ru](https://img.shields.io/badge/lang-ru-red.svg)] [![en](https://img.shields.io/badge/lang-en-red.svg)](README_en.md)
+## ![ru](https://img.shields.io/badge/lang-ru-red.svg) [![en](https://img.shields.io/badge/lang-en-blue.svg)](README_en.md)
 
 Индивидуальный менеджер репутаций пользователей социальных сетей, оформленный как расширение для браузера (webextension), поддерживаются десктопные браузеры, созданные на базе Chrome и Mozilla.
 Перечень поддерживаемых социальных сетей расширяется, на данный момент поддерживаются следующие соцсети:
@@ -112,7 +112,7 @@ _Обратите внимание, что дата и время события
 
 Подробности, текущие объявления и обсуждения ведутся в блоге https://cont.ws/@dmitrevo
 
-Благодарю авторов следующих библиотек, задействованных в расширении/Acknowledgments to authors of the following libraries, used in extension:
+Благодарю авторов следующих библиотек, задействованных в расширении
 * https://github.com/mozilla/webextension-polyfill
 * https://github.com/eligrey/FileSaver.js
 

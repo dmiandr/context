@@ -2,7 +2,7 @@
 
 ## UNDER CONSTRUCTION: screens are in progress...
 
-## [![ru](https://img.shields.io/badge/lang-ru-red.svg)](README.md) | [![en](https://img.shields.io/badge/lang-en-red.svg)]
+## [![ru](https://img.shields.io/badge/lang-ru-red.svg)](README.md) ![en](https://img.shields.io/badge/lang-en-blue.svg)
 
 This extension for desktop browser (both Mozilla and Chrome based) performs tracking of reputation of social networks users. The list of social networks supported is growing permanently, now it includes:
 - CONT Social Journalistic platform (cont.ws)
