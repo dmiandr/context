@@ -14,6 +14,26 @@ expbtn.onclick = function() {
   setExport();
 }
 
+window.addEventListener("load", onOptionsPageLoad, false)
+
+function onOptionsPageLoad() {
+    if(document.readyState === "complete") {
+        let allTxtNodes = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+        while(allTxtNodes.nextNode()) {
+            let tnode = allTxtNodes.currentNode
+            tmptext = tnode.nodeValue
+            if(tmptext == null)
+                continue;
+            let msg = tmptext.replace(/__MSG_(\w+)__/g, function(match, v1) {
+                return v1 ? browser.i18n.getMessage(v1) : ''
+            })
+            if(msg != tmptext)
+                tnode.nodeValue = msg
+        }
+    }
+}
+
+
 document.getElementById("impbtn").addEventListener('change', handleSelectImport, false)
 
 function setExport() {

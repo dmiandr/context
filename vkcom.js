@@ -21,6 +21,7 @@ function IsVkPub() {
 }
 
 function ListVkActiveZones(zmap, ishome) {
+    let parceCorrect = true
     let allcomms = []
     let username = ""
     if(ishome != 0)
@@ -165,6 +166,7 @@ function ListVkActiveZones(zmap, ishome) {
         actzone['captElement'] = null;
         zmap.set(itm, actzone)
     }
+    return parceCorrect;
 }
 
 // Функция, возвращающая уникальное имя пользователя - для внутренних ссылок ВК (если есть доп. аттрибуты data-from-id 

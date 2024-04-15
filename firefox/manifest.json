@@ -1,8 +1,9 @@
 {
   "manifest_version": 2,
+  "default_locale": "en",
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.54",
+  "version": "0.55",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
 
   "developer": {
@@ -20,6 +21,12 @@
   },
   "icons": {
     "48": "icons/context48.png"
+  },
+  
+  "browser_action": {
+    "default_icon": {
+      "48": "icons/context48.png"
+    }
   },
 
   "background": {

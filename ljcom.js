@@ -65,6 +65,7 @@ function detectPageType() {
 }
 
 function ListLjActiveZones(zmap, ishome) {
+    let parceCorrect = true
     let pgtype = detectPageType()
     let pusername = pgtype.username
     let itm
@@ -448,6 +449,7 @@ function ListLjActiveZones(zmap, ishome) {
             }
         }
     }
+    return parceCorrect;
 }
 
 function GetLjTimestamp(item, type) {

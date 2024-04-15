@@ -239,6 +239,13 @@ table.histable tr:nth-child(even) {
 table.histable tr.dark {
     border: 1px solid #326891;
     background-color: #487ca4;
+    color: #FFF;
+    text-decoration: bold;
+}
+
+table.histable tr.dark a:link {
+  color: #FFF;
+  text-decoration: bold;
 }
 
 table.histable tr.light {

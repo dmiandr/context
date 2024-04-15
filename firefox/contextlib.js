@@ -81,7 +81,7 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
                 datalistelem.appendChild(opt)
             }
         }
-        newtagfld.setAttribute("placeholder", "Введите тег  (" + tgsmap.size + ")")
+        newtagfld.setAttribute("placeholder", browser.i18n.getMessage('entertag_sign') + "  (" + tgsmap.size + ")")
     }, 
     error => {})
   
@@ -214,11 +214,11 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
     if(erasebtn == null)
       erasebtn = document.createElement('span');
     erasebtn.classList.add('continvbutton');
-    erasebtn.innerHTML = "Удалить";
+    erasebtn.innerHTML = browser.i18n.getMessage('deletevent_button')
     erasebtn.style.setProperty('margin-left', '100px');
     erasebtn.setAttribute("id", "erasebtn");
     buttonsline.insertBefore(erasebtn, okbtn);
-    okbtn.innerHTML = "Изменить";
+    okbtn.innerHTML = browser.i18n.getMessage('changevent_button')
   }
   else
   {
@@ -226,7 +226,7 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
     if(erasebtn != null)
       erasebtn.remove();
     
-    okbtn.innerHTML = "Добавить";
+    okbtn.innerHTML = browser.i18n.getMessage('addevent_button')
   }
 
   return new Promise(resolve => {

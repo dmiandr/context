@@ -1,0 +1,230 @@
+{
+    "context_menu_add": {
+        "message":      "Add event",
+        "description":  "Menu item than opens event dialog to add new event"
+    },
+    "context_menu_change": {
+        "message":      "Change event",
+        "description":  "Menu item than opens event dialog to change existing event"
+    },
+    "event_type_selector": {
+        "message":      "EVENT",
+        "description":  "Title of drop-down list that contains possible event types"
+    },
+    "event_type_post": {
+        "message":      "Post",
+        "description":  "Post event name"
+    },
+    "event_type_comment": {
+        "message":      "Comment",
+        "description":  "Comment event name"
+    },
+    "event_type_unknown": {
+        "message":      "Unknown",
+        "description":  "Name of unknown event type"
+    },
+    "event_type_repostsign": {
+        "message":      "repost",
+        "description":  "Repost sign name"
+    },
+    "entertag_sign": {
+        "message":      "Type tag here",
+        "description":  "Remark on tag field"
+    },
+    "press_enter_toadd_tag": {
+        "message":      "Press Enter to add tag you typed",
+        "description":  "Floating txt above tag field"
+    },
+    "event_title_sign": {
+        "message":      "Event title",
+        "description":  "Remark on event title field"
+    },
+    "event_text_sign": {
+        "message":      "Event text",
+        "description":  "Remark on event text field"
+    },
+    "cancel_button": {
+        "message":      "Cancel",
+        "description":  "Cancel button"
+    },
+    "addevent_button": {
+        "message":      "Add",
+        "description":  "Add button"
+    },
+    "deletevent_button": {
+        "message":      "Delete",
+        "description":  "Delete button"
+    },
+    "changevent_button": {
+        "message":      "Change",
+        "description":  "Change button"
+    },
+    "status_selector": {
+        "message":      "Status",
+        "description":  "Title of drop-down list that contains possible event user statuses"
+    },
+    "author_charact_sign": {
+        "message":      "Author's characteristics",
+        "description":  "Place to enter yout text with characteristics of the author"
+    },
+    "hide_author_sign": {
+        "message":      "hide author's events",
+        "description":  "Checkbox that controls whether events from this author will be hidden"
+    },
+    "time_header": {
+        "message":      "Time",
+        "description":  "Header of the time column"
+    },
+    "title_header": {
+        "message":      "Title",
+        "description":  "Header of the title column"
+    },
+    "event_header": {
+        "message":      "Event",
+        "description":  "Header of the event URL column"
+    },
+    "close_useropt_button": {
+        "message":      "Close",
+        "description":  "Close user options without saving button"
+    },
+    "refresh_useropt_button": {
+        "message":      "Refresh",
+        "description":  "Refresh user options when changed"
+    },
+    "keep_useropt_button": {
+        "message":      "Keep",
+        "description":  "Save all changes and then close user options button"
+    },
+    "common_tab": {
+        "message":      "Common",
+        "description":  "First tab title"
+    },
+    "tags_tab": {
+        "message":      "Tags",
+        "description":  "Second tab title"
+    },
+    "export_button": {
+        "message":      "Export",
+        "description":  "Export data button"
+    },
+    "import_button": {
+        "message":      "Import",
+        "description":  "Import data button"
+    },
+    "remove_before_import_sign": {
+        "message":      "Clear data before import",
+        "description":  "Sign on checkbox that clears existing data before importing new one"
+    },
+    "read_details_text": {
+        "message":      "View detailed description on working with extension at ",
+        "description":  "Sign near description link"
+    },
+    "github_link_text": {
+        "message":      "project page on GitHub",
+        "description":  "GitHub link text"
+    },
+    "totalevents_sign": {
+        "message":      "Total events stored: ",
+        "description":  "Sign before total events number"
+    },
+    "from_sign": {
+        "message":      "from",
+        "description":  "Sign between number of events and number of users"
+    },
+    "different_users_sign": {
+        "message":      "different users",
+        "description":  "Sign after a number of users"
+    },
+    "user_character_sign": {
+        "message":      "overall characteristics",
+        "description":  "Sing after number of users with non-empty characteristics"
+    },
+    "last_added_event_sign": {
+        "message":      "Last added event: ",
+        "description":  "Sing near last added event"
+    },
+    "supported_socnets_sign": {
+        "message":      "Supported social networks:",
+        "description":  "Title for a section with supported social networks list"
+    },
+    "user_statuses_sign": {
+        "message":      "Status editor/filter",
+        "description":  "Title for a section with status editor/filer"
+    },
+    "user_list_sign": {
+        "message":      "Users list:",
+        "description":  "Title for a section with selected user list"
+    },
+    "name_columntitle": {
+        "message":      "Login",
+        "description":  "Header of the column containing user login"
+    },
+    "nickname_columntitle": {
+        "message":      "Nickname",
+        "description":  "Header of the column containing user name"
+    },
+    "eventsnumber_columntitle": {
+        "message":      "Number of events",
+        "description":  "Header of the column containing number of events for this user"
+    },
+    "remove_all_marks_button": {
+        "message":      "Clear selected",
+        "description":  "Remove marks from all tags button"
+    },
+    "without_status": {
+        "message":      "Without status",
+        "description":  "First string of status filter, matches status-free users"
+    },
+    "background_color_sign": {
+        "message":      "Background color",
+        "description":  "Tooltip for background color control for user status"
+    },
+    "font_color_sign": {
+        "message":      "Font color",
+        "description":  "Tooltip for font color control for user status"
+    },
+    "edit_status_button": {
+        "message":      "Edit status",
+        "description":  "Tooltip for edit status bitton '...'"
+    },
+    "delete_status_button": {
+        "message":      "Delete",
+        "description":  "Button for removing particular status"
+    },
+    "delete_status_question": {
+        "message":      "Do you really want to remove this status?",
+        "description":  "Request for confirmation on deleteing status"
+    },
+    "add_status_button": {
+        "message":      "Add new status",
+        "description":  "Tooltip for add status bitton '+'"
+    },
+    "keep_status_button": {
+        "message":      "Keep status added",
+        "description":  "Tooltip for keep status bitton after entering it's data"
+    },
+    "empty_event_title": {
+        "message":      "(without title)",
+        "description":  "Printed instead of empty title"
+    },
+    "comment_type_name": {
+        "message":      "Comment",
+        "description":  "Name of the comment event type"
+    },
+    "post_type_name": {
+        "message":      "Post",
+        "description":  "Name of the post event type"
+    },
+    "socnet_header": {
+        "message":      "Soc.Network",
+        "description":  "Column name containing social network"
+    },
+    "unable_update_status_error": {
+        "message":      "Unable to update status",
+        "description":  "Error message when status update is fail"
+    },
+    "allevents_added_message": {
+        "message":      "Events added from current page: ",
+        "description":  "Message on adding all events from current page"
+    }
+}

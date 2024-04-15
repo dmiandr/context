@@ -1,9 +1,9 @@
 <div id="histbackground" class="darkbackground">
   <div id="histdialog" class="eventwindow">
     <div class="firstline">
-      <span style="width: 25%; color: #FFF; padding: 10px">СОБЫТИЕ:</span>
-      <select name="eventype" class="contselector" id="eventypeselector" disabled="disabled"><option value="post">Запись</option><option value="comment">Комментарий</option><option value="unknown">Неизвестное</option></select>
-      <label style="color: #FFF;" id="repostlbl"><input id="repostmark" type="checkbox"/>репост</label>
+      <span style="width: 25%; color: #FFF; padding: 10px">__MSG_event_type_selector__:</span>
+      <select name="eventype" class="contselector" id="eventypeselector" disabled="disabled"><option value="post">__MSG_event_type_post__</option><option value="comment">__MSG_event_type_comment__</option><option value="unknown">__MSG_event_type_unknown__</option></select>
+      <label style="color: #FFF;" id="repostlbl"><input id="repostmark" type="checkbox"/>__MSG_event_type_repostsign__</label>
     </div>
     <div class="firstline">
       <span class="dialogfield" id="fldname" style="width: 25%">
@@ -18,17 +18,17 @@
     </span>
     <span class="dialogfield" id="fldtags" style="width: 94%">
 	<ul id="tagslist"></ul>
-	<input type="text" id="inputtag" placeholder="Введите тег" list="usedtags">
+	<input type="text" id="inputtag" placeholder="__MSG_entertag_sign__" list="usedtags" title="__MSG_press_enter_toadd_tag__">
 	<datalist id="usedtags"></datalist>
     </span>
-    <input class="dialogfieldedit" id="fldtitle" placeholder="Заголовок события" style="width: 95%"></input>
-    <textarea class="dialogfieldedit" id="fldmain" placeholder="Описание события и цитаты пользователя" style="width: 95%; height: 100px; resize: none; opacity: 1;"></textarea>
+    <input class="dialogfieldedit" id="fldtitle" placeholder="__MSG_event_title_sign__" style="width: 95%"></input>
+    <textarea class="dialogfieldedit" id="fldmain" placeholder="__MSG_event_text_sign__" style="width: 95%; height: 100px; resize: none; opacity: 1;"></textarea>
     <div class="firstline" id="buttonsline">
     <span class="continvbutton" id="cancelbtn" style="align: left">
-    Отмена
+    __MSG_cancel_button__
     </span>
     <span class="continvbutton" id="okbtn"  style="float: right">
-    Добавить
+    __MSG_addevent_button__
     </span>
     </div>
   </div>

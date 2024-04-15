@@ -93,7 +93,7 @@ function showBriefList(res) {
         if(document.getElementById("refreshstatuses") == undefined) {
             let imgrefresh = document.createElement('img')
             imgrefresh.setAttribute("id", "refreshstatuses")
-            imgrefresh.title = "Обновить"
+            imgrefresh.title = browser.i18n.getMessage("refresh_useropt_button")//"Обновить"
             imgrefresh.src = 'icons/refresh.png'
             imgrefresh.onclick = function() {
                 showstatuses.length = 0
@@ -133,7 +133,7 @@ function showBriefList(res) {
 
         })
         c.appendChild(chbox0)
-        addPlainCell(row0, 1, "Без статуса")
+        addPlainCell(row0, 1, browser.i18n.getMessage("without_status"))
         let c2 = row0.insertCell(2)
         let santsat = document.createElement("label");
         santsat.setAttribute("id", "santsat");
@@ -179,19 +179,19 @@ function showBriefList(res) {
                 cD.setAttribute("id", "descr"+res[co].id)
                 let cellbackgr = addPlainCell(row, 4, "")
                 let bcolorinp = createColorPicker(res[co].bgcolor, "bcolor"+res[co].id, true)
-                bcolorinp.title = "Цвет фона"
+                bcolorinp.title = browser.i18n.getMessage("background_color_sign")
                 cellbackgr.appendChild(bcolorinp)
                 
                 let cellfont = addPlainCell(row, 5, "")
                 let fcolorinp = createColorPicker(res[co].fontcolor, "fcolor"+res[co].id, true)
-                fcolorinp.title = "Цвет шрифта"
+                fcolorinp.title = browser.i18n.getMessage("font_color_sign")
                 cellfont.appendChild(fcolorinp)
                                                 
                 let cedt = row.insertCell(6)
                 let btnedt= document.createElement("button");
 
                 btnedt.textContent = "..."
-                btnedt.title = "Редактировать статус"
+                btnedt.title = browser.i18n.getMessage("edit_status_button")
                 btnedt.setAttribute("id", "edit"+res[co].id)
                 btnedt.addEventListener("click", function(ev){
                     let rid = res[co].id;
@@ -206,12 +206,12 @@ function showBriefList(res) {
                 cedt.appendChild(btnedt)
                 let crm = row.insertCell(7)
                 let btnrm= document.createElement("button");
-                btnrm.textContent = "Удалить"
+                btnrm.textContent = browser.i18n.getMessage("delete_status_button")
                 btnrm.setAttribute("id", "rmcnsl"+res[co].id)
                 btnrm.addEventListener("click", function(ev){
-                    if(btnrm.textContent == "Удалить") {
+                    if(btnrm.textContent == browser.i18n.getMessage("delete_status_button")) {
                         if(ranksediting == false && res[co].amount == 0) {
-                            if(confirm("Вы действительно хотите удалить данный статус?") == true) {
+                            if(confirm(browser.i18n.getMessage("delete_status_question")) == true) {
                                 let arrdel = new Array();
                                 arrdel.push(res[co].id)
                                 arrdel.push({request: "deleterank"});
@@ -249,27 +249,27 @@ function showBriefList(res) {
         cD.setAttribute("id", "descr"+next_id)
         let cB = rowplus.insertCell(4)
         let newbckgr = createColorPicker('#ffffff', "bcolor"+next_id, true)
-        newbckgr.title = "Цвет фона"
+        newbckgr.title = browser.i18n.getMessage("background_color_sign")
         cB.appendChild(newbckgr)
         let cF = rowplus.insertCell(5)
         let newfnt = createColorPicker('#000000', "fcolor"+next_id, true)
-        newfnt.title = "Цвет шрифта"
+        newfnt.title = browser.i18n.getMessage("font_color_sign")
         cF.appendChild(newfnt)
         let cE = rowplus.insertCell(6)
         let btnadd = document.createElement("button");
         btnadd.setAttribute("id", "addrankbtn")
         btnadd.style.fontSize = "20px"
-        btnadd.title = "Добавить статус"
+        btnadd.title = browser.i18n.getMessage("add_status_button")
         btnadd.textContent = " + "
         btnadd.addEventListener("click", (ev)=>{
             if(ranksediting == false) {
                 btnadd.textContent = "..."
-                btnadd.title = "Сохранить"
+                btnadd.title = browser.i18n.getMessage("keep_status_button")
                 startRankEdit(next_id)
                 ranksediting = true;
             } else {
                 btnadd.textContent = " + "
-                btnadd.title = "Добавить статус"
+                btnadd.title = browser.i18n.getMessage("add_status_button")
                 completeRankEdit(next_id, true)
                 ranksediting = false;
             }                    
@@ -279,12 +279,12 @@ function showBriefList(res) {
         let cC = rowplus.insertCell(7)
         let btncnsl = document.createElement("button");
         btncnsl.setAttribute("id", "rmcnsl"+next_id)
-        btncnsl.textContent = "Отмена"
+        btncnsl.textContent = browser.i18n.getMessage("cancel_button")
         btncnsl.addEventListener("click", (ev) => {
                 completeRankEdit(next_id, false)
                 ranksediting = false;
                 btnadd.textContent = "+"
-                btnadd.title = "Добавить статус"
+                btnadd.title = browser.i18n.getMessage("add_status_button")
                 btncnsl.disabled = true
         })
         cC.appendChild(btncnsl)
@@ -354,7 +354,7 @@ function tableSummary(result)
             drawHistoryEventDlg(evt, lastevent.socnet, lastevent.username, lastevent.alias, lastevent.time.toLocaleString('ru-RU'), lastevent.url, lastevent.title, lastevent.descript, lastevent.type, lastevent.repost, lastevent.tags, true, lastevent.time, true);
         });
         if(lastevent.title === "")
-            lastevent.title = " (без заголовка) "
+            lastevent.title = browser.i18n.getMessage("empty_event_title")
         cellelem.innerText = lastevent.title;        
         curcell.appendChild(cellelem);
         curcell = singlrow.insertCell(3);
@@ -363,14 +363,14 @@ function tableSummary(result)
         cellelem.addEventListener("click", function(evt){parent.window.open(lastevent.url)})
         let evtype_name  = ""
         if(lastevent.type == 1)
-            evtype_name = "Комментарий";
+            evtype_name = browser.i18n.getMessage("comment_type_name");
         if(lastevent.type == 4 || lastevent.type == 2)
-            evtype_name = "Запись";
+            evtype_name = browser.i18n.getMessage("post_type_name");
         cellelem.innerText = evtype_name
         curcell.appendChild(cellelem);
     } 
     
-    tbl.innerHTML = '<th>N</th><th>Сеть</th><th>Имя</th><th>Псевдоним</th><th>Количество событий</th>';
+    tbl.innerHTML = '<th>N</th><th>' + browser.i18n.getMessage("socnet_header") + '</th><th>' + browser.i18n.getMessage("name_columntitle") + '</th><th>' + browser.i18n.getMessage("nickname_columntitle") + '</th><th>' + browser.i18n.getMessage("eventsnumber_columntitle") + '</th>';
     let usrn = 1
     for(let h of data.keys())
     {
@@ -417,7 +417,7 @@ function DrawTagsTab() {
     let btn1 = toolbarrow.insertCell(0)
     let imgrefresh = document.createElement('img')
     imgrefresh.src = 'icons/refresh.png'
-    imgrefresh.title = "Обновить"
+    imgrefresh.title = browser.i18n.getMessage("refresh_useropt_button")//"Обновить"
     imgrefresh.onclick = function() {
         tagsul.innerHTML=''; 
         curtagslst = []; 
@@ -431,7 +431,7 @@ function DrawTagsTab() {
     let btn2 = toolbarrow.insertCell(2)
     let imgunmark = document.createElement('img')
     imgunmark.src = 'icons/unmark.png'
-    imgunmark.title = "Снять все отметки"
+    imgunmark.title = browser.i18n.getMessage("remove_all_marks_button")//"Снять все отметки"
     imgunmark.onclick = function() { removeAllMarks(); let outtable = document.getElementById("taggedevents"); outtable.innerHTML = '';}
     btn2.appendChild(imgunmark)
     btn2.width = '40px'
@@ -469,6 +469,7 @@ function listTagged(res) {
         let key = JSON.parse(skey)
         let alias = evntslst[0].alias
         let singlrow = outtable.insertRow(-1);
+        singlrow.className = "dark"
         let curcell = singlrow.insertCell(0);
         let stitle = KnownSNets.get(key.socnet).Title
         if(stitle == undefined)
@@ -510,7 +511,7 @@ function listTagged(res) {
                 drawHistoryEventDlg(evt, cnet, cnam, calias, ctime.toLocaleString('ru-RU'), curl, ctitle, cdescr, ctype, crepost, ctags, true, ctime, true);
             })
             if(ctitle === "")
-                ctitle = " (без заголовка) "
+                ctitle = browser.i18n.getMessage("empty_event_title")
             cellelem.innerText = ctitle
             evcell.appendChild(cellelem)
             evcell = evrow.insertCell(2)
@@ -519,9 +520,9 @@ function listTagged(res) {
             evcell = evrow.insertCell(3)
             cellelem = document.createElement("a")
             if(evntslst[co].type == 1)
-                evtype_name = "Комментарий";
+                evtype_name = browser.i18n.getMessage("comment_type_name")
             if(evntslst[co].type == 4 || evntslst[co].type == 2)
-                evtype_name = "Запись";
+                evtype_name = browser.i18n.getMessage("post_type_name");
             cellelem.addEventListener("click", function(evt){evt.preventDefault(); parent.window.open(curl)})
             cellelem.innerText = evtype_name
             cellelem.href = "#"
@@ -648,7 +649,7 @@ function completeRankEdit(rankid, apply) {
     else
         rmbtn.disabled = true
     
-    rmbtn.textContent = "Удалить"
+    rmbtn.textContent = browser.i18n.getMessage('deletevent_button')
     
     if(apply == false) {
         bcolorinp.value = gPrevBcolor
@@ -669,7 +670,7 @@ function completeRankEdit(rankid, apply) {
         sendonaddingrank.then(res => {
             gRanksParams.clear()
             cacheRankParams(); },
-        err => { alert("Не удалось обновить статус: " + err); return; });
+        err => { alert(browser.i18n.getMessage('unable_update_status_error') + err); return; });
     }
 
     blockButtons(rankid, false)   

@@ -21,6 +21,7 @@ function IsHabrPub() {
 }
 
 function ListHabrActiveZones(zmap, ishome) {
+    let parceCorrect = true
     let allcomms = []
     let username = ""
     let curl = window.location.href
@@ -158,6 +159,7 @@ function ListHabrActiveZones(zmap, ishome) {
             zmap.set(itmh, actzone)
         }
     }
+    return parceCorrect;
 }
 
 function GetHabrTimestamp(item, type) {

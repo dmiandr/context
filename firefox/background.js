@@ -138,6 +138,7 @@ Handlers.set("gethistoryitem", gethistoryitem_handler);
 Handlers.set("getbrieflist", getbrieflist_handler);
 Handlers.set("gettags", gettags_handler);
 Handlers.set("historybytags", historybytags_handler);
+Handlers.set("bactionstatus", bactionstatus_handler);
 
 function ranks_handler(msg, db, resolve) {
     let tr = db.transaction(["users", "ranks"]);
@@ -250,7 +251,8 @@ function histatuses_handler(msg, db, resolve) {
                         if(curitm.username == null) {
                             console.log("Error: got null username in list of page users")
                             continue;
-                        }                            
+                        }            
+
                         let curusr = curitm.username.toLowerCase();
                         let curnet = curitm.socnet
                         let curx = curnet + "%" + curusr
@@ -428,11 +430,14 @@ function eraseall_handler(msg, db, resolve) {
 
 function injecthistorydialog_handler(msg, db, resolve) {
     fetch('addhistorydialog.html')
-    .then(response => { 
+    .then(response => {
         return response.text()
     })
     .then(text => {
-        resolve(text)
+        let translated = text.replace(/__MSG_(\w+)__/g, function(match, v1) {
+            return v1 ? browser.i18n.getMessage(v1) : "";
+        })
+        resolve(translated)
     })
     
     /*let src = browser.runtime.getURL('addhistorydialog.html');
@@ -573,10 +578,11 @@ function getbrieflist_handler(msg, db, resolve) {
         socnetlst = paramsocnets.split(",")
         console.log("SOCNETs = ", socnetlst.join('|'))
     }
-    else
-        console.log("NO SOCNET PROVIDED")
-      
-        
+    else {
+        if(paramrnks == undefined)
+            paramrnks = "0"
+        console.log("NO SOCNET PROVIDED for RanksList: ", paramrnks)
+    }   
     
     oc.onsuccess = function(event) {
         let cur = event.target.result
@@ -823,3 +829,15 @@ browser.commands.onCommand.addListener((cmd) => {
         browser.tabs.sendMessage(currentTab.id, cmd)
     });
 });
+
+
+function bactionstatus_handler(msg, db, resolve) {
+    let prms = msg.pop();
+    if(prms != undefined) {
+        if(prms.iscorrect == true)
+            browser.browserAction.setIcon({path:'icons/context48.png'});
+        else
+            browser.browserAction.setIcon({path:'icons/context48_red.png'});
+    }
+}
+

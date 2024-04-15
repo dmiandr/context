@@ -38,6 +38,7 @@ function IsContPub() {
 // кроме того там есть небольшие проблемы с отображением баджа..
 
 function ListContActiveZones(zmap, ishome) {
+    let parceCorrect = true
     // cont.ws/@username, with or without /, followed by post id at the end and with or without & followed by params
     let testurlre = new RegExp("cont.ws\\/@([^\\/\\&]+)\\/*(\\d*)*\\&*.*$")
     let testurlnonpostre = new RegExp("cont.ws\\/@([^\\/\\&]+)\\/*(\\S*)*\\&*.*$")  // выражение, отсекающее служебные линки, где вместо идентификатора публикации (числовой) идет буквенное или цифробуквенное сочетание
@@ -131,6 +132,11 @@ function ListContActiveZones(zmap, ishome) {
                     actzone['isModifiable'] = true;
                     actzone['eventype'] = 2
                     let itmhead = getParentElementBelobgsToClass(itm, "post-special-header")
+                    if(itmhead == null) {
+                        console.log("Parcing error: No class post-special-header parent element found")
+                        parceCorrect = false
+                        continue;
+                    }
                     let tltcont = getIndirectChildElementBelongsToClass(itmhead, "post-title")
                     if(tltcont != null)
                         actzone['captElement'] = tltcont.children[0]
@@ -146,6 +152,12 @@ function ListContActiveZones(zmap, ishome) {
                     actzone['eventype'] = 2
                     actzone['captElement'] = itm
                     let itmprevhead = getParentElementBelobgsToClass(itm, "new_post_prev")
+                    if(itmprevhead == null) {
+                        console.log("Parcing error: No class new_post_prev parent element found")
+                        parceCorrect = false
+                        continue;
+                    }                   
+                    actzone['totalblock'] = itmprevhead
                     for(const c of itmprevhead.children) {
                         if(c.tagName.toLowerCase() == "h3") {
                             for(const a of c.children)
@@ -154,8 +166,10 @@ function ListContActiveZones(zmap, ishome) {
                         }
                     }
                     lnkpostid = itmprevhead.getAttribute("post_prv")
-                    if(lnkpostid == null)
-                        console.log("Unexpected parcing branch: post link has no id")
+                    if(lnkpostid == null) {
+                        console.log("Parcing error: Unexpected parcing branch: post link has no id")
+                        parceCorrect = false
+                    }
                     else
                         actzone['url'] = "https://cont.ws/@" + username + "/" + lnkpostid
                     zmap.set(itm, actzone)
@@ -176,7 +190,8 @@ function ListContActiveZones(zmap, ishome) {
                 let prntblock = getParentItemWithAttribute(itm, "comment-author-login")
                 let commid = prntblock.getAttribute("comment-id")
                 if(commid == null) {
-                    console.log("Unexpected parcing branch: comment div does not have comment id value")
+                    console.log("Parcing error: Unexpected parcing branch: comment div does not have comment id value")
+                    parceCorrect = false
                     continue;
                 }
                 actzone['isModifiable'] = true 
@@ -194,13 +209,14 @@ function ListContActiveZones(zmap, ishome) {
             }
         }
         
-        if(itm.classList.contains("new_m_author") || itm.classList.contains("post_jr")) {    // блоки аннотоаций публикаций в ленте, первый случай - непосредственно автора, второй - публикация автора в журнале
+        if(itm.classList.contains("new_m_author") || itm.classList.contains("post_jr")) {    // блоки аннотаций публикаций в ленте, первый случай - непосредственно автора, второй - публикация автора в журнале
             let feedcomp = getParentElementBelobgsToClass(itm, "new_post_prev")
             if(feedcomp != null) {
                 let feedpostid = feedcomp.getAttribute("data-post-id")
                 actzone['url'] = "https://cont.ws/@" + username + "/" + feedpostid
                 actzone['eventype'] = 2
                 actzone['captElement'] = itm
+                actzone['totalblock'] = feedcomp
                 for(const c of feedcomp.children) {
                     if(c.tagName.toLowerCase() == "h3") {
                         for(const a of c.children)
@@ -234,17 +250,27 @@ function ListContActiveZones(zmap, ishome) {
                     continue;
                 let tagpostid2 = schurlre[1]
                 actzone['url'] = "https://cont.ws/@" + username + "/" + tagpostid2
-                if(tagpostid != tagpostid2)
-                    console.log("Unexpected parcing branch: in tagged feed new_post_prev element parameter post_prv does not fit postid from url")
-                
-                zmap.set(itm, actzone)
+                if(tagpostid != tagpostid2) {
+                    console.log("Parcing error: Unexpected parcing branch: in tagged feed new_post_prev element parameter post_prv does not fit postid from url")
+                    parceCorrect = false
+                }
+                else
+                    zmap.set(itm, actzone)
                 continue;
+            }
+            else {
+                console.log("Parcing error: m_author has no new_post_prev parent")
+                parceCorrect = false
             }
         }
         if(itm.classList.contains("m_author") && itm.parentElement.classList.contains("topblock_author")) {
             headcomp = getParentElementBelobgsToClass(itm, "topblock_prv")
             if(headcomp != null) {
                 let captelem = getIndirectChildElementBelongsToClass(headcomp, "topblock_title")
+                if(captelem == null) {
+                    console.log("Parcing error: topblock_prv has no topblock_title class element")
+                    parceCorrect = false
+                }
                 let uri = captelem.getAttribute("href")
                 let tres = uri.match(testlocurlre, "g")
                 if(tres != null)
@@ -256,6 +282,10 @@ function ListContActiveZones(zmap, ishome) {
                         zmap.set(itm, actzone)
                         continue;
                     }
+            }
+            else {
+                console.log("Parcing error: topblock_author has no parent belongs to class topblock_prv")
+                parceCorrect = false
             }
         }
         if(itm.parentElement.classList.contains("sidebar_prv")) {  // статьи из списка в правом блоке ЛУЧШЕЕ ЗА СТУКИ
@@ -398,6 +428,7 @@ function ListContActiveZones(zmap, ishome) {
             continue;
         }
     }
+    return parceCorrect;
 }
 
 /*! \brief \~russian Выделение имени пользователя из ссылки на его профиль. Если ссылка на статью, то вернет null */
@@ -540,7 +571,10 @@ function GetContEventText(item, type) {
     }
     if(type == 2) {
         evtitle = document.title.split('|')[0];
-        evmain = document.title.split('|')[0];        
+        evmain = evtitle
+        postelem = document.querySelector('article')
+        if(postelem != null)
+            evmain = postelem.innerText;
     }
     let res = {}
     res["evtext"] = evmain

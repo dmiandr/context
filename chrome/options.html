@@ -1,6 +1,6 @@
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Параметры расшрения Context RepuTracker v0.5.4</title>
+<title>Параметры расшрения Context RepuTracker v0.5.5</title>
 <script defer="" type="text/javascript" src="FileSaver.js"></script>
 <script defer="" type="text/javascript" src="expimp.js"></script>
 <link rel="stylesheet" type="text/css" href="ddmenu.css">
@@ -20,46 +20,46 @@
   <nav>
     <ul>
       <li class="tab1">
-        <label for="tab1">Общие</label>
+        <label for="tab1">__MSG_common_tab__</label>
       </li>
       <li class="tab2">
-        <label for="tab2">Теги</label>
+        <label for="tab2">__MSG_tags_tab__</label>
       </li>
     </ul>
   </nav>
 <section>
 <div class="tab1">
-<a href="#" id="expbtn"><button>Экспорт</button></a><br>
+<a href="#" id="expbtn"><button>__MSG_export_button__</button></a><br>
 <br>
-<br>Импорт:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт"><label><input type="checkbox" id="erasebeforeimport"/>Удалить данные перед импортом новых</label>
+<br>__MSG_import_button__:<br><input type="file" id="impbtn" name="jsonfile" value="Импорт"><label><input type="checkbox" id="erasebeforeimport"/>__MSG_remove_before_import_sign__</label>
 <br>
 <hr>
-<p style="text-align: center;">Подробное описание работы с расширением помещено на <a href="https://github.com/dmiandr/context/blob/master/README.md">странице проекта на GitHub</a></p>
+<p style="text-align: center;">__MSG_read_details_text__<a href="https://github.com/dmiandr/context/blob/master/README.md">__MSG_github_link_text__</a></p>
 <br>
-Всего сохранено событий: <label id="totaleventsplace"></label> от <label id="totaldiffuserssplace"></label> различных пользователей<br>
-<label id="totaldescripts"></label> обобщенных характеристик.
+__MSG_totalevents_sign__ <label id="totaleventsplace"></label> __MSG_from_sign__ <label id="totaldiffuserssplace"></label> __MSG_different_users_sign__<br>
+<label id="totaldescripts"></label> __MSG_user_character_sign__.
 <br>
-Последнее добавленное событие:<br>
+__MSG_last_added_event_sign__<br>
 <table class="histable" id="lastevent">
 </table>
 <br>
 <hr>
-<label>Поддерживаемые соцсети:</label><br>
+<label>__MSG_supported_socnets_sign__</label><br>
 <form id="socnets">
 <select id="socnetselection" multiple>
 </select>
 </form>
 <br>
-<label id="filtertitle">Статусы пользователей:</label><br>
+<label id="filtertitle">__MSG_user_statuses_sign__</label><br>
 <table class="histable" id="statuslist">
 </table>
 <br>
-Перечень пользователей:<br>
+__MSG_user_list_sign__<br>
 <table class="histable" id="overalltabid" width="50%">
 <th>N</th>
-<th>Имя</th>
-<th>Псевдоним</th>
-<th>Количество событий</th>
+<th>__MSG_name_columntitle__</th>
+<th>__MSG_nickname_columntitle__</th>
+<th>__MSG_eventsnumber_columntitle__</th>
 </table>
 </div>
 <div class="tab2" id="tab2section">

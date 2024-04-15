@@ -21,8 +21,13 @@ function IsYtPub() {
 }
 
 function ListYtActiveZones(zmap, ishome) {
+    let parceCorrect = true
     let allcomms = []
     let cururl = window.location.href
+    if(cururl.includes("&lc")) { // значит в ссылке есть добавка, уточняющая конкретный комментарий
+        urlparts = cururl.split("&lc")
+        cururl = urlparts[0]
+    }
     let username = ""
     
     vidheadelem = document.querySelector("[id=upload-info]")
@@ -31,6 +36,10 @@ function ListYtActiveZones(zmap, ishome) {
         if(refs.length == 1) {
             let itm = refs[0]
             let chname = getIndirectChildElementWithId(vidheadelem, "channel-name")
+            if(chname == null) {
+                parceCorrect = false
+                console.log("Parcing error: channel-name not found")
+            }
             let vparent = vidheadelem.parentElement
             for(const isa of vparent.children) {
                 if(isa.tagName.toLowerCase() == "a") {
@@ -49,7 +58,7 @@ function ListYtActiveZones(zmap, ishome) {
             actzone['attachBadge'] = chname
             actzone['url'] = cururl
             zmap.set(itm, actzone)
-        }
+        } // if refs.length == 0 it is not error, it means that page does not contain a video
     }
     
     allcomms = document.querySelectorAll('#header-author')
@@ -58,6 +67,11 @@ function ListYtActiveZones(zmap, ishome) {
         let itmh = allcomms[co]
         let comprnt = itmh.parentElement.parentElement
         let elem = getIndirectChildElementWithId(itmh, "author-text")
+        if(elem == null) {
+            console.log("Parcing error: No 'author-text' child element found inside #header-author")
+            parceCorrect = false
+            continue;
+        }
         let attrhref = elem.getAttribute("href")
         if(attrhref.startsWith("/"))
             attrhref = attrhref.substring(1)
@@ -74,14 +88,26 @@ function ListYtActiveZones(zmap, ishome) {
             hidelem = hidelem.parentElement
             actzone['totalblock'] = hidelem
         }
-        let comrefelem = getIndirectChildElementBelongsToClass(itmh, "published-time-text")
-        let hrefs = getAllChildElementsOfType(comrefelem, "a")
-        if(hrefs.length == 1)  {
-            let u = hrefs[0].getAttribute("href")
-            actzone['url'] = new URL(u, document.baseURI).href
+        let comrefelem = getIndirectChildElementWithId(itmh, "published-time-text") 
+        //let comrefelem = getIndirectChildElementBelongsToClass(itmh, "published-time-text")
+        if(comrefelem == null) {
+            console.log("Parcing error: No 'published-time-text' child element found")
+            parceCorrect = false
         }
-        zmap.set(elem, actzone)
+        else {
+            let hrefs = getAllChildElementsOfType(comrefelem, "a")
+            if(hrefs.length == 1)  {
+                let u = hrefs[0].getAttribute("href")
+                actzone['url'] = new URL(u, document.baseURI).href
+                zmap.set(elem, actzone)
+            }
+            else {
+                console.log("Parcing error: More than single href under 'published-time-text' element found")
+                parceCorrect = false
+            }
+        }
     }
+    return parceCorrect;
 }
 
 function GetYtTimestamp(item, type) {
@@ -93,8 +119,14 @@ function GetYtTimestamp(item, type) {
     
     if(type == 1) {
         let headerauthorelem = getParentElementWithId(item, "header-author")
-        let comrefelem = getIndirectChildElementBelongsToClass(headerauthorelem, "published-time-text")
-        tmstmp = comrefelem.innerText
+        if(headerauthorelem != null) {
+            //let comrefelem = getIndirectChildElementBelongsToClass(headerauthorelem, "published-time-text")
+            let comrefelem = getIndirectChildElementWithId(headerauthorelem, "published-time-text") 
+            if(comrefelem != null) {
+                tmstmp = comrefelem.innerText
+                overres['success'] = true
+            }
+        }
     }
     if(type == 2) {
         let datepub = document.querySelector('[itemprop=datePublished]')
@@ -135,23 +167,39 @@ function GetYtEventText(item, type) {
     let res = {}
     res['evtitle'] = ""
     res['evtext'] = ""
+    res['success'] = false
     
     if(type == 1) {
-        let maincomelem = getParentElementWithId(item, "main")    
-        let comblockelem = getChildElementWithId(maincomelem, "comment-content")
-        let comelem = getIndirectChildElementWithId(comblockelem, "content-text")
-        res['evtext'] = comelem.innerText
+        let maincomelem = getParentElementWithId(item, "main")
+        if(maincomelem != null) {
+            let comblockelem = getIndirectChildElementWithId(maincomelem, "content")
+            if(comblockelem != null) {
+                let comelem = getIndirectChildElementWithId(comblockelem, "content-text")
+                if(comelem != null) {
+                    res['evtext'] = comelem.innerText
+                    res['success'] = true
+                }
+            }
+        }
     }
     if(type == 2) {
         let vidtextelem = document.querySelector('[id=description-inline-expander]')
-        res['evtext'] = vidtextelem.innerText
+        if(vidtextelem != null) {
+            res['evtext'] = vidtextelem.innerText
+            res['success'] = true
+        }
         
         let captheadelem = document.querySelector('[id=above-the-fold]')
-        let semiheadelem = getIndirectChildElementWithId(captheadelem, "title")
-        let h1elems = getAllIndirectChildElementsOfType(semiheadelem, "h1")
-        if(h1elems.length == 1) {
-            let h1elem = h1elems[0]
-            res['evtitle'] = h1elem.innerText
+        if(captheadelem != null) {
+            let semiheadelem = getIndirectChildElementWithId(captheadelem, "title")
+            if(semiheadelem != null) {
+                let h1elems = getAllIndirectChildElementsOfType(semiheadelem, "h1")
+                if(h1elems.length == 1) {
+                    let h1elem = h1elems[0]
+                    res['evtitle'] = h1elem.innerText
+                    res['success'] = true
+                }
+            }
         }
     }
     return res

@@ -1,14 +1,21 @@
 {
   "manifest_version": 3,
+  "default_locale": "en",
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.54",
+  "version": "0.55",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
   "author": "dmitrevo",
   "homepage_url": "https://github.com/dmiandr/context",
 
   "icons": {
     "48": "icons/context48.png"
+  },
+  
+  "action": {
+    "default_icon": {
+      "48": "icons/context48.png"
+    }
   },
 
   "background": {

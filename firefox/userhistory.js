@@ -64,6 +64,29 @@ buildCloud(tagsul, socname + "#" + uname)
 
 function onCompletePageLoad() {
     if(document.readyState === "complete") {
+        let allTxtNodes = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+        while(allTxtNodes.nextNode()) {
+            let tnode = allTxtNodes.currentNode
+            tmptext = tnode.nodeValue
+            if(tmptext == null)
+                continue;
+            let msg = tmptext.replace(/__MSG_(\w+)__/g, function(match, v1) {
+                return v1 ? browser.i18n.getMessage(v1) : ''
+            })
+            if(msg != tmptext)
+                tnode.nodeValue = msg
+        }
+        let pholders = document.querySelectorAll('[placeholder]')       // наверняка можно было как=то добарться до значение аттрибутов и через TreeWalker, но я не нашел способа
+        for(let co = 0; co < pholders.length; co++) {
+            let itm = pholders[co];
+            let hld = itm.getAttribute("placeholder")
+            let msg = hld.replace(/__MSG_(\w+)__/g, function(match, v1) {
+                return v1 ? browser.i18n.getMessage(v1) : ''
+            })
+            if(msg != hld)
+                itm.setAttribute('placeholder', msg)
+        }
+
         let nmarr = new Array();
         nmarr.push({request: "injecthistorydialog"});
         let sendhtmlinject = browser.runtime.sendMessage(nmarr);
@@ -132,9 +155,9 @@ function buildTable(historymap)
 
         let evtype = rowmap.type;
         if(evtype == 1)
-            evtype_name = "Комментарий";
+            evtype_name = browser.i18n.getMessage("comment_type_name");
         if(evtype == 4 || evtype == 2)
-            evtype_name = "Запись";
+            evtype_name = browser.i18n.getMessage("post_type_name");
             
         let curcell = row.insertCell(0);
         let newtext = document.createTextNode(rowmap.time);
