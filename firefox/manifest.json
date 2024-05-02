@@ -3,7 +3,7 @@
   "default_locale": "en",
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.55",
+  "version": "0.56",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
 
   "developer": {

@@ -1,4 +1,8 @@
 {
+    "short_description": {
+        "message":      "Your personal tracker for social networks users reputation",
+        "description":  "Short description of extension"
+    },
     "context_menu_add": {
         "message":      "Add event",
         "description":  "Menu item than opens event dialog to add new event"

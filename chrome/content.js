@@ -101,9 +101,12 @@ function addElemsToActiveZone(zone) {
     if(zone.totalblock != null) {
         if(uopt.hidden == true) {
             if(zone.eventype == 2) {
+                let prnt = zone.totalblock.parentNode
+                if(prnt.classList.contains("repuhidden"))
+                    return;
                 let wrapper = document.createElement('div');
                 wrapper.style.setProperty('display', "none");
-                let prnt = zone.totalblock.parentNode
+                wrapper.classList.add("repuhidden")
                 prnt.replaceChild(wrapper, zone.totalblock)
                 wrapper.appendChild(zone.totalblock)
             }

@@ -3,8 +3,8 @@
   "default_locale": "en",
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.55",
-  "description": "Расширение для отслеживания репутации пользователей социальных сетей",
+  "version": "0.56",
+  "description": "__MSG_short_description__",
   "author": "dmitrevo",
   "homepage_url": "https://github.com/dmiandr/context",
 

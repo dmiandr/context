@@ -232,7 +232,7 @@ function ListContActiveZones(zmap, ishome) {
         if(itm.classList.contains("m_author") && getParentElementBelobgsToClass(itm, "new_post_prev") != null) { // блоки аннотоаций публикаций в ленте, отобранной по тегам
             let tagcomp = getParentElementBelobgsToClass(itm, "new_post_prev")
             if(tagcomp != null) {
-                let tagpostid = tagcomp.getAttribute("post_prv")
+                let tagpostid = tagcomp.getAttribute("data-post-id")
                 actzone['eventype'] = 2
                 actzone['captElement'] = itm
                 for(const c of tagcomp.children) {
