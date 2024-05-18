@@ -106,10 +106,14 @@ function addElemsToActiveZone(zone) {
     if(zone.totalblock != null) {
         if(uopt.hidden == true) {
             if(zone.eventype == 2) {
+                zone.totalblock.style.setProperty('border', "1px solid");
+                zone.totalblock.style.setProperty('border-color', "red");
                 let prnt = zone.totalblock.parentNode
                 if(prnt.classList.contains("repuhidden"))
                     return;
                 let wrapper = document.createElement('div');
+                wrapper.style.setProperty('border', "1px solid");
+                wrapper.style.setProperty('border-color', "green");
                 wrapper.style.setProperty('display', "none");
                 wrapper.classList.add("repuhidden")
                 prnt.replaceChild(wrapper, zone.totalblock)

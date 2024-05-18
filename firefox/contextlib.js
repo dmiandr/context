@@ -56,7 +56,7 @@ var gTagsStat = new Map();
 function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, tags, mode, timeorig, time_parced) {
     let resY;
     let eventbkgrnd = document.getElementById("histbackground"); 
-    var dlg = document.getElementById('histdialog');
+    let dlg = document.getElementById('histdialog');
     var cancelbtn = document.getElementById('cancelbtn');
     var linkfld = document.getElementById('fldlink');
     var titlefld = document.getElementById('fldtitle');
@@ -93,86 +93,83 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
         tgsarr = tags.split("#").filter(o=>o)
     datalistelem.replaceChildren()
   
-  eventbkgrnd.style.display = "block";
-  dlg.style.setProperty('position', "fixed");
-  dlg.style.setProperty('width', "700px");
-  document.body.style.setProperty('overflow', "auto");  
-  cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };
+    eventbkgrnd.style.display = "block";
+    dlg.style.setProperty('position', "fixed");
+    dlg.style.setProperty('width', "700px");
+    document.body.style.setProperty('overflow', "auto");  
+    cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };
 
-  var repostchkbox = document.getElementById('repostmark');
-  var repostlbl = document.getElementById('repostlbl');
-  repostlbl.style.display = "none";
-  var evselector = document.getElementById('eventypeselector');
-  evselector.disabled = true
-  if(type == 1) // Comment
-  {
-    evselector.value = "comment";
-  }
-  else if(type == 2) // Post
-  {
-    repostlbl.style.display = "inline";
-    evselector.value = "post";
-  }
-  else {
-    console.log("UNknown event type: ", type)
-    evselector.value = "unknown";
-    evselector.disabled = false     // Если сохранен тип события недопустимый (не коммент и не пост) - то его можно поменять вручную
-  }
-
-  if(repost == true)
-    repostchkbox.checked = true;
-
-  var fldname = document.getElementById('fldname');
-  fldname.textContent = uname;
-  var fldalias = document.getElementById('fldalias');
-  fldalias.textContent = ualias;
-  
-  let useDTLoc = isInputTypeDatetimeLocalImplemented() // if input type="datetime-local" is supported (FF ver 93 or newer)
-  let flddatetimecover = document.getElementById('fldtime');
-  let flddatetime = document.getElementById('inpdatetime');
-  
-  if(useDTLoc) {
-    flddatetime.style.backgroundColor = "#ffffff"
-    if(timeorig != "")
-        flddatetime.setAttribute("title", timeorig)
-    if(time_parced) {
-        flddatetime.disabled = true;
-        flddatetime.style.backgroundColor = "#a1a1a1"
+    var repostchkbox = document.getElementById('repostmark');
+    var repostlbl = document.getElementById('repostlbl');
+    repostlbl.style.display = "none";
+    var evselector = document.getElementById('eventypeselector');
+    evselector.disabled = true
+    if(type == 1) { // Comment 
+        evselector.value = "comment";
+    }
+    else if(type == 2) { // Post
+        repostlbl.style.display = "inline";
+        evselector.value = "post";
+    }
+    else {
+        console.log("UNknown event type: ", type)
+        evselector.value = "unknown";
+        evselector.disabled = false     // Если сохранен тип события недопустимый (не коммент и не пост) - то его можно поменять вручную
     }
 
-    let isotime = parceDateFromRuLocale(evtime, true)
-    flddatetime.value = isotime    
-    flddatetimecover.ondblclick = function() {
-        flddatetime.disabled = false;
+    if(repost == true)
+        repostchkbox.checked = true;
+
+    var fldname = document.getElementById('fldname');
+    fldname.textContent = uname;
+    var fldalias = document.getElementById('fldalias');
+    fldalias.textContent = ualias;
+  
+    let useDTLoc = isInputTypeDatetimeLocalImplemented() // if input type="datetime-local" is supported (FF ver 93 or newer)
+    let flddatetimecover = document.getElementById('fldtime');
+    let flddatetime = document.getElementById('inpdatetime');
+  
+    if(useDTLoc) {
         flddatetime.style.backgroundColor = "#ffffff"
+        if(timeorig != "")
+            flddatetime.setAttribute("title", timeorig)
+        if(time_parced) {
+            flddatetime.disabled = true;
+            flddatetime.style.backgroundColor = "#a1a1a1"
+        }
+
+        let isotime = parceDateFromRuLocale(evtime, true)
+        flddatetime.value = isotime    
+        flddatetimecover.ondblclick = function() {
+            flddatetime.disabled = false;
+            flddatetime.style.backgroundColor = "#ffffff"
+        }
     }
-  }
-  else {
-      flddatetimecover.textContent = evtime
-  }
+    else {
+        flddatetimecover.textContent = evtime
+    }
   
-  let fldmain = document.getElementById('fldmain');
-  titlefld.value = evtitle;
-  fldmain.value = evmain; 
-  fldmain.textContent = evmain; // some firefox versions requires setting textContent instead of value
-  linkfld.textContent = url;
+    let fldmain = document.getElementById('fldmain');
+    titlefld.value = evtitle;
+    fldmain.value = evmain;
+    fldmain.textContent = evmain; // some firefox versions requires setting textContent instead of value
+    linkfld.textContent = url;
 
-  var rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
-  var moveleft = 0;
-  if(window.innerWidth < rightdlgbound)
-    moveleft = rightdlgbound - window.innerWidth + 10;
+    var rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
+    var moveleft = 0;
+    if(window.innerWidth < rightdlgbound)
+        moveleft = rightdlgbound - window.innerWidth + 10;
 
-  var dlgY = mouseevent.clientY - (dlg.offsetHeight)/2;
-  if(mouseevent.clientY < (dlg.offsetHeight)/2)
-    dlgY = 1;
-  if(mouseevent.clientY + (dlg.offsetHeight)/2 > window.innerHeight)
-    dlgY = window.innerHeight - dlg.offsetHeight - 1;
+    var dlgY = mouseevent.clientY - (dlg.offsetHeight)/2;
+    if(mouseevent.clientY < (dlg.offsetHeight)/2)
+        dlgY = 1;
+    if(mouseevent.clientY + (dlg.offsetHeight)/2 > window.innerHeight)
+        dlgY = window.innerHeight - dlg.offsetHeight - 1;
 
-  dlg.style.setProperty('top', dlgY + 'px');
-  dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');
+    dlg.style.setProperty('top', dlgY + 'px');
+    dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');
   
     newtagfld.addEventListener('keypress', keypress_onevent)
-    
     newtagfld.addEventListener('keydown', (e) => {
         if(e.key == "#") {
             e.preventDefault()
@@ -205,60 +202,55 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
             }                
         }        
     }
-
-  //режим редактирования
-  if(mode)
-  {
-    var buttonsline = document.getElementById('buttonsline');
-    var erasebtn = document.getElementById('erasebtn');
-    if(erasebtn == null)
-      erasebtn = document.createElement('span');
-    erasebtn.classList.add('continvbutton');
-    erasebtn.innerHTML = browser.i18n.getMessage('deletevent_button')
-    erasebtn.style.setProperty('margin-left', '100px');
-    erasebtn.setAttribute("id", "erasebtn");
-    buttonsline.insertBefore(erasebtn, okbtn);
-    okbtn.innerHTML = browser.i18n.getMessage('changevent_button')
-  }
-  else
-  {
-    var erasebtn = document.getElementById('erasebtn');
-    if(erasebtn != null)
-      erasebtn.remove();
     
-    okbtn.innerHTML = browser.i18n.getMessage('addevent_button')
-  }
-
-  return new Promise(resolve => {
-    okbtn.onclick = function() 
-    {
-      let tcnt = titlefld.value;
-      let mcnt = fldmain.value;
-      if(evselector.value == "comment")
-          type = 1
-      if(evselector.value == "post")
-          type = 2
-          
-      let unpdatedtime = evtime
-      if(useDTLoc == true) {
-        if(flddatetime.disabled == false)
-            unpdatedtime = convTimedateToRuLocale(flddatetime.value)
-      }
-      
-      addHistoryEvent(socname, uname, fldalias.textContent, unpdatedtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, "", tagslistfdl.tags)
-      eventbkgrnd.style.display = "none"; 
-      resolve("okbtn");
-    };
-    if(mode)
-    {
-      erasebtn.onclick = function()
-      {
-        removeHistoryEvent(linkfld.textContent);
-        eventbkgrnd.style.display = "none"; 
-        resolve("rmbtn");
-      }
+    //режим редактирования
+    if(mode) {
+        var buttonsline = document.getElementById('buttonsline')
+        var erasebtn = document.getElementById('erasebtn')
+        if(erasebtn == null)
+            erasebtn = document.createElement('span');
+        erasebtn.classList.add('continvbutton')
+        erasebtn.innerHTML = browser.i18n.getMessage('deletevent_button')
+        erasebtn.style.setProperty('margin-left', '100px')
+        erasebtn.setAttribute("id", "erasebtn")
+        buttonsline.insertBefore(erasebtn, okbtn)
+        okbtn.innerHTML = browser.i18n.getMessage('changevent_button')
     }
-  }); 
+    else {
+        var erasebtn = document.getElementById('erasebtn');
+        if(erasebtn != null)
+            erasebtn.remove();
+    
+        okbtn.innerHTML = browser.i18n.getMessage('addevent_button')
+    }
+
+    return new Promise(resolve => {
+        okbtn.onclick = function() {
+            let tcnt = titlefld.value
+            let mcnt = fldmain.value
+            if(evselector.value == "comment")
+                type = 1
+            if(evselector.value == "post")
+                type = 2
+          
+            let unpdatedtime = evtime
+            if(useDTLoc == true) {
+                if(flddatetime.disabled == false)
+                    unpdatedtime = convTimedateToRuLocale(flddatetime.value)
+            }
+      
+            addHistoryEvent(socname, uname, fldalias.textContent, unpdatedtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, "", tagslistfdl.tags)
+            eventbkgrnd.style.display = "none"; 
+            resolve("okbtn");
+        }
+        if(mode) {
+            erasebtn.onclick = function() {
+                removeHistoryEvent(linkfld.textContent);
+                eventbkgrnd.style.display = "none"; 
+                resolve("rmbtn");
+            }
+        }
+    });
   
     function renderTags() {
         let tgsjoined = tagslistfdl.tags

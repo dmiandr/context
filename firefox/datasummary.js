@@ -205,7 +205,7 @@ function showBriefList(res) {
                 })
                 cedt.appendChild(btnedt)
                 let crm = row.insertCell(7)
-                let btnrm= document.createElement("button");
+                let btnrm = document.createElement("button");
                 btnrm.textContent = browser.i18n.getMessage("delete_status_button")
                 btnrm.setAttribute("id", "rmcnsl"+res[co].id)
                 btnrm.addEventListener("click", function(ev){
@@ -267,6 +267,7 @@ function showBriefList(res) {
                 btnadd.title = browser.i18n.getMessage("keep_status_button")
                 startRankEdit(next_id)
                 ranksediting = true;
+                btnadd.disabled = false
             } else {
                 btnadd.textContent = " + "
                 btnadd.title = browser.i18n.getMessage("add_status_button")
