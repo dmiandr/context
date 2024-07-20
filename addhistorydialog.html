@@ -1,7 +1,7 @@
 <div id="histbackground" class="darkbackground">
   <div id="histdialog" class="eventwindow">
     <div class="firstline">
-      <span style="width: 25%; color: #FFF; padding: 10px">__MSG_event_type_selector__:</span>
+      <span id="socnetname" style="width: 25%; color: #FFF; padding: 10px">__MSG_event_type_selector__:</span>
       <select name="eventype" class="contselector" id="eventypeselector" disabled="disabled"><option value="post">__MSG_event_type_post__</option><option value="comment">__MSG_event_type_comment__</option><option value="unknown">__MSG_event_type_unknown__</option></select>
       <label style="color: #FFF;" id="repostlbl"><input id="repostmark" type="checkbox"/>__MSG_event_type_repostsign__</label>
     </div>
@@ -14,8 +14,13 @@
       <input  id="inpdatetime" type="datetime-local" step="2" style="width: 100%">
       </span>
     </div>
-    <span class="dialogfield" id="fldlink" style="width: 94%">
-    </span>
+    <div class="flatline">
+      <input type="image" id="eventlinkbtn" src='icons/link32.png' width="18" height="18" title="Follow link">
+      <select name="evhead" class="contselector" id="evheadselector" style="width:100%;max-width:45%;"></select>
+      <input type="image" id="headlinkbtn" src='icons/rarr32.png' width="18" height="18" title="Follow link" >
+      <select name="evprev" class="contselector" id="evpresselector" style="width:100%;max-width:45%;"></select>
+      <input type="image" id="prevlinkbtn" src='icons/rarr32.png' width="18" height="18" title="Follow link" >
+    </div>
     <span class="dialogfield" id="fldtags" style="width: 94%">
 	<ul id="tagslist"></ul>
 	<input type="text" id="inputtag" placeholder="__MSG_entertag_sign__" list="usedtags" title="__MSG_press_enter_toadd_tag__">

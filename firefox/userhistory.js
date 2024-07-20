@@ -174,10 +174,11 @@ function buildTable(historymap)
         let cdescr = rowmap.descript;
         let crepost = rowmap.repost;
         let tags = rowmap.tags;
+        let parent_url = rowmap.parent_url
         
         newelem.addEventListener("click", function(evt){ 
             evt.preventDefault();
-            let dlgres = drawHistoryEventDlg(evt, socname, cnam, calias, ctime, curl, ctitle, cdescr, evtype, crepost, tags, true, ctime, true);
+            let dlgres = showHistoryEventDlg(evt, true, true, rowmap.time, rowmap);
             dlgres.then(result => {
                 if(result == "okbtn") {
                     updateContent();

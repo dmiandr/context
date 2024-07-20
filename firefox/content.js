@@ -610,8 +610,18 @@ function fillHistoryDialogFromPage(socname, cname, mouseevent, commentitem, type
         }
     }    
     let ev = gCurrnetNet.GetEventText(commentitem, type);
-    let evurl =  z['url'] //gCurrnetNet.GetEventUrl(commentitem, type);
-    let dlgres = drawHistoryEventDlg(mouseevent, socname, cname, ualias, evtime, evurl, ev.evtitle, ev.evtext, type, false, "", false, timeoptions.origtime, timeoptions.success);
+    let evurl =  z['url']
+    let robj = {}
+    robj['socnet'] = socname
+    robj['username'] = cname
+    robj['alias'] = ualias
+    robj['time'] = evtime
+    robj['url'] = evurl
+    robj['title'] = ev.evtitle
+    robj['descript'] = ev.evtext
+    robj['type'] = type
+    robj['repost'] = false
+    let dlgres = showHistoryEventDlg(mouseevent, false, timeoptions.success, timeoptions.origtime, robj);
     return dlgres.then(result => {
         addEventMark(evurl, socname, cname);
         requestActualUsersStauses(); // этот вызов нужен затем, чтобы в EventListener пункта меню "добавить/изменить событие" обновилась переменная - а конкретнее, ее поле isevent. Можно оптимизировать, убрав добавление классов и записей из addEventMark
@@ -630,14 +640,19 @@ function fillHistoryDialogFromDb(az, mouseevent)
     let sendongeth = browser.runtime.sendMessage(nmarr);
     return sendongeth.then(result => {
         let r = new Map(result);
-        let dlgres = drawHistoryEventDlg(mouseevent, az.socnet, az.username, r.get("alias"), r.get("time"), url, r.get("title"), r.get("descript"), az.eventype, r.get("repost"), r.get("tags"), true, r.get("time"), true);
+        let robj = {}
+        r.forEach((value, key) => {
+            robj[key] = value;
+        })
+        let dlgres = showHistoryEventDlg(mouseevent, true, true, r.get("time"), robj);
         dlgres.then( result => {
             if(result == "rmbtn") {
                 removeEventMark(url, az.socnet, az.username);
                 requestActualUsersStauses();
             }
         });
-    });
+    }, 
+    error => { console.log("Error gethistoryitem"); });
 }
 
 /*! \brief \~russian Модифицирует все упоминания автора на странице в связи с добавлением события. Просматривает все потенциальные события рассматриваемого автора, 
@@ -769,7 +784,7 @@ function addAllPotentialEvents() {
                 let evtime = timeoptions.parcedtime
                 let ev = gCurrnetNet.GetEventText(azitm, v.eventype);
                 let ualias = gCurrnetNet.GetUserAlias(azitm, v.eventype)
-                let pr = addHistoryEvent(v.socnet, v.username, ualias, evtime, v['url'], ev.evtitle, ev.evtext, v.eventype, false, "", "")
+                let pr = addHistoryEvent(v.socnet, v.username, ualias, evtime, v['url'], ev.evtitle, ev.evtext, v.eventype, false, "", "", "")
                 addedev += 1
                 prs.push(pr)
             }

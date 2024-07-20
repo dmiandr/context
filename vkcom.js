@@ -8,7 +8,7 @@ for (d of vkurls) {
     }
 }
 
-let vkobj = {Mark: 0, IsPub: IsVkPub, Title: "ВК", ListActiveZones: ListVkActiveZones, GetTimestamp: GetVkTimestamp, GetEventText: GetVkEventText, GetEventUrl: GetVkEventUrl, GetUserAlias: GetVkUserAlias};
+let vkobj = {Mark: 0, IsPub: IsVkPub, Title: "ВК", ListActiveZones: ListVkActiveZones, GetTimestamp: GetVkTimestamp, GetEventText: GetVkEventText, GetEventUrl: GetVkEventUrl, GetUserAlias: GetVkUserAlias, GetRootFor: GetVkRootFor, IsNested: IsNestedVk};
 if (IsVk == 1)
     vkobj.Mark = 1
 
@@ -407,6 +407,22 @@ function GetVkEventUrl(item, type) {
         }
     }
     return null;
+}
+
+function GetVkRootFor(evlink) {
+    let rooturl = ""
+    if(!evlink.includes("?"))
+        return rooturl;
+    
+    let urlparts = evlink.split("?")
+    return urlparts[0];
+}
+
+function IsNestedVk(root, candidate) {
+    if(candidate.includes(root))
+        return true;
+    
+    return false;
 }
 
 function getTimeFromElement(elem) {

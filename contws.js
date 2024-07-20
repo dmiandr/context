@@ -8,7 +8,7 @@ for (d of contwsurls) {
     }
 }
 
-let contobj = {Mark: 0, IsPub: IsContPub, Title: "КОНТ", ListActiveZones: ListContActiveZones, GetTimestamp: GetContTimestamp, GetEventText: GetContEventText, GetEventUrl: GetContEventUrl, GetUserAlias: GetContUserAlias};
+let contobj = {Mark: 0, IsPub: IsContPub, Title: "КОНТ", ListActiveZones: ListContActiveZones, GetTimestamp: GetContTimestamp, GetEventText: GetContEventText, GetEventUrl: GetContEventUrl, GetUserAlias: GetContUserAlias, GetRootFor: GetContRootFor, IsNested: IsNestedCont};
 if (IsCont == 1)
     contobj.Mark = 1
 
@@ -596,6 +596,22 @@ function GetContUserAlias(item, type) {
     if(!!item == false)
         return ""
     return item.innerText;
+}
+
+function GetContRootFor(evlink) {
+    let rooturl = ""
+    if(!evlink.includes("/full#comment"))
+        return rooturl;
+    
+    let urlparts = evlink.split("/full#comment")
+    return urlparts[0];
+}
+
+function IsNestedCont(root, candidate) {
+    if(candidate.includes(root))
+        return true;
+    
+    return false;
 }
 
 /*!

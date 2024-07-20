@@ -1,6 +1,6 @@
 
 const defaultranks = [
-{id: 0, rank: "Не читать", descript: "", bgcolor: "#FF0000", fontcolor: "#000000", bold: false, italic: false},
+/*{id: 0, rank: "Не читать", descript: "", bgcolor: "#FF0000", fontcolor: "#000000", bold: false, italic: false},
 {id: 1, rank: "Не комментировать", descript: "", bgcolor: "#FFB6B6", fontcolor: "#000000", bold: false, italic: false},
 {id: 2, rank: "Хам",  descript: "Может сорваться на хамство без видимого повода", bgcolor: "#d3d52b", fontcolor: "#000000", bold: false, italic: false },
 {id: 3, rank: "Обидчивый",  descript: "Оскорбляется на любую нейтральную реплику, в которой ему чудится несогласие", bgcolor: "#9587ff", fontcolor: "#000000", bold: false, italic: false },
@@ -8,7 +8,7 @@ const defaultranks = [
 {id: 5, rank: "Упертый",  descript: "Излагать мысли краткими фразами, без отступлений, не давать возможности заболтать", bgcolor: "#290cff", fontcolor: "#ffffff", bold: false, italic: false },
 {id: 6, rank: "Не закончен разговор",  descript: "Не начинать новых дискуссий пока не выполнены обещания по старым", bgcolor: "#29ffff", fontcolor: "#000000", bold: false, italic: false },
 {id: 7, rank: "Хороший собеседник",  descript: "Не значит, что он со мной согласен, значит что он умеет беседовать содержательно, без демагогии", bgcolor: "#29ff1b", fontcolor: "#000000", bold: false, italic: false },
-{id: 8, rank: "Читать",  descript: "", bgcolor: "#17760f", fontcolor: "#ffffff", bold: false, italic: false }
+{id: 8, rank: "Читать",  descript: "", bgcolor: "#17760f", fontcolor: "#ffffff", bold: false, italic: false }*/
 ];
 var rankspossible = [];
 
@@ -144,6 +144,9 @@ Handlers.set("gethistoryitem", gethistoryitem_handler);
 Handlers.set("getbrieflist", getbrieflist_handler);
 Handlers.set("gettags", gettags_handler);
 Handlers.set("historybytags", historybytags_handler);
+Handlers.set("getnestedevents", getnestedevents_handler);
+Handlers.set("getallevents", getallevents_handler);
+
 Handlers.set("bactionstatus", bactionstatus_handler);
 
 function ranks_handler(msg, db, resolve) {
@@ -486,7 +489,7 @@ function getuserhistory_handler(msg, db, resolve) {
         if(cur) {
             let curusr = cur.value.username.toLowerCase();
             if(curusr === reqprms.username.toLowerCase() && cur.value.socnet === reqprms.socnet) {
-                let itmap = {};
+                /*let itmap = {};
                 itmap['time'] = cur.value.time;
                 itmap['title'] = cur.value.title;
                 itmap['type'] = cur.value.type;
@@ -494,7 +497,8 @@ function getuserhistory_handler(msg, db, resolve) {
                 itmap['descript'] = cur.value.descript;
                 itmap['repost'] = cur.value.repost;
                 itmap['tags'] = cur.value.tags;
-                histmap.set(cur.value.url, itmap);
+                itmap['parent_url'] = cur.value.parent_url;*/
+                histmap.set(cur.value.url, cur.value);
             }
             cur.continue();
         }
@@ -525,15 +529,17 @@ function gethistoryitem_handler(msg, db, resolve) {
                 if(cur) {
                     let cururl = cur.value.url;
                     if(cururl.toLowerCase() == url.toLowerCase()) {
-                        let cmap = new Map();
-                        cmap.set("time", cur.value.time);
+                        let cmap = new Map(Object.entries(cur.value));
+                        /*cmap.set("time", cur.value.time);
                         cmap.set("title", cur.value.title);
                         cmap.set("type", cur.value.type);
                         cmap.set("alias", cur.value.alias);
                         cmap.set("descript", cur.value.descript);
                         cmap.set("repost", cur.value.repost);
                         cmap.set("tags", cur.value.tags);
+                        cmap.set("parent_url", cur.value.parent_url);*/
                         resolve([...cmap]);
+                        //resolve([...cur.value]);
                     }
                     cur.continue();
                 }
@@ -544,15 +550,17 @@ function gethistoryitem_handler(msg, db, resolve) {
             }
         }
         else {
-            let itmap = new Map();
-            itmap.set("time", d.time);
+            let itmap = new Map(Object.entries(d));
+            /*itmap.set("time", d.time);
             itmap.set("title", d.title);
             itmap.set("type", d.type);
             itmap.set("alias", d.alias);
             itmap.set("descript", d.descript);
             itmap.set("repost", d.repost);
             itmap.set("tags", d.tags);
+            itmap.set("parent_url", d.parent_url);*/
             resolve([...itmap]);
+            //resolve([...d]);
         }
     }
     geth.onerror = function(err) {
@@ -839,6 +847,55 @@ browser.commands.onCommand.addListener((cmd) => {
     });
 });
 
+
+function getnestedevents_handler(msg, db, resolve) {
+    let headurl = msg.pop();
+    let evlist = []
+    let objh = db.transaction("history").objectStore("history");
+    let oc = objh.openCursor();
+    oc.onsuccess = function(event) {
+        let cur = event.target.result
+        if(cur) {
+            let curusr = cur.value.tags
+            if(curusr) {
+                let curtagslst = curusr.split(/#/)
+                for(let cot = 0; cot < reqtagslst.length; cot++) {
+                    let ctag = reqtagslst[cot]
+                    if(curtagslst.includes(ctag)) {
+                        evlist.push(cur.value)
+                        break;
+                    }
+                }
+            }
+            cur.continue();
+        }
+        else {
+            resolve(evlist)
+        }
+    }    
+}
+
+function getallevents_handler(msg, db, resolve) {
+    let socnet = msg.pop();
+    let evlist = []
+    let objh = db.transaction("history").objectStore("history");
+    let oc = objh.openCursor();
+    oc.onsuccess = function(event) {
+        let cur = event.target.result
+        if(cur) {
+            let curnet = cur.value.socnet
+            if(curnet) {
+                if(curnet == socnet)
+                    evlist.push(cur.value)
+            }
+            cur.continue();
+        }
+        else {
+            resolve(evlist)
+        }
+    }    
+}
+    
 
 function bactionstatus_handler(msg, db, resolve) {
     let prms = msg.pop();

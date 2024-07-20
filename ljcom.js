@@ -12,7 +12,7 @@ for (d of ljurls) {
     }
 }
 
-let ljobj = {Mark: 0, IsPub: IsLjPub, Title: "LJ", ListActiveZones: ListLjActiveZones, GetTimestamp: GetLjTimestamp, GetEventText: GetLjEventText, GetEventUrl: GetLjEventUrl, GetUserAlias: GetLjUserAlias};
+let ljobj = {Mark: 0, IsPub: IsLjPub, Title: "LJ", ListActiveZones: ListLjActiveZones, GetTimestamp: GetLjTimestamp, GetEventText: GetLjEventText, GetEventUrl: GetLjEventUrl, GetUserAlias: GetLjUserAlias, GetRootFor: GetLjRootFor, IsNested: IsNestedLj};
 if (IsLj == 1)
     ljobj.Mark = 1
 
@@ -800,6 +800,22 @@ function GetLjUserAlias(item, type) {
         }
     }
     return res;
+}
+
+function GetLjRootFor(evlink) {
+    let rooturl = ""
+    if(!evlink.includes("?"))
+        return rooturl;
+    
+    let urlparts = evlink.split("?")
+    return urlparts[0];
+}
+
+function IsNestedLj(root, candidate) {
+    if(candidate.includes(root))
+        return true;
+    
+    return false;
 }
 
 // Функция, определяющая тип верстки - используется для выбора алгоритма поиска элемента даты, заголовка и т.п

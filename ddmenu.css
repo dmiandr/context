@@ -201,6 +201,33 @@
     text-align: left;
 }
 
+.flatline {
+    width: 95%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.strechhor {
+    display: flex;
+    width: 100%;
+}
+
+.horexpander {
+    display: flex;
+    border: 1px solid #F00;
+    align-items: stretch;    
+}
+
+.contselector {
+    background-color: #fff;
+    color: #326891;
+    width: auto;
+}
+
+.contselector:disabled{
+   opacity: 0.6;
+}
+
 .hide-overlay .overlay {
     left: -100%;
 }
@@ -256,15 +283,6 @@ table.histable tr.light {
 table.histable td {
     border: 1px solid #326891;
     padding: 3px 7px 2px 7px;
-}
-
-.contselector {
-    background-color: #fff;
-    color: #326891;
-}
-
-.contselector:disabled{
-   opacity: 0.6;
 }
 
 .repubadge {

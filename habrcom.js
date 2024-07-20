@@ -8,7 +8,7 @@ for (d of habrurls) {
     }
 }
 
-let habrobj = {Mark: 0, IsPub: IsHabrPub, Title: "Habr", ListActiveZones: ListHabrActiveZones, GetTimestamp: GetHabrTimestamp, GetEventText: GetHabrEventText, GetEventUrl: GetHabrEventUrl, GetUserAlias: GetHabrUserAlias};
+let habrobj = {Mark: 0, IsPub: IsHabrPub, Title: "Habr", ListActiveZones: ListHabrActiveZones, GetTimestamp: GetHabrTimestamp, GetEventText: GetHabrEventText, GetEventUrl: GetHabrEventUrl, GetUserAlias: GetHabrUserAlias, GetRootFor: GetHabrRootFor, IsNested: IsNestedHabr};
 if (IsHabr == 1)
     habrobj.Mark = 1
 
@@ -217,7 +217,12 @@ function GetHabrEventText(item, type) {
 }
 
 function GetHabrEventUrl(item, type) {
+    let rooturl = ""
+    if(!evlink.includes("#"))
+        return rooturl;
     
+    let urlparts = evlink.split("#")
+    return urlparts[0];
 }
 
 function GetHabrUserAlias(item, type) {
@@ -227,4 +232,20 @@ function GetHabrUserAlias(item, type) {
             return ucard.innerText
     }
     return item.innerText
+}
+
+function GetHabrRootFor(evlink) {
+    let rooturl = ""
+    if(!evlink.includes("#"))
+        return rooturl;
+
+    let urlparts = evlink.split("#")
+    return urlparts[0];
+}
+
+function IsNestedHabr(root, candidate) {
+    if(candidate.includes(root))
+        return true;
+    
+    return false;
 }

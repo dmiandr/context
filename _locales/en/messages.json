@@ -230,5 +230,9 @@
     "allevents_added_message": {
         "message":      "Events added from current page: ",
         "description":  "Message on adding all events from current page"
-    }
+    },
+    "parent_notindicated": {
+        "message":      "-- not indicated --",
+        "description":  "Name for not indicater parent event"
+    }    
 }

@@ -14,6 +14,7 @@ if (typeof globalThis.browser === "undefined")
 
 /*! \brief \~russian Отображение окна описания события с данными, переданными как аргументы функции 
  * \param mouseevent событие созданное нажатием мыши
+ * \param socname идентификатор социальной сети
  * \param uname имя пользователя
  * \param ualias псевдоним пользователя
  * \param evtime время события
@@ -22,7 +23,10 @@ if (typeof globalThis.browser === "undefined")
  * \param evmain подробное описание события
  * \param type тип события
  * \param repost признак цитируемой записи
+ * \param tags теги, ассоциированные с событием
  * \param mode режим работы окна - создание нового или редактирование существующего события
+ * \param timeorig метка времени события, как она была указана на странице
+ * \param time_parced признак успешного распознавания метки даты
  * 
  * функция drawHistoryEventDlg отображает окна описания события со всеми его параметрами. Заголовок
  * и описание события могут редактироваться в данном окне, также как и признак репоста в случае если событие это запись. 
@@ -36,6 +40,7 @@ if (typeof globalThis.browser === "undefined")
  * режиме кнопка "Добавить" переименовывается в "Изменить", и добавляется кнопка "Удалить". */
 /*! \brief \~english Displays event desctiprion window with data, provided as argument
  * \param mouseevent mouce click event
+ * \param socname social network identifier
  * \param uname user name
  * \param ualias user alias
  * \param evtime event time
@@ -44,7 +49,10 @@ if (typeof globalThis.browser === "undefined")
  * \param evmain event detailed description
  * \param type event type
  * \param repost repost sign
+ * \param tags associated tags
  * \param mode create new or edit existed event mode
+ * \param timeorig original time sting, as received from page
+ * \param time_parced flag, indecating sucsessfult time parsing
  * 
  * drawHistoryEventDlg function draws dialog that displays all event parameters. Title and main text
  * can be edited with this dialog, as well as 'repost' mark in case of "post" event. All other parameters
@@ -56,25 +64,263 @@ if (typeof globalThis.browser === "undefined")
  * 
  * Dialog can work in two modes - "ADD NEW EVENT" and "EDIT EXISTED EVENT". In the later mode button "add" is
  * renamed to "Save" and "Erase" button is added. */
-function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, evtitle, evmain, type, repost, tags, mode, timeorig, time_parced) {
-    let resY;
-    let eventbkgrnd = document.getElementById("histbackground"); 
-    var dlg = document.getElementById('histdialog');
-    var cancelbtn = document.getElementById('cancelbtn');
-    var linkfld = document.getElementById('fldlink');
-    var titlefld = document.getElementById('fldtitle');
-    var okbtn = document.getElementById('okbtn');
-    let tagsfield = document.getElementById('fldtags')
-    let tagslistfdl = document.getElementById('tagslist') // Текущий список тегов помещается в поле tags данного элемента, и обновляется при каждой операции.
+
+
+// При создании EventParams в нем заполняются только те поля, которые имеют смысл в данный момент, остальные остаются 
+// undefined (например ссылка на родительское событие при создании нового события всегда пустая, поэтому parent_url надо
+// проверять не на пустую строку ( =! ""), а на truthy value ( if(!value) ) )
+function showHistoryEventDlg(mouseevent, mode, time_parced, timeorig, EventParams) {
+    setPositionEventDlg(mouseevent)
+    
+    let linkbtn = document.getElementById('eventlinkbtn')
+    let linkbtn_root = document.getElementById('headlinkbtn')
+    let linkbtn_parent = document.getElementById('prevlinkbtn')
+    let evpresselector = document.getElementById('evpresselector')
+    
+    let useDTLoc = isInputTypeDatetimeLocalImplemented() // if input type="datetime-local" is supported (FF ver 93 or newer)
+    
+    linkbtn_root.src = browser.runtime.getURL("icons/rarr32.png")
+    linkbtn_parent.src = browser.runtime.getURL("icons/rarr32.png")    
+    linkbtn_root.addEventListener("click", followRootEventHandler );
+    linkbtn_parent.addEventListener("click", followParentEventHandler);
+    evpresselector.addEventListener("change", procceedChangingParentEvent)
+    
+    // Перед закрытием диалога эти листенеры надо удалЯть -иначе они вызываются столько раз, сколько открывали диалог!
+    fillHistoryEventDlg(time_parced, timeorig, mode, EventParams)
+    
+    return new Promise(resolve => {
+        let eventbkgrnd = document.getElementById("histbackground")
+        let okbtn = document.getElementById('okbtn')
+        let erasebtn = document.getElementById('erasebtn')
+        
+        okbtn.onclick = function() {
+            onOkBtnProcessing(EventParams.socnet, useDTLoc)
+            linkbtn_root.removeEventListener("click", followRootEventHandler )
+            linkbtn_parent.removeEventListener("click", followParentEventHandler)
+            evpresselector.removeEventListener("change", procceedChangingParentEvent)
+            resolve("okbtn");
+        }
+        if(mode) {
+            if(erasebtn != null) {
+                erasebtn.onclick = function() {
+                    removeHistoryEvent(linkbtn.title)
+                    eventbkgrnd.style.display = "none"
+                    linkbtn_root.removeEventListener("click", followRootEventHandler )
+                    linkbtn_parent.removeEventListener("click", followParentEventHandler)
+                    evpresselector.removeEventListener("change", procceedChangingParentEvent)
+                    resolve("rmbtn");
+                }
+            }
+        }
+    });
+}
+
+function followRootEventHandler(evt) {
+    evt.preventDefault()
+    let evheadselector = document.getElementById('evheadselector')
+    if(!evheadselector.value)
+        return;
+    if(evheadselector.value == evheadselector.options[evheadselector.selectedIndex].text)
+        return;
+        
+    if(!evt.currentTarget.mode)
+        return;
+    
+    followEvent(evheadselector.value)
+}
+
+function followParentEventHandler(evt) {
+    evt.preventDefault()
+    let evpresselector = document.getElementById('evpresselector')
+    if(!evpresselector.value)
+        return;
+        
+    if(!evt.currentTarget.mode)
+        return;
+    
+    followEvent(evpresselector.value)
+}
+
+function followEvent(evurl) {
+    let nmarr = new Array();
+    nmarr.push(evurl);
+    nmarr.push({request: "gethistoryitem"});
+    let sendongeth = browser.runtime.sendMessage(nmarr);
+    sendongeth.then(result => {
+        let r = new Map(result);
+        let robj = {}
+        r.forEach((value, key) => {
+            robj[key] = value;
+        })
+        fillHistoryEventDlg(true, r.get("time"), true, robj)
+    })    
+}
+
+function procceedChangingParentEvent(evt) {
+    //alert("Parent changed, ", evt); 
+    
+    if(!evt.currentTarget.mode)
+        return;
+    
+    let evpresselector = document.getElementById('evpresselector')
+    let linkbtn_parent = document.getElementById('prevlinkbtn')
+    if(!evpresselector.value)
+        linkbtn_parent.style.opacity = "0.2"
+    else
+        linkbtn_parent.style.opacity = "1.0"
+}
+
+function onOkBtnProcessing(socnet, useDTLoc) {
+    let eventbkgrnd = document.getElementById("histbackground")
+    let evpresselector = document.getElementById('evpresselector')
+    let evselector = document.getElementById('eventypeselector')
+    let flddatetime = document.getElementById('inpdatetime')
+    let tagslistfdl = document.getElementById('tagslist')
+    let titlefld = document.getElementById('fldtitle')
+    let fldmain = document.getElementById('fldmain')
+    let fldalias = document.getElementById('fldalias')
+    let repostchkbox = document.getElementById('repostmark')
+    var fldname = document.getElementById('fldname');
+    let flddatetimecover = document.getElementById('fldtime')
+    let linkbtn = document.getElementById('eventlinkbtn')
+    
+    let curtype = 0
+    let tcnt = titlefld.value
+    let mcnt = fldmain.value
+    let parentev_url = evpresselector.value
+    if(evselector.value == "comment")
+        curtype = 1
+    if(evselector.value == "post")
+        curtype = 2
+          
+    let unpdatedtime = flddatetimecover.textContent
+    if(useDTLoc == true) {
+        //if(flddatetime.disabled == false)
+            unpdatedtime = convTimedateToRuLocale(flddatetime.value)
+    }
+      
+    addHistoryEvent(socnet, fldname.textContent, fldalias.textContent, unpdatedtime, linkbtn.title, tcnt, mcnt, curtype, repostchkbox.checked, "", tagslistfdl.tags, parentev_url)
+    eventbkgrnd.style.display = "none";
+}
+
+function fillHistoryEventDlg(time_parced, timeorig, mode, EventParams) {
+    // SOCIAL NETWORK NAME    
+    let socnetnamefld = document.getElementById('socnetname')
+    let soc = KnownSNets.get(EventParams.socnet)
+    if(soc != undefined)
+        soctitle = soc.Title
+    else
+        soctitle = EventParams.socnet
+    socnetnamefld.innerText = soctitle
+    // EVENT TYPE SELECTOR
+    let evselector = document.getElementById('eventypeselector');
+    let repostlbl = document.getElementById('repostlbl');
+    evselector.disabled = true
+    if(EventParams.type == 1) { // Comment 
+        evselector.value = "comment";
+    }
+    else if(EventParams.type == 2) { // Post
+        repostlbl.style.display = "inline";
+        evselector.value = "post";
+    }
+    else {
+        console.log("UNknown event type: ", EventParams.type)
+        evselector.value = "unknown";
+        evselector.disabled = false     // Если сохранен тип события недопустимый (не коммент и не пост) - то его можно поменять вручную
+    }
+    // REPOST CHECKBOX
+    let repostchkbox = document.getElementById('repostmark')
+    if(EventParams.repost == true)
+        repostchkbox.checked = true;
+    // USER NAME
+    let fldname = document.getElementById('fldname');
+    fldname.textContent = EventParams.username;
+    let fldalias = document.getElementById('fldalias');
+    fldalias.textContent = EventParams.alias;
+    // EVENT TIME
+    let useDTLoc = isInputTypeDatetimeLocalImplemented() // if input type="datetime-local" is supported (FF ver 93 or newer)
+    let flddatetimecover = document.getElementById('fldtime');
+    let flddatetime = document.getElementById('inpdatetime');
+  
+    if(useDTLoc) {
+        flddatetime.style.backgroundColor = "#ffffff"
+        if(timeorig != "")
+            flddatetime.setAttribute("title", timeorig)
+        if(time_parced) {
+            flddatetime.disabled = true;
+            flddatetime.style.backgroundColor = "#a1a1a1"
+        }
+
+        let isotime = parceDateFromRuLocale(EventParams.time, true)
+        flddatetime.value = isotime    
+        flddatetimecover.ondblclick = function() {
+            flddatetime.disabled = false;
+            flddatetime.style.backgroundColor = "#ffffff"
+        }
+    }
+    else {
+        flddatetimecover.textContent = EventParams.time
+    }
+    
+    let linkbtn = document.getElementById('eventlinkbtn')
+    linkbtn.src = browser.runtime.getURL("icons/link32.png")
+    linkbtn.title = EventParams.url
+    linkbtn.addEventListener("click", function(evt){evt.preventDefault(); parent.window.open(EventParams.url)});
+
+    let linkbtn_root = document.getElementById('headlinkbtn')
+    let linkbtn_parent = document.getElementById('prevlinkbtn')
+    let evpresselector = document.getElementById('evpresselector')
+    let evheadselector = document.getElementById('evheadselector')
+    // для передачи режима работы (новой событие/редактирование существующего) в обработчик кнопкок и списка родительских событий
+    // добавляется переменная в эти элементы.
+    linkbtn_root.mode = mode
+    linkbtn_parent.mode = mode
+    evpresselector.mode = mode
+
+    while(evpresselector.options.length > 0)
+        evpresselector.remove(0)
+    fillRootCandidatsList(soc, EventParams.url).then(res => {
+        if(res == true) {
+            if(mode) {
+                linkbtn_root.style.opacity = "1.0"
+                if(!evheadselector.value) {
+                    linkbtn_root.style.opacity = "0.2"
+                }
+                else {
+                    if(evheadselector.value == evheadselector.options[evheadselector.selectedIndex].text)
+                        linkbtn_root.style.opacity = "0.2"
+                }                
+            }
+            fillParentCandidatsList(EventParams.socnet, EventParams.url, EventParams.time, EventParams.parent_url).then(res => {
+                if(mode) {
+                    if(!evpresselector.value) 
+                        linkbtn_parent.style.opacity = "0.2"
+                    else {
+                        linkbtn_parent.style.opacity = "1.0"
+                        evpresselector.removeAttribute("disabled")
+                    }
+                }
+            })
+        }
+        else {
+            linkbtn_root.style.opacity = "0.2"
+            linkbtn_parent.style.opacity = "0.2"
+            evpresselector.disabled = "disabled"
+            console.log("NEED TO DIASBLE, res = ", res)
+        }
+    })
+    
+    // TAGS processing
+    let tagslistfdl = document.getElementById('tagslist') 
     let newtagfld = document.getElementById('inputtag')
-    let datalistelem = document.getElementById('usedtags')
+    let datalistelem = document.getElementById('usedtags')    
     newtagfld.value = ""
-    if(tags != undefined) {
-        tagslistfdl['tags'] = tags
+    if(EventParams.tags != undefined) {
+        tagslistfdl['tags'] = EventParams.tags
     }
     else
         tagslistfdl['tags'] = ""
-        
+   
     getTagsList().then(result => {
         let tgsmap = new Map(result);
         for(const k of tgsmap) {
@@ -90,92 +336,13 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
   
     renderTags()
     let tgsarr
-    if(tags == undefined)
+    if(EventParams.tags == undefined)
         tgsarr = []
     else
-        tgsarr = tags.split("#").filter(o=>o)
-    datalistelem.replaceChildren()
-  
-  eventbkgrnd.style.display = "block";
-  dlg.style.setProperty('position', "fixed");
-  dlg.style.setProperty('width', "700px");
-  document.body.style.setProperty('overflow', "auto");  
-  cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };
-
-  var repostchkbox = document.getElementById('repostmark');
-  var repostlbl = document.getElementById('repostlbl');
-  repostlbl.style.display = "none";
-  var evselector = document.getElementById('eventypeselector');
-  evselector.disabled = true
-  if(type == 1) // Comment
-  {
-    evselector.value = "comment";
-  }
-  else if(type == 2) // Post
-  {
-    repostlbl.style.display = "inline";
-    evselector.value = "post";
-  }
-  else {
-    console.log("UNknown event type: ", type)
-    evselector.value = "unknown";
-    evselector.disabled = false     // Если сохранен тип события недопустимый (не коммент и не пост) - то его можно поменять вручную
-  }
-
-  if(repost == true)
-    repostchkbox.checked = true;
-
-  var fldname = document.getElementById('fldname');
-  fldname.textContent = uname;
-  var fldalias = document.getElementById('fldalias');
-  fldalias.textContent = ualias;
-  
-  let useDTLoc = true
-  let flddatetimecover = document.getElementById('fldtime');
-  let flddatetime = document.getElementById('inpdatetime');
-  
-  if(useDTLoc) {
-    flddatetime.style.backgroundColor = "#ffffff"
-    if(timeorig != "")
-        flddatetime.setAttribute("title", timeorig)
-    if(time_parced) {
-        flddatetime.disabled = true;
-        flddatetime.style.backgroundColor = "#a1a1a1"
-    }
-
-    let isotime = parceDateFromRuLocale(evtime, true)
-    flddatetime.value = isotime    
-    flddatetimecover.ondblclick = function() {
-        flddatetime.disabled = false;
-        flddatetime.style.backgroundColor = "#ffffff"
-    }
-  }
-  else {
-      flddatetimecover.textContent = evtime
-  }
-  
-  let fldmain = document.getElementById('fldmain');
-  titlefld.value = evtitle;
-  fldmain.value = evmain; 
-  fldmain.textContent = evmain; // some firefox versions requires setting textContent instead of value
-  linkfld.textContent = url;
-
-  var rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
-  var moveleft = 0;
-  if(window.innerWidth < rightdlgbound)
-    moveleft = rightdlgbound - window.innerWidth + 10;
-
-  var dlgY = mouseevent.clientY - (dlg.offsetHeight)/2;
-  if(mouseevent.clientY < (dlg.offsetHeight)/2)
-    dlgY = 1;
-  if(mouseevent.clientY + (dlg.offsetHeight)/2 > window.innerHeight)
-    dlgY = window.innerHeight - dlg.offsetHeight - 1;
-
-  dlg.style.setProperty('top', dlgY + 'px');
-  dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');
-  
-    newtagfld.addEventListener('keypress', keypress_onevent)
+        tgsarr = EventParams.tags.split("#").filter(o=>o)
+    datalistelem.replaceChildren()   
     
+    newtagfld.addEventListener('keypress', keypress_onevent)
     newtagfld.addEventListener('keydown', (e) => {
         if(e.key == "#") {
             e.preventDefault()
@@ -208,61 +375,38 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
             }                
         }        
     }
-
-  //режим редактирования
-  if(mode)
-  {
-    var buttonsline = document.getElementById('buttonsline');
-    var erasebtn = document.getElementById('erasebtn');
-    if(erasebtn == null)
-      erasebtn = document.createElement('span');
-    erasebtn.classList.add('continvbutton');
-    erasebtn.innerHTML = browser.i18n.getMessage('deletevent_button')
-    erasebtn.style.setProperty('margin-left', '100px');
-    erasebtn.setAttribute("id", "erasebtn");
-    buttonsline.insertBefore(erasebtn, okbtn);
-    okbtn.innerHTML = browser.i18n.getMessage('changevent_button')
-  }
-  else
-  {
-    var erasebtn = document.getElementById('erasebtn');
-    if(erasebtn != null)
-      erasebtn.remove();
     
-    okbtn.innerHTML = browser.i18n.getMessage('addevent_button')
-  }
-
-  return new Promise(resolve => {
-    okbtn.onclick = function() 
-    {
-      let tcnt = titlefld.value;
-      let mcnt = fldmain.value;
-      if(evselector.value == "comment")
-          type = 1
-      if(evselector.value == "post")
-          type = 2
-          
-      let unpdatedtime = evtime
-      if(useDTLoc == true) {
-        if(flddatetime.disabled == false)
-            unpdatedtime = convTimedateToRuLocale(flddatetime.value)
-      }
-      
-      addHistoryEvent(socname, uname, fldalias.textContent, unpdatedtime, linkfld.textContent, tcnt, mcnt, type, repostchkbox.checked, "", tagslistfdl.tags)
-      eventbkgrnd.style.display = "none"; 
-      resolve("okbtn");
-    };
-    if(mode)
-    {
-      erasebtn.onclick = function()
-      {
-        removeHistoryEvent(linkfld.textContent);
-        eventbkgrnd.style.display = "none"; 
-        resolve("rmbtn");
-      }
+    // TITLE AND CAPTION
+    let titlefld = document.getElementById('fldtitle');
+    titlefld.value = EventParams.title;
+    let fldmain = document.getElementById('fldmain');
+    fldmain.value = EventParams.descript
+    fldmain.textContent = EventParams.descript
+    
+    // DIALOG MODE - add or edit
+    let buttonsline = document.getElementById('buttonsline')
+    let erasebtn = document.getElementById('erasebtn')
+    let okbtn = document.getElementById('okbtn')
+    if(mode) {
+        if(erasebtn == null)
+            erasebtn = document.createElement('span');
+        erasebtn.classList.add('continvbutton')
+        erasebtn.innerHTML = browser.i18n.getMessage('deletevent_button')
+        erasebtn.style.setProperty('margin-left', '100px')
+        erasebtn.setAttribute("id", "erasebtn")
+        buttonsline.insertBefore(erasebtn, okbtn)
+        okbtn.innerHTML = browser.i18n.getMessage('changevent_button')
     }
-  }); 
-  
+    else {
+        if(erasebtn != null)
+            erasebtn.remove();
+        // Если событие еще не создано - то кнопки перехода к вышестоящим заблокированных вне зависимости 
+        // от того, выбрано там существующее событие или нет
+        linkbtn_root.style.opacity = "0.2"
+        linkbtn_parent.style.opacity = "0.2"
+        okbtn.innerHTML = browser.i18n.getMessage('addevent_button')
+    }    
+    
     function renderTags() {
         let tgsjoined = tagslistfdl.tags
         tagslistfdl.innerHTML = ''
@@ -289,6 +433,44 @@ function drawHistoryEventDlg(mouseevent, socname, uname, ualias, evtime, url, ev
     }
 }
 
+function setPositionEventDlg(mouseevent) {
+    let eventbkgrnd = document.getElementById("histbackground")
+    let dlg = document.getElementById('histdialog')
+    let cancelbtn = document.getElementById('cancelbtn')
+    
+    eventbkgrnd.style.display = "block";
+    dlg.style.setProperty('position', "fixed");
+    dlg.style.setProperty('width', "700px");
+    document.body.style.setProperty('overflow', "auto");  
+    cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };
+    
+    let rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
+    let moveleft = 0;
+    if(window.innerWidth < rightdlgbound)
+        moveleft = rightdlgbound - window.innerWidth + 10;
+
+    let dlgY = mouseevent.clientY - (dlg.offsetHeight)/2;
+    if(mouseevent.clientY < (dlg.offsetHeight)/2)
+        dlgY = 1;
+    if(mouseevent.clientY + (dlg.offsetHeight)/2 > window.innerHeight)
+        dlgY = window.innerHeight - dlg.offsetHeight - 1;
+
+    dlg.style.setProperty('top', dlgY + 'px');
+    dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');    
+}
+
+function isInputTypeDatetimeLocalImplemented() {
+    let ffversr = navigator.userAgent
+    let re = new RegExp("Firefox\\/(\\d+)")
+    let d = ffversr.match(re, "g")
+    if(d != null) {
+        if(d.length > 1) {
+            if(d[1] > 93) 
+                return true
+        }
+    }
+    return false
+}
 
 function getTagsList() {
     return new Promise(function(resolve, reject) {
@@ -305,7 +487,107 @@ function getTagsList() {
     })
 }
 
-function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript, type, repost, commrecip, tags)
+
+function fillRootCandidatsList(soc, evurl) {
+    return new Promise(function(resolve, reject) {
+        let evheadselector = document.getElementById('evheadselector')
+        while(evheadselector.options.length > 0)
+            evheadselector.remove(0)
+        
+        let evhead_url = soc.GetRootFor(evurl)
+        if(evhead_url == "") { 
+            evheadselector.disabled = "disabled"
+            resolve(false)
+        }
+        else {
+            let nmarr = new Array();
+            nmarr.push(evhead_url);
+            nmarr.push({request: "gethistoryitem"});
+            let sendongeth = browser.runtime.sendMessage(nmarr);
+            sendongeth.then(result => {
+                let linkbtn_root = document.getElementById('headlinkbtn')
+                let r = new Map(result);
+                if(r.size == 0) {
+                    evheadselector.setAttribute("title", evhead_url)
+                    evheadselector.add(new Option(evhead_url, evhead_url))
+                    evheadselector.disabled = "disabled"
+                    linkbtn_root.style.opacity = "0.2"                
+                }
+                else {
+                    let evhead_comb = r.get("alias") + " (" + r.get("time") + ") "
+                    let qtext = r.get("title")
+                    if(qtext == "")
+                        qtext = r.get("descript");
+                    
+                    qtext = qtext.substring(0,100)
+                    evhead_comb = evhead_comb + qtext
+                    evheadselector.setAttribute("title", evhead_comb)
+                    evheadselector.add(new Option(evhead_comb, evhead_url))
+                    evheadselector.disabled = "disabled"
+                }
+                resolve(true)
+            })
+        }
+    })
+}
+
+function fillParentCandidatsList(socname, evurl, evtime, prntevurl) {
+    let evpresselector = document.getElementById('evpresselector')
+    while(evpresselector.options.length > 0)
+        evpresselector.remove(0)
+
+    let ev
+    return listPotentParentEvents(socname, evurl, evtime).then(res => proccedPotentialList(res, prntevurl), error => {console.log("listPotentParentEvents error")})
+}
+
+function proccedPotentialList(res, prntevurl) {
+    let addmissed = true; // если линка, указанного как родительский среди возвращенных событий нет (стерли событие) - то его надо добавить как линк.
+    if(!prntevurl)
+        addmissed = false // пустой линк есть всегда, поэтому если родительским указан он - ничего добавлять не надо
+    let evpresselector = document.getElementById('evpresselector')
+            
+    console.log("Selected evs = ", res.length)
+        
+    for(let co = 0; co < res.length; co++) {
+        ev = res[co]
+        let evhead_comb = res[co].alias + " (" + res[co].time + ") "
+        if(res[co].title != "")
+            evhead_comb += res[co].title + " | "
+        evhead_comb += res[co].descript
+        if(cmpLinks(res[co].url, prntevurl))
+            addmissed = false;
+            
+        evpresselector.add(new Option(evhead_comb, res[co].url))
+    }
+    if(addmissed)
+        evpresselector.add(new Option("(R) " + prntevurl, prntevurl))
+        
+    // Добавление пункта -- не указано -- с пустым линком
+    evpresselector.add(new Option(browser.i18n.getMessage('parent_notindicated'), ""))
+    // Если prntevurl пустой - то именно этот пункт выбирается в списке по умолчанию
+    if(prntevurl == undefined)
+        evpresselector.value = ""
+    else
+        evpresselector.value = prntevurl
+}
+
+/*! \brief \~russian Сохранение события в базе
+ * \param socname
+ * \param cname
+ * \param alias
+ * \param timestamp
+ * \param url
+ * \param title
+ * \param descript
+ * \param type
+ * \param repost
+ * \param commrecip
+ * \param tags
+ * \param prntevurl ссылка на родительское сообщение
+ * 
+ */
+
+function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript, type, repost, commrecip, tags, prntevurl)
 {
   var setarr = new Array();
   var userprms = {};
@@ -320,8 +602,9 @@ function addHistoryEvent(socname, cname, alias, timestamp, url, title, descript,
   userprms['repost'] = repost;
   userprms['recipient'] = commrecip;
   userprms['tags'] = tags;
+  userprms['parent_url'] = prntevurl;
   setarr.push(userprms);  
-  setarr.push({request: "addhistoryevent"});
+  setarr.push({request: "addhistoryevent"})
   
   var sendonrankchange = browser.runtime.sendMessage(setarr); 
   /*
@@ -576,4 +859,65 @@ function buildCloud(tagsul, socusername) {
             },
         err => { console.log("Error getting tags list: ", err ) });
     });
+}
+
+function listPotentParentEvents(socnet, evurl, evtime) {
+    //получить корневое событие,если оно есть
+    //получить время корневого события
+    // Если время корневого события меньше чем время наследника - то фильтрация по времени включается
+    // Получить полный список всех событий для заданной соцсети
+    // выбрать из них те, которые удовлетворяют требованию IsNested для данной соцсети (сам алгоритм специфичен для каждой сети)
+    // Из полученного списка удалить само исходное событие, если оно там есть.
+    // Если фильтрация по времени включена - то удалить также все более новые события, чем исходное
+    // Здесь же - было бы неплохо проверять отсутствие закольцованностей, но это пока отложу.
+    return new Promise(function(resolve, reject) {
+        let res = new Array()
+        let cururl;
+        
+        let soc = KnownSNets.get(socnet)
+        let evhead_url = soc.GetRootFor(evurl)
+        if(evhead_url == "")
+            resolve(res);
+        
+        let arr = new Array()
+        arr.push(socnet)
+        arr.push({request: "getallevents"})
+        let allevs = browser.runtime.sendMessage(arr)
+        
+        allevs.then( result => {
+            console.log("Found p evs =:", result.length)
+            for(let co = 0; co < result.length; co++) {
+                if(result[co] === null)
+                    continue;
+                cururl = result[co].url
+                curtime = result[co].time
+                if(soc.IsNested(evhead_url, cururl) == true) {
+                    if(parceDateFromRuLocale(curtime) <= parceDateFromRuLocale(evtime))
+                        if(evurl != cururl)
+                            res.push(result[co])
+                }
+            }
+            resolve(res);
+        }, error => { 
+            console.log("Cognate events error: " + error); 
+        })
+    })
+}
+
+// comparing links, ignoring protocol 
+function cmpLinks(link1, link2) {
+    if(link1 ? false : link2 ? false : true) 
+        return true;    // if both are empty, they are equal
+    if(!link1 || !link2)
+        return false;   // if any is empty they are not equal
+    
+    let l1 = link1
+    if(l1.includes("://"))
+        l1 = link1.split("://")[1]
+        
+    let l2 = link2
+    if(l2.includes("://"))
+        l2 = link2.split("://")[1]
+        
+    return l1 == l2;
 }

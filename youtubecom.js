@@ -8,7 +8,7 @@ for (d of youtubeurls) {
     }
 }
 
-let youtubeobj = {Mark: 0, IsPub: IsYtPub, Title: "YouTube", ListActiveZones: ListYtActiveZones, GetTimestamp: GetYtTimestamp, GetEventText: GetYtEventText, GetEventUrl: GetYtEventUrl, GetUserAlias: GetYtUserAlias};
+let youtubeobj = {Mark: 0, IsPub: IsYtPub, Title: "YouTube", ListActiveZones: ListYtActiveZones, GetTimestamp: GetYtTimestamp, GetEventText: GetYtEventText, GetEventUrl: GetYtEventUrl, GetUserAlias: GetYtUserAlias, GetRootFor: GetYtRootFor, IsNested: IsNestedYt};
 if (IsYoutube == 1)
     youtubeobj.Mark = 1
 
@@ -217,6 +217,23 @@ function GetYtUsername(item) {
     
     return username
 }
+
+function GetYtRootFor(evlink) {
+    let rooturl = ""
+    if(!evlink.includes("&lc"))
+        return rooturl;
+
+    let urlparts = evlink.split("&lc")
+    return urlparts[0];
+}
+
+function IsNestedYt(root, candidate) {
+    if(candidate.includes(root))
+        return true;
+    
+    return false;
+}
+
 
 function GetYtUserAlias(item, type) {
     if(type == 1) {

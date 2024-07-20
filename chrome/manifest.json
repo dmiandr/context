@@ -11,6 +11,10 @@
   "icons": {
     "48": "icons/context48.png"
   },
+  "web_accessible_resources": [
+    "icons/link32.png",
+    "icons/rarr32.png"
+  ],
   
   "action": {
     "default_icon": {

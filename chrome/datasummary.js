@@ -200,7 +200,7 @@ function showBriefList(res) {
                 })
                 cedt.appendChild(btnedt)
                 let crm = row.insertCell(7)
-                let btnrm= document.createElement("button");
+                let btnrm = document.createElement("button");
                 btnrm.textContent = browser.i18n.getMessage("delete_status_button")
                 btnrm.setAttribute("id", "rmcnsl"+res[co].id)
                 btnrm.addEventListener("click", function(ev){
@@ -262,6 +262,7 @@ function showBriefList(res) {
                 btnadd.title = browser.i18n.getMessage("keep_status_button")
                 startRankEdit(next_id)
                 ranksediting = true;
+                btnadd.disabled = false
             } else {
                 btnadd.textContent = " + "
                 btnadd.title = browser.i18n.getMessage("add_status_button")
@@ -344,7 +345,8 @@ function tableSummary(result)
         cellelem = document.createElement('a');
         cellelem.href = "#";
         cellelem.addEventListener("click", function(evt){
-            drawHistoryEventDlg(evt, lastevent.socnet, lastevent.username, lastevent.alias, lastevent.time.toLocaleString('ru-RU'), lastevent.url, lastevent.title, lastevent.descript, lastevent.type, lastevent.repost, lastevent.tags, true, lastevent.time, true);
+            lastevent.time = lastevent.time.toLocaleString('ru-RU') // ??? разобраться!
+            showHistoryEventDlg(evt, true, true, lastevent.time, lastevent);
         });
         if(lastevent.title === "")
             lastevent.title = browser.i18n.getMessage("empty_event_title")
@@ -446,16 +448,7 @@ function listTagged(res) {
         if(userevnts == undefined) {
             userevnts = new Array()
         }
-        let newevent = new Object();
-        newevent['alias'] = res[co].alias;              // alias can change from one event to another
-        newevent['title'] = res[co].title;
-        newevent['url'] = res[co].url;
-        newevent['type'] = res[co].type;
-        newevent['time'] = res[co].time;
-        newevent['tags'] = res[co].tags;
-        newevent['descript'] = res[co].descript;
-                
-        userevnts.push(newevent)
+        userevnts.push(res[co])
         usordedevents.set(JSON.stringify(ukey), userevnts);
     }
     for(const [skey, evntslst] of usordedevents) {
@@ -501,7 +494,8 @@ function listTagged(res) {
             let ctags = evntslst[co].tags;
             cellelem.addEventListener("click", function(evt) {
                 evt.preventDefault();
-                drawHistoryEventDlg(evt, cnet, cnam, calias, ctime.toLocaleString('ru-RU'), curl, ctitle, cdescr, ctype, crepost, ctags, true, ctime, true);
+                ce.time = ce.time.toLocaleString('ru-RU')
+                showHistoryEventDlg(evt, true, true, ce.time, ce);
             })
             if(ctitle === "")
                 ctitle = browser.i18n.getMessage("empty_event_title")
