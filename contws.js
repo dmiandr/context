@@ -143,7 +143,8 @@ function ListContActiveZones(zmap, ishome) {
                     else
                         actzone['captElement'] = itm // не понятно, когда, но такое случается в режиме /full
                     actzone['url'] = "https://cont.ws/@" + username + "/" + postid
-                    actzone['urlequivs'] = "(?<!comment)(?=" + postid + ")(?!.*comment\\d+)"  // фактически, подходит любое упоминиание id поста в линке - если только далее нет commentXXXX
+                    actzone['urlequivs'] = "(?<!comment\\d*)" + postid + "(?!.*#comment\\d+)"  // фактически, подходит любое упоминиание id поста в линке - если только далее нет commentXXXX
+                                                                                               // upd - и если перед ним нет слова comment, возможно с какими-нибудь доп цифрами - чтобы id комментария не был принят за id поста
                     zmap.set(itm, actzone)
                     continue;
                 }
@@ -196,6 +197,8 @@ function ListContActiveZones(zmap, ishome) {
                 }
                 actzone['isModifiable'] = true 
                 actzone['url'] = "https://cont.ws/@" + postuser + "/" + postid + "/full#comment" + commid
+                // Базовым видом линка считается с /full, но в каких-то старых версиях могли сохранятся и вариации без него - на этот случай используется альтернативное выражение
+                actzone['urlequivs'] = ".*" + postid + "#comment" + commid
                 actzone['captElement'] = itm
                 actzone['eventype'] = 1
                 for(const ch of prntblock.children) {
@@ -232,7 +235,7 @@ function ListContActiveZones(zmap, ishome) {
         if(itm.classList.contains("m_author") && getParentElementBelobgsToClass(itm, "new_post_prev") != null) { // блоки аннотоаций публикаций в ленте, отобранной по тегам
             let tagcomp = getParentElementBelobgsToClass(itm, "new_post_prev")
             if(tagcomp != null) {
-                let tagpostid = tagcomp.getAttribute("data-post-id")
+                let tagpostid = tagcomp.getAttribute("post_prv")  //("data-post-id")
                 actzone['eventype'] = 2
                 actzone['captElement'] = itm
                 for(const c of tagcomp.children) {
@@ -251,7 +254,7 @@ function ListContActiveZones(zmap, ishome) {
                 let tagpostid2 = schurlre[1]
                 actzone['url'] = "https://cont.ws/@" + username + "/" + tagpostid2
                 if(tagpostid != tagpostid2) {
-                    console.log("Parcing error: Unexpected parcing branch: in tagged feed new_post_prev element parameter post_prv does not fit postid from url")
+                    console.log("Parcing error: User = " + username + ", Unexpected parcing branch: in tagged feed new_post_prev element parameter post_prv ("+ tagpostid +") does not fit postid from url (" + tagpostid2 + ")")
                     parceCorrect = false
                 }
                 else
