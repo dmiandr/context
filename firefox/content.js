@@ -3,7 +3,8 @@ var gUsersCache = new Map();  // карта используемых на дан
 var gRanksParams = new Map(); // локальная копия перечня возможных статусов и данных для их отображения (цвета и особенности шрифта) 
 var config = { attributes: false, childList: true, subtree: true } // Конфигурация MutationObserver
 //var gTagsStat = new Map();
-gCurrnetNet = null;
+var gCurrnetNet = null;
+var gLinksOnPage = [] // список линков на редактируемые события на данной странице, обновляется каждый раз при mutationCallback, используется в get-cognet-events
 
 let mutationCallback = function(mutlst, observer) {   
     requestActualUsersStauses();
@@ -21,12 +22,17 @@ if(gRanksParams.size == 0)
 }
 // обработка изменений, сделанных в свойствах пользователя
 browser.runtime.onMessage.addListener( (message) => {
+    
+    //console.log("MSQ TYPE IS = ", message.type)
     if(message == "store-all-events") {
         let allevs = addAllPotentialEvents()
         allevs.then(() => {
             console.log("Refreshing elements...");
             requestActualUsersStauses();
         });
+    }
+    else if (message.type == "get-cognet-events") {
+        return Promise.resolve({ response: gLinksOnPage });
     }
     else
         requestActualUsersStauses();
@@ -551,12 +557,16 @@ function handleActualUsersStatuses(itmsmap) {
             }
         }
     }
-    
+    gLinksOnPage = []
     for ( let azitm of ActiveZones.keys()) {
         v = ActiveZones.get(azitm);
         //v.element.style['border-style'] = 'solid';
         if(v.eventype != 4)     // 4 - это внешние ссылки на события без оформления как стандартные блоки, в них нет даже имени пользователя, к которому надо было бы цеплять меню. Пока они находятся, но не размечаются.
             addElemsToActiveZone(v)
+        if(v.isevent == true) {
+            //console.log("ADDED TO LINKS: ", v.url);
+            gLinksOnPage.push(v.url)
+        }
     }
     colorAll();
 }

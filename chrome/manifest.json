@@ -11,15 +11,11 @@
   "icons": {
     "48": "icons/context48.png"
   },
-  "web_accessible_resources": [
-    "icons/link32.png",
-    "icons/rarr32.png"
-  ],
-  
   "action": {
     "default_icon": {
       "48": "icons/context48.png"
-    }
+    },
+    "default_popup": "popup.html"
   },
 
   "background": {
@@ -50,7 +46,7 @@
     "open_in_tab": true
   },
   "web_accessible_resources": [{
-      "resources": ["addhistorydialog.html", "userhistory.html", "contextlib.js"],
+      "resources": ["addhistorydialog.html", "userhistory.html", "contextlib.js", "icons/link32.png", "icons/rarr32.png"],
       "matches": ["<all_urls>"],
       "extension_ids": []
   }]

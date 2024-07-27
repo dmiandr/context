@@ -30,7 +30,8 @@
   "browser_action": {
     "default_icon": {
       "48": "icons/context48.png"
-    }
+    },
+    "default_popup": "popup.html"
   },
 
   "background": {

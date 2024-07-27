@@ -3,7 +3,8 @@ var gUsersCache = new Map();  // карта используемых на дан
 var gRanksParams = new Map(); // локальная копия перечня возможных статусов и данных для их отображения (цвета и особенности шрифта) 
 var config = { attributes: false, childList: true, subtree: true } // Конфигурация MutationObserver
 //var gTagsStat = new Map();
-gCurrnetNet = null;
+var gCurrnetNet = null;
+var gLinksOnPage = [] // список линков на редактируемые события на данной странице, обновляется каждый раз при mutationCallback, используется в get-cognet-events
 
 if (typeof globalThis.browser === "undefined")
     browser = chrome
@@ -23,11 +24,26 @@ if(gRanksParams.size == 0)
     error => { handleError(error); });*/
 }
 // обработка изменений, сделанных в свойствах пользователя
-browser.runtime.onMessage.addListener( (message) => {
-    if(message == "store-all-events")
-        addAllPotentialEvents()
+browser.runtime.onMessage.addListener( (message, sender, sendResponse) => {
+    
+    //console.log("MSQ TYPE IS = ", message.type)
+    if(message == "store-all-events") {
+        let allevs = addAllPotentialEvents()
+        allevs.then(() => {
+            console.log("Refreshing elements...");
+            requestActualUsersStauses();
+        });
+    }
+    else if (message.type == "get-cognet-events") {
+        //return Promise.resolve({ response: gLinksOnPage });
+        console.log("get-cognet-events received!!");
+        sendResponse(gLinksOnPage)
+        //return gLinksOnPage;
+    }
     else
         requestActualUsersStauses();
+        
+    return true;
 })
 
 browser.runtime.connect().onDisconnect.addListener( function() { 
@@ -474,7 +490,7 @@ function requestActualUsersStauses() {
     stat['iscorrect'] = correct
     carr.push(stat)
     carr.push({request: "bactionstatus"})
-    browser.runtime.sendMessage(carr, (response) => {console.log(response)} )
+    browser.runtime.sendMessage(carr, (response) => {})//{console.log(response)} )
     
     if(ActiveZones.size == 0) return null; // оно же промис возвращать должно! Тут надо выяснить, что будет при срабатывании
     let nmarr = new Array()
@@ -543,12 +559,16 @@ function handleActualUsersStatuses(itmsmap) {
             }
         }
     }
-    
+    gLinksOnPage = []
     for ( let azitm of ActiveZones.keys()) {
         v = ActiveZones.get(azitm);
         //v.element.style['border-style'] = 'solid';
         if(v.eventype != 4)     // 4 - это внешние ссылки на события без оформления как стандартные блоки, в них нет даже имени пользователя, к которому надо было бы цеплять меню. Пока они находятся, но не размечаются.
             addElemsToActiveZone(v)
+        if(v.isevent == true) {
+            //console.log("ADDED TO LINKS: ", v.url);
+            gLinksOnPage.push(v.url)
+        }
     }
     colorAll();
 }

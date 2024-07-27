@@ -792,12 +792,18 @@ function buildCloud(tagsul, socusername) {
         let minfontsz = 10;
         let maxfontsz = 20;
         tagsul.innerHTML = '';
+        let discussurls = []
        
         let fragment = document.createDocumentFragment();
         let tagsarr = new Array()
         let idnum = 0
-        if(socusername != "#")
+        let isurl = socusername.startsWith("http")
+        if(socusername != "#" && !isurl)
             tagsarr.push({socnet: socusername.split("#")[0], user: socusername.split("#")[1]})
+        if(isurl) {
+            tagsarr.push({selursl: socusername})
+        }
+        
         tagsarr.push({request: "gettags"})
         let sentontags = browser.runtime.sendMessage(tagsarr)
         sentontags.then(
@@ -896,6 +902,34 @@ function listPotentParentEvents(socnet, evurl, evtime) {
                         if(evurl != cururl)
                             res.push(result[co])
                 }
+            }
+            resolve(res);
+        }, error => { 
+            console.log("Potential parent events error: " + error); 
+        })
+    })
+}
+
+function listAllCognateEvents(socnet, url) {
+    return new Promise(function(resolve, reject) {
+        let res = new Array()
+        let soc = KnownSNets.get(socnet)
+        let evhead_url = soc.GetRootFor(evurl)
+        if(!evhead_url)
+            evhead_url = evurl
+        
+        let arr = new Array()
+        arr.push(socnet)
+        arr.push({request: "getallevents"})
+        let allevs = browser.runtime.sendMessage(arr)
+        
+        allevs.then( result => { 
+            for(let co = 0; co < result.length; co++) {
+                if(result[co] === null)
+                    continue;
+                cururl = result[co].url
+                if(soc.IsNested(evhead_url, cururl) == true)
+                    res.push(cururl)
             }
             resolve(res);
         }, error => { 

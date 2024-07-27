@@ -713,9 +713,18 @@ function gettags_handler(msg, db, resolve) {
     let reqprms = msg.pop()
     let usr = "";
     let soc = "";
+    let urslarray = []
+    let uselinks = false
     if(reqprms != undefined) {
-        usr = reqprms.user.toLowerCase()
-        soc = reqprms.socnet
+        if(reqprms.selursl != undefined) {
+            urslarray = reqprms.selursl.split("$")
+            reqprms = undefined
+            uselinks = true;
+        }
+        else {
+            usr = reqprms.user.toLowerCase()
+            soc = reqprms.socnet
+        }
     }
     let tagsmap = new Map();
     let tr = db.transaction("history")
@@ -725,6 +734,12 @@ function gettags_handler(msg, db, resolve) {
         let cur = event.target.result;
         if(cur) {
             let alltags = cur.value.tags;
+            if(uselinks) {
+                if(!urslarray.includes(cur.value.url)) {
+                    alltags = undefined;
+                }
+            }
+            
             if(alltags == undefined)
                 cur.continue()
             else {
