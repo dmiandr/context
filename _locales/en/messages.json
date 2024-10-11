@@ -31,6 +31,10 @@
         "message":      "repost",
         "description":  "Repost sign name"
     },
+    "repost_text_sign": {
+        "message":      "Place original URL or readable reference here",
+        "description":  "Place for original reference"
+    },
     "entertag_sign": {
         "message":      "Type tag here",
         "description":  "Remark on tag field"

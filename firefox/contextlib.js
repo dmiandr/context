@@ -77,7 +77,8 @@ function showHistoryEventDlg(mouseevent, mode, time_parced, timeorig, EventParam
     let useDTLoc = isInputTypeDatetimeLocalImplemented() // if input type="datetime-local" is supported (FF ver 93 or newer)
     
     linkbtn_root.src = browser.runtime.getURL("icons/rarr32.png")
-    linkbtn_parent.src = browser.runtime.getURL("icons/rarr32.png")    
+    linkbtn_parent.src = browser.runtime.getURL("icons/rarr32.png")
+    linkbtn.src = browser.runtime.getURL("icons/link32.png")
     linkbtn_root.addEventListener("click", followRootEventHandler );
     linkbtn_parent.addEventListener("click", followParentEventHandler);
     evpresselector.addEventListener("change", procceedChangingParentEvent)
@@ -389,7 +390,6 @@ function fillHistoryEventDlg(time_parced, timeorig, mode, EventParams) {
             erasebtn = document.createElement('span');
         erasebtn.classList.add('continvbutton')
         erasebtn.innerHTML = browser.i18n.getMessage('deletevent_button')
-        erasebtn.style.setProperty('margin-left', '100px')
         erasebtn.setAttribute("id", "erasebtn")
         buttonsline.insertBefore(erasebtn, okbtn)
         okbtn.innerHTML = browser.i18n.getMessage('changevent_button')
@@ -434,26 +434,33 @@ function setPositionEventDlg(mouseevent) {
     let eventbkgrnd = document.getElementById("histbackground")
     let dlg = document.getElementById('histdialog')
     let cancelbtn = document.getElementById('cancelbtn')
-    
-    eventbkgrnd.style.display = "block";
-    dlg.style.setProperty('position', "fixed");
-    dlg.style.setProperty('width', "700px");
+
     document.body.style.setProperty('overflow', "auto");  
-    cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };
+    cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };    
+    eventbkgrnd.style.display = "block";
+    if(!isMobile()) {
+        dlg.style.setProperty('position', "fixed");
+        dlg.style.setProperty('width', "700px");
+        dlg.style.setProperty('height', "400px");
     
-    let rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
-    let moveleft = 0;
-    if(window.innerWidth < rightdlgbound)
-        moveleft = rightdlgbound - window.innerWidth + 10;
+        let rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
+        let moveleft = 0;
+        if(window.innerWidth < rightdlgbound)
+            moveleft = rightdlgbound - window.innerWidth + 10;
 
-    let dlgY = mouseevent.clientY - (dlg.offsetHeight)/2;
-    if(mouseevent.clientY < (dlg.offsetHeight)/2)
-        dlgY = 1;
-    if(mouseevent.clientY + (dlg.offsetHeight)/2 > window.innerHeight)
-        dlgY = window.innerHeight - dlg.offsetHeight - 1;
+        let dlgY = mouseevent.clientY - (dlg.offsetHeight)/2;
+        if(mouseevent.clientY < (dlg.offsetHeight)/2)
+            dlgY = 1;
+        if(mouseevent.clientY + (dlg.offsetHeight)/2 > window.innerHeight)
+            dlgY = window.innerHeight - dlg.offsetHeight - 1;
 
-    dlg.style.setProperty('top', dlgY + 'px');
-    dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');    
+        dlg.style.setProperty('top', dlgY + 'px');
+        dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');    
+    }
+}
+
+function isMobile() {
+    return /android|ipad|iphone/i.test(navigator.userAgent);
 }
 
 function isInputTypeDatetimeLocalImplemented() {

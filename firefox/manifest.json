@@ -22,10 +22,6 @@
   "icons": {
     "48": "icons/context48.png"
   },
-  "web_accessible_resources": [
-    "icons/link32.png",
-    "icons/rarr32.png"
-  ],
   
   "browser_action": {
     "default_icon": {
@@ -63,5 +59,5 @@
     "page": "options.html",
     "open_in_tab": true
   },
-  "web_accessible_resources": ["addhistorydialog.html", "userhistory.html", "contextlib.js"]
+  "web_accessible_resources": ["addhistorydialog.html", "userinfodialog.html", "userhistory.html", "contextlib.js", "icons/link32.png", "icons/rarr32.png"]
 }

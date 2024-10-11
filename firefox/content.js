@@ -5,6 +5,10 @@ var config = { attributes: false, childList: true, subtree: true } // Конфи
 //var gTagsStat = new Map();
 var gCurrnetNet = null;
 var gLinksOnPage = [] // список линков на редактируемые события на данной странице, обновляется каждый раз при mutationCallback, используется в get-cognet-events
+var gMenuClass = 'dropdownusr'; // имя класса, формирующего треугольничек меню. Меняется, если это мобильный браузер
+if(isMobile())
+    gMenuClass = 'dropdownusr_mobile';
+
 
 let mutationCallback = function(mutlst, observer) {   
     requestActualUsersStauses();
@@ -82,11 +86,23 @@ function handleRanksList(rankslist) {
 }
 
 function onCompletePageLoad() {
-    let nmarr = [{request: "injecthistorydialog"}];
+    /*let fetchreqarr = new Array()
+    fetchreqarr.push("userinfodialog.html")
+    fetchreqarr.push({request: "fetchhtml"})
+    let infohtmlreq = browser.runtime.sendMessage(fetchreqarr);
+    infohtmlreq.then( inforesult => {})*/
+    
+    let nmarr = new Array() //[{request: "injecthistorydialog"}];
+    nmarr.push("addhistorydialog.html")
+    nmarr.push({request: "fetchhtml"})
+    
     let sendhtmlinject = browser.runtime.sendMessage(nmarr);
     sendhtmlinject.then( result => {
         injectHistoryDialog(result);
     }, error => {console.log("Error injecting history dialog")});
+    
+    
+    //}
     
     for( let a of KnownSNets.keys()) {  // locating object corresponds to current snet
         let snet = KnownSNets.get(a);
@@ -137,7 +153,7 @@ function addElemsToActiveZone(zone) {
     
     if(zone.attachMenuDomElement.parentNode == null) // по идее такого никогда не должно быть, но иногда это вдруг всплывает по непонятной причине
         return;
-    let alrex = zone.attachMenuDomElement.parentNode.getElementsByClassName("dropdownusr");
+    let alrex = zone.attachMenuDomElement.parentNode.getElementsByClassName(gMenuClass);
     if(alrex.length > 0)
         return;
     if(uopt.numevents > 0 && zone.attachBadge != null && zone.eventype != 5) {
@@ -158,7 +174,7 @@ function addElemsToActiveZone(zone) {
     
     if(uopt.numevents > 0 || zone.isModifiable == true) { // меню имеет смысл только если можно использовать его функции - добавлять новые или просматривать существующие события
         let astr = document.createElement('span');
-        astr.className = 'dropdownusr';
+        astr.className = gMenuClass//'dropdownusr';
         if(zone.menuAttachBefore == true)
             zone.attachMenuDomElement.parentNode.insertBefore(astr, zone.attachMenuDomElement)
         else
@@ -485,8 +501,9 @@ function requestActualUsersStauses() {
     stat['iscorrect'] = correct
     carr.push(stat)
     carr.push({request: "bactionstatus"})
-    browser.runtime.sendMessage(carr)
+    //let iconstat = browser.runtime.sendMessage(carr)
     
+    //iconstat.then(res => {
     if(ActiveZones.size == 0) return null; // оно же промис возвращать должно! Тут надо выяснить, что будет при срабатывании
     let nmarr = new Array()
     for (let azitm of ActiveZones.keys()) {
@@ -503,6 +520,7 @@ function requestActualUsersStauses() {
     return sendonstatus.then(
       result => { handleActualUsersStatuses(result); },
       error => { console.log("histatuses reqest fails") });
+    //})
 }
 
 /*! \brief \~russian Вызов функции поиска активных зон для всех известных сетей, по-очереди 
@@ -772,7 +790,7 @@ function locateMenuElement(item) {
         return null;
     if(prev.classList == undefined)
         return null;
-    if(!prev.classList.contains('dropdownusr'))
+    if(!prev.classList.contains(gMenuClass))
         return null;
     let menu = prev.childNodes[0];
     if(!menu.classList.contains('dropdownusr-content'))

@@ -11,7 +11,7 @@ browser.tabs.query({ currentWindow: true, active: true })
             let tbsnd = browser.tabs.sendMessage(tid, {type:"get-cognet-events"});
             tbsnd.then( (resp) => {
                 let allurls = resp.response.join("$")
-                console.log("allurls = ", allurls)
+                //console.log("allurls = ", allurls)
                 buildCloud(tagsul, allurls)
             })
         }
