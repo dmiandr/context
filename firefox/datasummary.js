@@ -9,7 +9,7 @@ let gPrevBcolor
 let selectednets = []
 let showstatuses = new Array() // список статусов, которые будут отображаться, обновляется при каждом отмеченном чекбоксе
 
-var gRanksParams = new Map();
+//var gRanksParams = new Map();
 window.addEventListener("load", onCompletePageLoad, false);
 
 // Вызов сетеспецифичного файла здесь осуществляется за счет его упоминания в options.html - там идет ссылка на скрипт, благодаря чему вызывается заполнение 
@@ -22,12 +22,7 @@ browser.runtime.onMessage.addListener( (message) => {
 })
 
 function onCompletePageLoad() {
-    if(document.readyState === "complete") {
-        let nmarr = new Array();
-        nmarr.push({request: "injecthistorydialog"});
-        let sendhtmlinject = browser.runtime.sendMessage(nmarr);
-        sendhtmlinject.then(result => { injectHistoryDialog(result); }, error => {});
-    }
+    injectDialogs()
 }
 
 cacheRankParams();
@@ -46,7 +41,6 @@ checksocnet_filter()
 socnetlist.onchange = function() {
     checksocnet_filter()
     listUsersByCondition()
-    //alert(selectednets.join(","))
 }
 
 function checksocnet_filter() {
@@ -343,7 +337,7 @@ function tableSummary(result)
         curcell = singlrow.insertCell(1);
         cellelem = document.createElement('a');
         cellelem.href = "#";
-        cellelem.addEventListener("click", function(evt){popupHistoryWindow(lastevent.socnet, lastevent.username);});
+        cellelem.addEventListener("click", function(evt){userInfoDialogShow(lastevent.socnet, lastevent.username);});
         cellelem.innerText = lastevent.alias + " (" + lastevent.username + ")";
         if(lastevent.hidden == true)
             cellelem.style.fontStyle = "italic"
@@ -388,7 +382,7 @@ function tableSummary(result)
         addPlainCell(row, 0, usrn)
         addPlainCell(row, 1, socname)
         let aelem = addHrefCell(row, 2, uname, "#")
-        aelem.addEventListener("click", function(evt){evt.preventDefault(); popupHistoryWindow(socnet, uname); });
+        aelem.addEventListener("click", function(evt){evt.preventDefault(); userInfoDialogShow(socnet, uname); });
         if(rowmap.hidden == true)
             aelem.style.fontStyle = "italic"        
 
@@ -472,7 +466,7 @@ function listTagged(res) {
         curcell = singlrow.insertCell(1);
         let usrhref = document.createElement("a")
         usrhref.href = "#"
-        usrhref.addEventListener("click", function(evt){evt.preventDefault(); popupHistoryWindow(key.socnet, key.username)}) 
+        usrhref.addEventListener("click", function(evt){evt.preventDefault(); userInfoDialogShow(key.socnet, key.username)}) 
         usrhref.innerText = alias + " (" + key.username + ")";
         curcell.appendChild(usrhref);
         let detailsrow = outtable.insertRow(-1);

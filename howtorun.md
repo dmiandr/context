@@ -21,6 +21,7 @@ ljcom.js <br>
 youtubecom.js <br>
 habrcom.js <br>
 popup.html <br>
+userinfodialog.html <br>
 
 В эту же директорию скопируйте папки icons и _locales из корня проекта.
 

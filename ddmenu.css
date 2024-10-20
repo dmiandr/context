@@ -51,7 +51,7 @@
 
 .dropdownusr-content a:hover {
     background-color: #f1f1f1;
-   text-decoration: bold;    
+    font-weight: bold;
 }
 
 .dropdownusr:hover .dropdownusr-content {
@@ -85,6 +85,7 @@
     padding: 7px;
     background: #326891;
     z-index: 2147483646;
+    opacity: 90%;
 }
 .evdialogrid {
     height: 100%;
@@ -93,12 +94,39 @@
     grid-template-columns: 100%;
     gap: 11px;
 }
+
 .evdialogstring {
     display: flex;
     column-gap: 10px;
     border: 0px solid #F00;
     width: 100%;
+    opacity: 100%;
 }
+.infodialoggrid {
+    height: 100%;
+    display: grid;
+    grid-template-rows: max-content 27px 108px 27px max-content max-content auto;
+    grid-template-columns: 100%;
+    gap: 11px;
+    overflow-y: auto;
+    color: #000;
+}
+.infodialogstring {
+    display: flex;
+    column-gap: 10px;
+    width: 100%;
+    opacity: parent;
+}
+.infodialogfooter {
+    position: fixed;
+    bottom: 50px;
+    width: 100%;
+}
+.sideby {
+    display:inline-block;
+    width:24%;
+}
+
 .close {
     color: #E11;
     float: right;
@@ -158,8 +186,8 @@
     color: white;
     text-decoration: none;
     margin-left: 2px;
-    margin-bottom: 2px;    
-    margin-top: 2px;    
+    margin-bottom: 2px;
+    margin-top: 2px;
     font-size: 10px;
     background: #333;
     width: 15px;
@@ -209,7 +237,7 @@
     background: #326891;
     border-radius: 4px;
     position: relative;
-    top: 5px;
+    top: 0px;
     padding-left: 5px;
     padding-right: 5px;
 }
@@ -219,6 +247,17 @@
     color: #aa0000;
     border: 0px solid #1a4870;
     cursor: pointer;
+}
+
+.contbutton_bigger {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    opacity: 80%;
+    border: 0px solid #000070;
+}
+
+.contbutton_unsaved {
+    border: 2px solid #FF0070;
 }
 
 .firstline {
@@ -269,6 +308,7 @@
 table.histable {
     border-collapse: collapse;
     border: 1px solid #326891;
+    width: 100%;
 }
 
 table.histable th {
@@ -294,12 +334,26 @@ table.histable tr.dark {
     border: 1px solid #326891;
     background-color: #487ca4;
     color: #FFF;
-    text-decoration: bold;
 }
 
-table.histable tr.dark a:link {
-  color: #FFF;
-  text-decoration: bold;
+.histable tr:nth-child(odd) a {
+    color: #EEE;
+    font-weight: bold;
+}
+
+.histable tr:nth-child(even) a {
+    color: #001;
+    font-weight: bold;
+}
+
+.histable tr:nth-child(odd) a:hover {
+    color: #FFF;
+    font-weight: bold;
+}
+
+.histable tr:nth-child(even) a:hover {
+    color: #223;
+    font-weight: bold;
 }
 
 table.histable tr.light {
@@ -322,4 +376,33 @@ table.histable td {
     border-radius: 8px;
     font-size: 10px;
     opacity: 40%;
+}
+
+.reputags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    border: 1px solid white;
+    border-radius: 5px !important;
+    background-color: #bdd9e7;
+    font-weight: normal;
+    color: #000;
+}
+
+.reputags label {
+    padding: 2px 2px !important;
+    background: #bdd9e7 !important;
+    border-radius: 5px !important;
+    border: 1px solid #326891 !important;
+    font-weight: normal;
+    padding: 0px;
+    margin: 0px;    
+}
+
+.reputags li {
+    background-color: #bdd9e7;
+    font-weight: normal;
+    color: #000;
+    padding: 2px;
+    margin: 2px;
 }

@@ -80,7 +80,8 @@ function showHistoryEventDlg(mouseevent, mode, time_parced, timeorig, EventParam
     let useDTLoc = isInputTypeDatetimeLocalImplemented() // if input type="datetime-local" is supported (FF ver 93 or newer)
     
     linkbtn_root.src = browser.runtime.getURL("icons/rarr32.png")
-    linkbtn_parent.src = browser.runtime.getURL("icons/rarr32.png")    
+    linkbtn_parent.src = browser.runtime.getURL("icons/rarr32.png")
+    linkbtn.src = browser.runtime.getURL("icons/link32.png")
     linkbtn_root.addEventListener("click", followRootEventHandler );
     linkbtn_parent.addEventListener("click", followParentEventHandler);
     evpresselector.addEventListener("change", procceedChangingParentEvent)
@@ -180,9 +181,10 @@ function onOkBtnProcessing(socnet, useDTLoc) {
     let fldmain = document.getElementById('fldmain')
     let fldalias = document.getElementById('fldalias')
     let repostchkbox = document.getElementById('repostmark')
-    var fldname = document.getElementById('fldname');
+    let fldname = document.getElementById('fldname');
     let flddatetimecover = document.getElementById('fldtime')
     let linkbtn = document.getElementById('eventlinkbtn')
+    let reportlink = document.getElementById('fldrepost')
     
     let curtype = 0
     let tcnt = titlefld.value
@@ -198,8 +200,11 @@ function onOkBtnProcessing(socnet, useDTLoc) {
         //if(flddatetime.disabled == false)
             unpdatedtime = convTimedateToRuLocale(flddatetime.value)
     }
+    let rep = repostchkbox.checked
+    if(reportlink.value != '')
+        rep = reportlink.value
       
-    addHistoryEvent(socnet, fldname.textContent, fldalias.textContent, unpdatedtime, linkbtn.title, tcnt, mcnt, curtype, repostchkbox.checked, "", tagslistfdl.tags, parentev_url)
+    addHistoryEvent(socnet, fldname.textContent, fldalias.textContent, unpdatedtime, linkbtn.title, tcnt, mcnt, curtype, rep, "", tagslistfdl.tags, parentev_url)
     eventbkgrnd.style.display = "none";
 }
 
@@ -212,26 +217,46 @@ function fillHistoryEventDlg(time_parced, timeorig, mode, EventParams) {
     else
         soctitle = EventParams.socnet
     socnetnamefld.innerText = soctitle
+    // REPOST CHECKBOX
+    let repostchkbox = document.getElementById('repostmark')
+    let reportlink = document.getElementById('fldrepost')
+    repostchkbox.addEventListener("input", function() { 
+        if(repostchkbox.checked == true)
+            reportlink.disabled = false;
+        else {
+            reportlink.disabled = true;
+            reportlink.value = ''
+        }
+    })
     // EVENT TYPE SELECTOR
     let evselector = document.getElementById('eventypeselector');
     let repostlbl = document.getElementById('repostlbl');
     evselector.disabled = true
     if(EventParams.type == 1) { // Comment 
         evselector.value = "comment";
+        repostchkbox.checked = false;
+        repostchkbox.disabled = true;
+        reportlink.disabled = true;
     }
     else if(EventParams.type == 2) { // Post
         repostlbl.style.display = "inline";
         evselector.value = "post";
+        repostchkbox.disabled = false;
+        reportlink.disabled = true;
+        if(EventParams.repost != null) {
+            repostchkbox.checked = true;
+            reportlink.disabled = false;
+            if(EventParams.repost == true)
+                reportlink.value = ''
+            else 
+                reportlink.value = EventParams.repost
+        }
     }
     else {
         console.log("UNknown event type: ", EventParams.type)
         evselector.value = "unknown";
         evselector.disabled = false     // Если сохранен тип события недопустимый (не коммент и не пост) - то его можно поменять вручную
     }
-    // REPOST CHECKBOX
-    let repostchkbox = document.getElementById('repostmark')
-    if(EventParams.repost == true)
-        repostchkbox.checked = true;
     // USER NAME
     let fldname = document.getElementById('fldname');
     fldname.textContent = EventParams.username;
@@ -392,7 +417,6 @@ function fillHistoryEventDlg(time_parced, timeorig, mode, EventParams) {
             erasebtn = document.createElement('span');
         erasebtn.classList.add('continvbutton')
         erasebtn.innerHTML = browser.i18n.getMessage('deletevent_button')
-        erasebtn.style.setProperty('margin-left', '100px')
         erasebtn.setAttribute("id", "erasebtn")
         buttonsline.insertBefore(erasebtn, okbtn)
         okbtn.innerHTML = browser.i18n.getMessage('changevent_button')
@@ -437,26 +461,33 @@ function setPositionEventDlg(mouseevent) {
     let eventbkgrnd = document.getElementById("histbackground")
     let dlg = document.getElementById('histdialog')
     let cancelbtn = document.getElementById('cancelbtn')
-    
-    eventbkgrnd.style.display = "block";
-    dlg.style.setProperty('position', "fixed");
-    dlg.style.setProperty('width', "700px");
+
     document.body.style.setProperty('overflow', "auto");  
-    cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };
+    cancelbtn.onclick = function() {  eventbkgrnd.style.display = "none"; };    
+    eventbkgrnd.style.display = "block";
+    if(!isMobile()) {
+        dlg.style.setProperty('position', "fixed");
+        dlg.style.setProperty('width', "700px");
+        dlg.style.setProperty('height', "400px");
     
-    let rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
-    let moveleft = 0;
-    if(window.innerWidth < rightdlgbound)
-        moveleft = rightdlgbound - window.innerWidth + 10;
+        let rightdlgbound = mouseevent.clientX + dlg.offsetWidth;
+        let moveleft = 0;
+        if(window.innerWidth < rightdlgbound)
+            moveleft = rightdlgbound - window.innerWidth + 10;
 
-    let dlgY = mouseevent.clientY - (dlg.offsetHeight)/2;
-    if(mouseevent.clientY < (dlg.offsetHeight)/2)
-        dlgY = 1;
-    if(mouseevent.clientY + (dlg.offsetHeight)/2 > window.innerHeight)
-        dlgY = window.innerHeight - dlg.offsetHeight - 1;
+        let dlgY = mouseevent.clientY - (dlg.offsetHeight)/2;
+        if(mouseevent.clientY < (dlg.offsetHeight)/2)
+            dlgY = 1;
+        if(mouseevent.clientY + (dlg.offsetHeight)/2 > window.innerHeight)
+            dlgY = window.innerHeight - dlg.offsetHeight - 1;
 
-    dlg.style.setProperty('top', dlgY + 'px');
-    dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');    
+        dlg.style.setProperty('top', dlgY + 'px');
+        dlg.style.setProperty('left', mouseevent.clientX - moveleft + 'px');    
+    }
+}
+
+function isMobile() {
+    return /android|ipad|iphone/i.test(navigator.userAgent);
 }
 
 function isInputTypeDatetimeLocalImplemented() {
@@ -621,21 +652,6 @@ function removeHistoryEvent(url)
   var send = browser.runtime.sendMessage(setarr); 
 }
 
-function popupHistoryWindow(socnet, user, alias)
-{
-    let histurl = browser.runtime.getURL("userhistory.html");
-    histurl += "?socnet=";
-    histurl += socnet;
-    histurl += "&username=";
-    histurl += user;
-    if(alias !== undefined) {
-        histurl += "&alias="
-        histurl += encodeURI(alias)
-    }
-    let popup = window.open(histurl, "", "height=400,width=750");
-    popup.focus();
-}
-
 /*! \brief \~russian Расскрасить переданный элемент в соответствии со стилем, идентификатор которого передается в виде параметра
  * \param ranks \~russian массив, содержащий описание параметров всех заданных стилей 
  * \param itm раскрашиваемый элемент
@@ -670,28 +686,6 @@ function createrank(rank, bgcolor, fontcolor) {
     rnk.italic = false;
     return rnk;
 };
-
-function injectHistoryDialog(res) {
-    let backgrnd = document.getElementById('histbackground');
-    if(backgrnd == null)
-    {
-        let tst = document.createElement('iframe');
-        tst.style.setProperty('height', '0px');
-        tst.style.setProperty('width', '0px');
-        document.body.appendChild(tst);
-        var win = tst.contentWindow;
-        var frmrange = win.document.createRange();
-        frmrange.selectNode(win.document.firstChild);
-        if(res.length != 0)
-            var frg = frmrange.createContextualFragment(res);
-        document.body.appendChild(frg);
-        
-        /*document.body.insertAdjacentHTML('beforeend', res)
-        backgrnd = document.getElementById('histbackground');
-        backgrnd.style.setProperty('display', "none");*/
-    }
-}
-
 
 /*! Function converts time-date string to Date type (by default) or ISO string (like 2017-06-02T08:20) if optional
  * flag is true. */
@@ -954,4 +948,44 @@ function cmpLinks(link1, link2) {
         l2 = link2.split("://")[1]
         
     return l1 == l2;
+}
+
+/*! \brief \~russian Вставка фрагмента html, полученного при помощи fetch в заданный элемент страницы
+ * \param bckgrndid \~russian Идентификатор элемента для вставки
+ * \param fragment вставляемый фрагмент */
+/*! \brief \~english Instrts html fragment got by fetch into page's element 
+ * \param bckgrndid \~english ID of element to instert 
+ * \param fragment \~russian fragment to instert */
+function injectFragment(bckgrndid, fragment) {
+    let backgrnd = document.getElementById(bckgrndid);
+    if(backgrnd == null) {
+        let rng = document.createRange()
+        rng.selectNode(document.firstChild)
+        let frg = rng.createContextualFragment(fragment);
+        document.body.appendChild(frg);
+        backgrnd = document.getElementById(bckgrndid);
+        backgrnd.style.setProperty('display', "none");
+    }
+}
+
+
+function injectDialogs() {
+    let fetchreqarr = new Array()
+    fetchreqarr.push("userinfodialog.html")
+    fetchreqarr.push({request: "fetchhtml"})
+    
+    let nmarr = new Array()
+    nmarr.push("addhistorydialog.html")
+    nmarr.push({request: "fetchhtml"})
+    
+    let infohtmlreq = browser.runtime.sendMessage(fetchreqarr, fetchinfo);
+    function fetchinfo(inforesult) {
+
+        let sendhtmlinject = browser.runtime.sendMessage(nmarr, fetchact);
+        function fetchact(result) {
+            injectFragment('userinfobackground', inforesult)
+            injectFragment('histbackground', result)
+        }
+    
+    }
 }

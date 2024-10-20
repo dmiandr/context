@@ -1,56 +1,62 @@
-  <div id="userinfobackground" class="darkbackground">
-    <div id="userinfodialog" class="eventwindow">
+<div id="userinfobackground" class="darkbackground">
+  <div id="userinfodialog" class="eventwindow" style="background: #FFF;">
+    <div class="infodialoggrid">
+    
+      <div class="infodialogstring">
+        <label style="font-size:20px; font-weight:bold;" id="popuptitle">username</label><span id="numevents" class="repubadge" style="opacity: 80%; border-radius: 12px; font-size: 16px;">144</span>
+      </div>
+      <div class="infodialogstring">
+        <label>__MSG_status_selector__:</label>
+        <select name="status" id="statuselector">
+        </select>
+      </div>
+      <div class="infodialogstring">
+        <textarea class="dialogfieldedit" id="useroverall" placeholder="__MSG_author_charact_sign__" style="width: 100%; resize: none; opacity: 1; margin-bottom: 1; margin-left: 0">vvv</textarea>
+      </div>
+      <div class="infodialogstring">      
+        <label style="position: relative; float: right; top: 0;"></label>
+        <label style="position: relative; float: right; top: 0;" class="contbutton" id="hidehimlbl"><input id="hidehim" type="checkbox"/>__MSG_hide_author_sign__</label>
+      </div>
+      <div class="infodialogstring">
+        <ul class="reputags">
+        </ul>
+      </div>
+      <div class="infodialogstring">
+        <table class="histable" id="historytabid">
+        <thead>
+        <tr>
+        <th>__MSG_time_header__</th>
+        <th>__MSG_title_header__</th>
+        <th>__MSG_event_header__</th>
+        </tr>
+        </thead>
+        <tbody id="tablebody">
+        </tbody>
+        </table>
+      </div>
 
-
-<label style="font-size:20px; font-weight:bold;" id="popuptitle">username</label><span id="numevents" class="repubadge" style="opacity: 80%; border-radius: 12px; font-size: 16px;">144</span>
-<p style="overflow: hidden;">
-<label>__MSG_status_selector__:</label>
-<select name="status" id="statuselector">
-</p>
-</select>
-<textarea class="dialogfieldedit" id="useroverall" placeholder="__MSG_author_charact_sign__" style="width: 100%; height: 70px; resize: none; opacity: 1; margin-bottom: 1; margin-left: 0">vvv</textarea>
-<p style="overflow: hidden;margin-top: -10">
-<label style="position: relative; float: left; top: 0;"></label>
-<label style="position: relative; float: right; top: 0;" class="contbutton" id="hidehimlbl"><input id="hidehim" type="checkbox"/>__MSG_hide_author_sign__</label>
-</p>
-
-<ul class="tags">
-</ul>
-<table class="histable" id="historytabid">
-<thead>
-<tr>
-<th>__MSG_time_header__</th>
-<th>__MSG_title_header__</th>
-<th>__MSG_event_header__</th>
-</tr>
-</thead>
-<tbody id="tablebody">
-</tbody>
-</table>
-<br>
-<br>
-<br>
-<div class="footer">
+<div class="infodialogfooter">
 <div class="sideby">
-<span class="contbutton" style="padding-top: 20px; padding-bottom: 20px; opacity: 80%;" id="closebtn">
+<span class="contbutton contbutton_bigger" id="closebtn">
 <!-- background: #bd484d; --> 
 __MSG_close_useropt_button__
 </span>
 </div>
 <div class="sideby">
-<span class="contbutton" style="padding-top: 20px; padding-bottom: 20px; opacity: 80%;" id="updatelbtn">
+<span class="contbutton contbutton_bigger" id="updatelbtn">
 __MSG_refresh_useropt_button__
 </span>
 </div>
 <div class="sideby">
 </div>
 <div class="sideby">
-<span class="contbutton" style="padding-top: 20px; padding-bottom: 20px; opacity: 80%;" id="savebtn">
+<span class="contbutton contbutton_bigger" id="savebtn">
 <!--  border: 2px solid #FF0070; --> 
 __MSG_keep_useropt_button__
 </span>
 </div>
+</div>      
+      
+   </div>
+ </div>
 </div>
-
-    </div>
-  </div>

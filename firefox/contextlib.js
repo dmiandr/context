@@ -8,6 +8,7 @@ var UserContextTypes = {
 };
 var mothsnamesrod = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 var gTagsStat = new Map();
+var gEvDlgListeners = false //!< \~russian флаг добавления обработчиков на элементы диалога свойств пользователя \~english flag indicates that listeners to active elements of iser info dialod already added
 
 /*! \brief \~russian Отображение окна описания события с данными, переданными как аргументы функции 
  * \param mouseevent событие созданное нажатием мыши
@@ -178,9 +179,10 @@ function onOkBtnProcessing(socnet, useDTLoc) {
     let fldmain = document.getElementById('fldmain')
     let fldalias = document.getElementById('fldalias')
     let repostchkbox = document.getElementById('repostmark')
-    var fldname = document.getElementById('fldname');
+    let fldname = document.getElementById('fldname');
     let flddatetimecover = document.getElementById('fldtime')
     let linkbtn = document.getElementById('eventlinkbtn')
+    let reportlink = document.getElementById('fldrepost')
     
     let curtype = 0
     let tcnt = titlefld.value
@@ -196,8 +198,11 @@ function onOkBtnProcessing(socnet, useDTLoc) {
         //if(flddatetime.disabled == false)
             unpdatedtime = convTimedateToRuLocale(flddatetime.value)
     }
+    let rep = repostchkbox.checked
+    if(reportlink.value != '')
+        rep = reportlink.value
       
-    addHistoryEvent(socnet, fldname.textContent, fldalias.textContent, unpdatedtime, linkbtn.title, tcnt, mcnt, curtype, repostchkbox.checked, "", tagslistfdl.tags, parentev_url)
+    addHistoryEvent(socnet, fldname.textContent, fldalias.textContent, unpdatedtime, linkbtn.title, tcnt, mcnt, curtype, rep, "", tagslistfdl.tags, parentev_url)
     eventbkgrnd.style.display = "none";
 }
 
@@ -210,26 +215,46 @@ function fillHistoryEventDlg(time_parced, timeorig, mode, EventParams) {
     else
         soctitle = EventParams.socnet
     socnetnamefld.innerText = soctitle
+    // REPOST CHECKBOX
+    let repostchkbox = document.getElementById('repostmark')
+    let reportlink = document.getElementById('fldrepost')
+    repostchkbox.addEventListener("input", function() { 
+        if(repostchkbox.checked == true)
+            reportlink.disabled = false;
+        else {
+            reportlink.disabled = true;
+            reportlink.value = ''
+        }
+    })
     // EVENT TYPE SELECTOR
     let evselector = document.getElementById('eventypeselector');
     let repostlbl = document.getElementById('repostlbl');
     evselector.disabled = true
     if(EventParams.type == 1) { // Comment 
         evselector.value = "comment";
+        repostchkbox.checked = false;
+        repostchkbox.disabled = true;
+        reportlink.disabled = true;
     }
     else if(EventParams.type == 2) { // Post
         repostlbl.style.display = "inline";
         evselector.value = "post";
+        repostchkbox.disabled = false;
+        reportlink.disabled = true;
+        if(EventParams.repost != null) {
+            repostchkbox.checked = true;
+            reportlink.disabled = false;
+            if(EventParams.repost == true)
+                reportlink.value = ''
+            else 
+                reportlink.value = EventParams.repost
+        }
     }
     else {
         console.log("UNknown event type: ", EventParams.type)
         evselector.value = "unknown";
         evselector.disabled = false     // Если сохранен тип события недопустимый (не коммент и не пост) - то его можно поменять вручную
     }
-    // REPOST CHECKBOX
-    let repostchkbox = document.getElementById('repostmark')
-    if(EventParams.repost == true)
-        repostchkbox.checked = true;
     // USER NAME
     let fldname = document.getElementById('fldname');
     fldname.textContent = EventParams.username;
@@ -624,21 +649,6 @@ function removeHistoryEvent(url)
   var send = browser.runtime.sendMessage(setarr); 
 }
 
-function popupHistoryWindow(socnet, user, alias)
-{
-    let histurl = browser.runtime.getURL("userhistory.html");
-    histurl += "?socnet=";
-    histurl += socnet;
-    histurl += "&username=";
-    histurl += user;
-    if(alias !== undefined) {
-        histurl += "&alias="
-        histurl += encodeURI(alias)
-    }
-    let popup = window.open(histurl, "", "height=400,width=750");
-    popup.focus();
-}
-
 /*! \brief \~russian Расскрасить переданный элемент в соответствии со стилем, идентификатор которого передается в виде параметра
  * \param ranks \~russian массив, содержащий описание параметров всех заданных стилей 
  * \param itm раскрашиваемый элемент
@@ -673,28 +683,6 @@ function createrank(rank, bgcolor, fontcolor) {
     rnk.italic = false;
     return rnk;
 };
-
-function injectHistoryDialog(res) {
-    let backgrnd = document.getElementById('histbackground');
-    if(backgrnd == null)
-    {
-        let tst = document.createElement('iframe');
-        tst.style.setProperty('height', '0px');
-        tst.style.setProperty('width', '0px');
-        document.body.appendChild(tst);
-        var win = tst.contentWindow;
-        var frmrange = win.document.createRange();
-        frmrange.selectNode(win.document.firstChild);
-        if(res.length != 0)
-            var frg = frmrange.createContextualFragment(res);
-        document.body.appendChild(frg);
-        
-        /*document.body.insertAdjacentHTML('beforeend', res)
-        backgrnd = document.getElementById('histbackground');
-        backgrnd.style.setProperty('display', "none");*/
-    }
-}
-
 
 /*! Function converts time-date string to Date type (by default) or ISO string (like 2017-06-02T08:20) if optional
  * flag is true. */
@@ -959,4 +947,44 @@ function cmpLinks(link1, link2) {
         l2 = link2.split("://")[1]
         
     return l1 == l2;
+}
+
+/*! \brief \~russian Вставка фрагмента html, полученного при помощи fetch в заданный элемент страницы
+ * \param bckgrndid \~russian Идентификатор элемента для вставки
+ * \param fragment вставляемый фрагмент */
+/*! \brief \~english Instrts html fragment got by fetch into page's element 
+ * \param bckgrndid \~english ID of element to instert 
+ * \param fragment \~russian fragment to instert */
+function injectFragment(bckgrndid, fragment) {
+    let backgrnd = document.getElementById(bckgrndid);
+    if(backgrnd == null) {
+        let rng = document.createRange()
+        rng.selectNode(document.firstChild)
+        let frg = rng.createContextualFragment(fragment);
+        document.body.appendChild(frg);
+        backgrnd = document.getElementById(bckgrndid);
+        backgrnd.style.setProperty('display', "none");
+    }
+}
+
+
+function injectDialogs() {
+    let fetchreqarr = new Array()
+    fetchreqarr.push("userinfodialog.html")
+    fetchreqarr.push({request: "fetchhtml"})
+    
+    let nmarr = new Array()
+    nmarr.push("addhistorydialog.html")
+    nmarr.push({request: "fetchhtml"})
+    
+    let infohtmlreq = browser.runtime.sendMessage(fetchreqarr);
+    infohtmlreq.then( inforesult => {
+
+        let sendhtmlinject = browser.runtime.sendMessage(nmarr);
+        sendhtmlinject.then( result => {
+            injectFragment('userinfobackground', inforesult)
+            injectFragment('histbackground', result)
+        }, error => {console.log("Error injecting history dialog")});
+    
+    })
 }

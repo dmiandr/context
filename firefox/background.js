@@ -130,7 +130,6 @@ Handlers.set("getstatus", getstatus_handler);
 Handlers.set("addrank", addrank_handler);
 Handlers.set("deleterank", deleterank_handler);
 Handlers.set("eraseall", eraseall_handler);
-Handlers.set("injecthistorydialog", injecthistorydialog_handler);
 Handlers.set("fetchhtml", fetchhtml_handler);
 Handlers.set("addhistoryevent", addhistoryevent_handler);
 Handlers.set("removehistoryevent", removehistoryevent_handler);
@@ -432,28 +431,6 @@ function eraseall_handler(msg, db, resolve) {
     }
 }
 
-function injecthistorydialog_handler(msg, db, resolve) {
-    fetch('addhistorydialog.html')
-    .then(response => {
-        return response.text()
-    })
-    .then(text => {
-        let translated = text.replace(/__MSG_(\w+)__/g, function(match, v1) {
-            return v1 ? browser.i18n.getMessage(v1) : "";
-        })
-        resolve(translated)
-    })
-    
-    /*let src = browser.runtime.getURL('addhistorydialog.html');
-    let reqhtml = new XMLHttpRequest();
-    reqhtml.open("GET", src, true);
-    reqhtml.send(null);
-    reqhtml.onreadystatechange = function() {
-        if (reqhtml.readyState == 4)
-            resolve(reqhtml.responseText); 
-    }*/
-}
-
 function fetchhtml_handler(msg, db, resolve) {
     let resname = msg.pop();
     fetch(resname)
@@ -467,7 +444,6 @@ function fetchhtml_handler(msg, db, resolve) {
         resolve(translated)
     })
 }
-
 
 function addhistoryevent_handler(msg, db, resolve) {
     let reqadded;
@@ -738,7 +714,6 @@ function gettags_handler(msg, db, resolve) {
             uselinks = true;
         }
         else {
-            //console.log("REQPR<MS IOS = ", reqprms)
             usr = reqprms.user.toLowerCase()
             soc = reqprms.socnet
         }

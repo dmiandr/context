@@ -1,8 +1,7 @@
 var gExeptionsNames = ["leffet"]; // имена пользователей, которым не надо прицеплять менюшек
 var gUsersCache = new Map();  // карта используемых на данной странице имен пользователей с указанием их статусов. Ключ - имя пользователя, значение - идентификатор статуса
-var gRanksParams = new Map(); // локальная копия перечня возможных статусов и данных для их отображения (цвета и особенности шрифта) 
+//var gRanksParams = new Map(); // локальная копия перечня возможных статусов и данных для их отображения (цвета и особенности шрифта) 
 var config = { attributes: false, childList: true, subtree: true } // Конфигурация MutationObserver
-//var gTagsStat = new Map();
 var gCurrnetNet = null;
 var gLinksOnPage = [] // список линков на редактируемые события на данной странице, обновляется каждый раз при mutationCallback, используется в get-cognet-events
 var gMenuClass = 'dropdownusr'; // имя класса, формирующего треугольничек меню. Меняется, если это мобильный браузер
@@ -86,23 +85,8 @@ function handleRanksList(rankslist) {
 }
 
 function onCompletePageLoad() {
-    /*let fetchreqarr = new Array()
-    fetchreqarr.push("userinfodialog.html")
-    fetchreqarr.push({request: "fetchhtml"})
-    let infohtmlreq = browser.runtime.sendMessage(fetchreqarr);
-    infohtmlreq.then( inforesult => {})*/
     
-    let nmarr = new Array() //[{request: "injecthistorydialog"}];
-    nmarr.push("addhistorydialog.html")
-    nmarr.push({request: "fetchhtml"})
-    
-    let sendhtmlinject = browser.runtime.sendMessage(nmarr);
-    sendhtmlinject.then( result => {
-        injectHistoryDialog(result);
-    }, error => {console.log("Error injecting history dialog")});
-    
-    
-    //}
+    injectDialogs()
     
     for( let a of KnownSNets.keys()) {  // locating object corresponds to current snet
         let snet = KnownSNets.get(a);
@@ -190,7 +174,7 @@ function addElemsToActiveZone(zone) {
         itma.textContent = zone.username + " (" + uopt.numevents + ")";
         itma.style.background = "#FFFFDD";
         itma.style.color = "#000";
-        itma.addEventListener("click", function(){popupHistoryWindow(zone.socnet, zone.username, zone.element.innerText);});
+        itma.addEventListener("click", function(){userInfoDialogShow(zone.socnet, zone.username, zone.element.innerText);});
         ddown.appendChild(itma);
         
         if(zone.isevent == true && zone.captElement != null)
@@ -460,25 +444,6 @@ function getAllChildElementsOfType(item, rtype) {
         }
     }
     return elems;
-}
-
-function injectHistoryDialog(dlgcode) {
-    
-    let backgrnd = document.getElementById('histbackground');
-    if(backgrnd == null) {
-        tst = document.createElement('iframe');
-        document.body.appendChild(tst);
-        let win = tst.contentWindow;
-        let frmrange = win.document.createRange();
-        frmrange.selectNode(win.document.firstChild);
-        let frg = frmrange.createContextualFragment(dlgcode);
-        document.body.appendChild(frg);
-        backgrnd = document.getElementById('histbackground');
-        backgrnd.style.setProperty('display', "none");
-        /*document.body.insertAdjacentHTML('beforeend', dlgcode)
-        backgrnd = document.getElementById('histbackground');
-        backgrnd.style.setProperty('display', "none");*/
-    }
 }
 
 function getParentItemWithAttribute(item, attr)

@@ -136,7 +136,7 @@ Handlers.set("getstatus", getstatus_handler);
 Handlers.set("addrank", addrank_handler);
 Handlers.set("deleterank", deleterank_handler);
 Handlers.set("eraseall", eraseall_handler);
-Handlers.set("injecthistorydialog", injecthistorydialog_handler);
+Handlers.set("fetchhtml", fetchhtml_handler);
 Handlers.set("addhistoryevent", addhistoryevent_handler);
 Handlers.set("removehistoryevent", removehistoryevent_handler);
 Handlers.set("getuserhistory", getuserhistory_handler);
@@ -437,8 +437,9 @@ function eraseall_handler(msg, db, resolve) {
     }
 }
 
-function injecthistorydialog_handler(msg, db, resolve) {
-    fetch('addhistorydialog.html')
+function fetchhtml_handler(msg, db, resolve) {
+    let resname = msg.pop();
+    fetch(resname)
     .then(response => {
         return response.text()
     })
@@ -448,15 +449,6 @@ function injecthistorydialog_handler(msg, db, resolve) {
         })
         resolve(translated)
     })
-    
-    /*let src = browser.runtime.getURL('addhistorydialog.html');
-    let reqhtml = new XMLHttpRequest();
-    reqhtml.open("GET", src, true);
-    reqhtml.send(null);
-    reqhtml.onreadystatechange = function() {
-        if (reqhtml.readyState == 4)
-            resolve(reqhtml.responseText); 
-    }*/
 }
 
 function addhistoryevent_handler(msg, db, resolve) {

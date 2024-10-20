@@ -1,10 +1,12 @@
 var gExeptionsNames = ["leffet"]; // имена пользователей, которым не надо прицеплять менюшек
 var gUsersCache = new Map();  // карта используемых на данной странице имен пользователей с указанием их статусов. Ключ - имя пользователя, значение - идентификатор статуса
-var gRanksParams = new Map(); // локальная копия перечня возможных статусов и данных для их отображения (цвета и особенности шрифта) 
+//var gRanksParams = new Map(); // локальная копия перечня возможных статусов и данных для их отображения (цвета и особенности шрифта) 
 var config = { attributes: false, childList: true, subtree: true } // Конфигурация MutationObserver
-//var gTagsStat = new Map();
 var gCurrnetNet = null;
 var gLinksOnPage = [] // список линков на редактируемые события на данной странице, обновляется каждый раз при mutationCallback, используется в get-cognet-events
+var gMenuClass = 'dropdownusr'; // имя класса, формирующего треугольничек меню. Меняется, если это мобильный браузер
+if(isMobile())
+    gMenuClass = 'dropdownusr_mobile';
 
 if (typeof globalThis.browser === "undefined")
     browser = chrome
@@ -87,11 +89,8 @@ function handleRanksList(rankslist) {
 }
 
 function onCompletePageLoad() {
-    let nmarr = [{request: "injecthistorydialog"}];
-    let sendhtmlinject = browser.runtime.sendMessage(nmarr, (result) => { injectHistoryDialog(result); });
-    /*sendhtmlinject.then( result => {
-        injectHistoryDialog(result);
-    }, error => {console.log("Error injecting history dialog")});*/
+    
+    injectDialogs()
     
     for( let a of KnownSNets.keys()) {  // locating object corresponds to current snet
         let snet = KnownSNets.get(a);
@@ -142,7 +141,7 @@ function addElemsToActiveZone(zone) {
     
     if(zone.attachMenuDomElement.parentNode == null) // по идее такого никогда не должно быть, но иногда это вдруг всплывает по непонятной причине
         return;
-    let alrex = zone.attachMenuDomElement.parentNode.getElementsByClassName("dropdownusr");
+    let alrex = zone.attachMenuDomElement.parentNode.getElementsByClassName(gMenuClass);
     if(alrex.length > 0)
         return;
     if(uopt.numevents > 0 && zone.attachBadge != null && zone.eventype != 5) {
@@ -163,7 +162,7 @@ function addElemsToActiveZone(zone) {
     
     if(uopt.numevents > 0 || zone.isModifiable == true) { // меню имеет смысл только если можно использовать его функции - добавлять новые или просматривать существующие события
         let astr = document.createElement('span');
-        astr.className = 'dropdownusr';
+        astr.className = gMenuClass//'dropdownusr';
         if(zone.menuAttachBefore == true)
             zone.attachMenuDomElement.parentNode.insertBefore(astr, zone.attachMenuDomElement)
         else
@@ -179,7 +178,7 @@ function addElemsToActiveZone(zone) {
         itma.textContent = zone.username + " (" + uopt.numevents + ")";
         itma.style.background = "#FFFFDD";
         itma.style.color = "#000";
-        itma.addEventListener("click", function(){popupHistoryWindow(zone.socnet, zone.username, zone.element.innerText);});
+        itma.addEventListener("click", function(){userInfoDialogShow(zone.socnet, zone.username, zone.element.innerText);});
         ddown.appendChild(itma);
         
         if(zone.isevent == true && zone.captElement != null)
@@ -449,25 +448,6 @@ function getAllChildElementsOfType(item, rtype) {
         }
     }
     return elems;
-}
-
-function injectHistoryDialog(dlgcode) {
-    
-    let backgrnd = document.getElementById('histbackground');
-    if(backgrnd == null) {
-        tst = document.createElement('iframe');
-        document.body.appendChild(tst);
-        let win = tst.contentWindow;
-        let frmrange = win.document.createRange();
-        frmrange.selectNode(win.document.firstChild);
-        let frg = frmrange.createContextualFragment(dlgcode);
-        document.body.appendChild(frg);
-        backgrnd = document.getElementById('histbackground');
-        backgrnd.style.setProperty('display', "none");
-        /*document.body.insertAdjacentHTML('beforeend', dlgcode)
-        backgrnd = document.getElementById('histbackground');
-        backgrnd.style.setProperty('display', "none");*/
-    }
 }
 
 function getParentItemWithAttribute(item, attr)
@@ -772,7 +752,7 @@ function locateMenuElement(item) {
         return null;
     if(prev.classList == undefined)
         return null;
-    if(!prev.classList.contains('dropdownusr'))
+    if(!prev.classList.contains(gMenuClass))
         return null;
     let menu = prev.childNodes[0];
     if(!menu.classList.contains('dropdownusr-content'))

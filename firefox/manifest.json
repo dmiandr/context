@@ -3,7 +3,7 @@
   "default_locale": "en",
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.56",
+  "version": "0.60",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
 
   "developer": {
@@ -16,6 +16,9 @@
 
   "applications": {
     "gecko": {
+      "id": "dmiandich@yandex.ru"
+    },
+    "gecko_android": {
       "id": "dmiandich@yandex.ru"
     }
   },
@@ -45,7 +48,7 @@
     {
       "matches": ["*://*.cont.ws/*", "*://*.vk.com/*", "*://*.livejournal.com/*", "*://*.youtube.com/*", "*://*.habr.com/*"],
       "css": ["ddmenu.css"],
-      "js": ["browser-polyfill.js", "mutation.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "ljcom.js", "youtubecom.js", "habrcom.js", "content.js"]
+      "js": ["browser-polyfill.js", "mutation.js", "userinfodialog.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "ljcom.js", "youtubecom.js", "habrcom.js", "content.js"]
     }
   ],
   "incognito": "spanning",
@@ -59,5 +62,5 @@
     "page": "options.html",
     "open_in_tab": true
   },
-  "web_accessible_resources": ["addhistorydialog.html", "userinfodialog.html", "userhistory.html", "contextlib.js", "icons/link32.png", "icons/rarr32.png"]
+  "web_accessible_resources": ["addhistorydialog.html", "userinfodialog.html", "userinfodialog.js", "contextlib.js", "icons/link32.png", "icons/rarr32.png"]
 }
