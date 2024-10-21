@@ -47,12 +47,14 @@ function addUserInfoListeners() {
         let hidehim = document.getElementById("hidehim")
         
         closebtnelem.addEventListener("click", function(evt) {
+            saveuserdescript.classList.remove('contbutton_unsaved');
             eventbkgrnd.style.display = "none";
         })
-        updatelbtnelem.addEventListener("click", function(evt){ updateContent(eventbkgrnd.username, eventbkgrnd.socnet, eventbkgrnd.prmalias); });
+        updatelbtnelem.addEventListener("click", function(evt){ drawHistoryTable(eventbkgrnd.username, eventbkgrnd.socnet, eventbkgrnd.prmalias); });
         useroverall.addEventListener("input", function(){ optchanged = true; saveuserdescript.classList.add('contbutton_unsaved'); })
         hidehim.addEventListener("input", function(){ optchanged = true; saveuserdescript.classList.add('contbutton_unsaved'); })
         statuselector.addEventListener("change", function(){let k = Number(this.value); changeUserRank(k);})
+        saveuserdescript.classList.remove('contbutton_unsaved'); // if previously contents was changed but unsaved
 
         saveuserdescript.addEventListener("click", function(evt){
             setUserStatus(eventbkgrnd.socnet, eventbkgrnd.username, {user: eventbkgrnd.username, rankid: gRankId, description: useroverall.value, hidden: hidehim.checked})
@@ -194,7 +196,7 @@ function listHistory(historymap, uname, socname, prmalias)
             let dlgres = showHistoryEventDlg(evt, true, true, rowmap.time, rowmap);
             dlgres.then(result => {
                 if(result == "okbtn") {
-                    updateContent();
+                    drawHistoryTable(uname, socname, prmalias)
                 }
             })
         });

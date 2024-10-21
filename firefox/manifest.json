@@ -14,13 +14,13 @@
   "homepage_url": "https://github.com/dmiandr/context",
 
 
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
       "id": "dmiandich@yandex.ru"
     },
     "gecko_android": {
-      "id": "dmiandich@yandex.ru"
-    }
+      "strict_min_version": "79.0"
+      }
   },
   "icons": {
     "48": "icons/context48.png"
