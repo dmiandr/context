@@ -243,13 +243,21 @@ function fillHistoryEventDlg(time_parced, timeorig, mode, EventParams) {
         evselector.value = "post";
         repostchkbox.disabled = false;
         reportlink.disabled = true;
+        reportlink.value = ''
         if(EventParams.repost != null) {
-            repostchkbox.checked = true;
-            reportlink.disabled = false;
-            if(EventParams.repost == true)
-                reportlink.value = ''
-            else 
+            if(EventParams.repost != true && EventParams.repost != false) {
                 reportlink.value = EventParams.repost
+                repostchkbox.checked = true;
+                reportlink.disabled = false;                
+            }
+            if(EventParams.repost == true) {
+                repostchkbox.checked = true;
+                reportlink.disabled = false;
+            }
+            if(EventParams.repost == false) {
+                repostchkbox.checked = false;
+                reportlink.disabled = true;
+            }
         }
     }
     else {
@@ -576,15 +584,13 @@ function proccedPotentialList(res, prntevurl) {
     if(!prntevurl)
         addmissed = false // пустой линк есть всегда, поэтому если родительским указан он - ничего добавлять не надо
     let evpresselector = document.getElementById('evpresselector')
-            
-    console.log("Selected evs = ", res.length)
         
     for(let co = 0; co < res.length; co++) {
         ev = res[co]
         let evhead_comb = res[co].alias + " (" + res[co].time + ") "
         if(res[co].title != "")
             evhead_comb += res[co].title + " | "
-        evhead_comb += res[co].descript
+        evhead_comb += res[co].descript.substring(0,100) // only first 100 symbols taken
         if(cmpLinks(res[co].url, prntevurl))
             addmissed = false;
             

@@ -57,9 +57,16 @@ function setExport() {
             alldata.push(rankspossible)
             alldata.push(users)
             alldata.push(hist)
+            // file name
+            let today = new Date();
+            let  dd = String(today.getDate()).padStart(2, '0')
+            let mm = String(today.getMonth() + 1).padStart(2, '0')
+            let yyyy = today.getFullYear()
+            let numev = hist.length
+            let propname = dd+"_"+mm+"_"+yyyy+"_"+numev+"ev.jason"
             let str = JSON.stringify(alldata,undefined,2)
-            let blobtosave = new Blob([str], {type: "application/json", name: "file.json"})
-            saveAs(blobtosave, 'context.json')
+            let blobtosave = new Blob([str], {type: "application/json", name: propname})
+            saveAs(blobtosave, propname)
         }, (error) => {
             console.log(error)
         })
