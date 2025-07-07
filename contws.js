@@ -20,6 +20,9 @@ function IsContPub() {
     return contwsreg.test(url);
 }
 
+let glob_templates = ["cont.ws\\/@([^\\/\\&]+)\\/*(\\d*)*\\&*.*$", "([^\\/\\&]+)\\.cont.ws"]
+let loc_templates = ["\\/@([^\\/\\&]+)\\/*(\\d*)*\\&*.*$"]
+
 // !!!Выдаваемый   URL всегда должен приводиться к нижнему регистру - т.к. он первичный ключ, и поиск многих вариантов сильно усложняет и замедляет процесс.
 // Структура поста на КОНТе:
 // Пост: два варианта:
@@ -236,6 +239,8 @@ function ListContActiveZones(zmap, ishome) {
             let tagcomp = getParentElementBelobgsToClass(itm, "new_post_prev")
             if(tagcomp != null) {
                 let tagpostid = tagcomp.getAttribute("post_prv")  //("data-post-id")
+                if(tagpostid == null)
+                    tagpostid = tagcomp.getAttribute("data-post-id")
                 actzone['eventype'] = 2
                 actzone['captElement'] = itm
                 for(const c of tagcomp.children) {
@@ -253,6 +258,7 @@ function ListContActiveZones(zmap, ishome) {
                     continue;
                 let tagpostid2 = schurlre[1]
                 actzone['url'] = "https://cont.ws/@" + username + "/" + tagpostid2
+                actzone['totalblock'] = tagcomp
                 if(tagpostid != tagpostid2) {
                     console.log("Parcing error: User = " + username + ", Unexpected parcing branch: in tagged feed new_post_prev element parameter post_prv ("+ tagpostid +") does not fit postid from url (" + tagpostid2 + ")")
                     parceCorrect = false
@@ -388,6 +394,7 @@ function ListContActiveZones(zmap, ishome) {
                 let searchpostid = schurlre[1]
                 actzone['url'] = "https://cont.ws/@" + username + "/" + searchpostid
                 actzone['eventype'] = 2
+                actzone['totalblock'] = newacomp
                 zmap.set(itm, actzone)
                 continue;
             }
