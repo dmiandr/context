@@ -3,7 +3,7 @@
   "default_locale": "en",
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.60",
+  "version": "0.61",
   "description": "__MSG_short_description__",
   "author": "dmitrevo",
   "homepage_url": "https://github.com/dmiandr/context",
@@ -32,7 +32,7 @@
 
   "content_scripts": [
     {
-      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*", "*://*.livejournal.com/*", "*://*.youtube.com/*", "*://*.habr.com/*"],  
+      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*", "*://*.livejournal.com/*", "*://*.youtube.com/*", "*://*.habr.com/*", "file:///*"],
       "css": ["ddmenu.css"],
       "js": ["mutation.js", "userinfodialog.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "ljcom.js", "youtubecom.js", "habrcom.js", "content.js"]
     }

@@ -11,14 +11,14 @@ const defaultranks = [
 {id: 8, rank: "Читать",  descript: "", bgcolor: "#17760f", fontcolor: "#ffffff", bold: false, italic: false }*/
 ];
 var rankspossible = [];
-
+/*
 if (!(crypto.randomUUID instanceof Function)) {
     crypto.randomUUID = function uuidv4() {
         return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
         );
     }
-}
+}*/
 
 function onInstallInit(details) {
     // details.reason can be "install" or "update", but unfortunately "install" does not mean that no database exists 
@@ -140,7 +140,7 @@ Handlers.set("gettags", gettags_handler);
 Handlers.set("historybytags", historybytags_handler);
 Handlers.set("getnestedevents", getnestedevents_handler);
 Handlers.set("getallevents", getallevents_handler);
-
+Handlers.set("getdependentevents", getdependentevents_handler); // Получение событий, подчиненных переданным - комментарии к публикации
 Handlers.set("bactionstatus", bactionstatus_handler);
 
 function ranks_handler(msg, db, resolve) {
@@ -272,6 +272,7 @@ function histatuses_handler(msg, db, resolve) {
                         optstoadd['username'] = curusr
                         optstoadd['socnet'] = curnet
                         optstoadd['isevent'] = lstevents.includes(cururl.toLowerCase())
+						
                         if(!optstoadd['isevent'] && !!cururlequiv) {
                             let altrexp = new RegExp(cururlequiv)
                             for(let cosamp = 0; cosamp < lstevents.length; cosamp++) {
@@ -904,3 +905,36 @@ function bactionstatus_handler(msg, db, resolve) {
     }
 }
 
+function getdependentevents_handler(msg, db, resolve) {
+    let evntscopy = [];
+    let numusrs = msg.length;
+    let stsmap = new Map();
+
+    for(let i = 0; i < numusrs; i++) {
+        let r = msg.pop();
+        evntscopy.push(r);
+    }
+
+    for(let co = 0; co < numusrs; co++) {
+        let headexp = new RegExp(evntscopy[co].testnestedre)
+        let tr = db.transaction(["history"]);
+        let objh = tr.objectStore("history");
+        let oc = objh.openCursor();
+        oc.onsuccess = function(event) {
+            let cur = event.target.result;
+            if(cur) {
+                if(headexp.test(cur.value.url)) {
+                    let evopts = {};
+                    evopts['username'] = cur.value.username.toLowerCase();
+                    evopts['url'] = cur.value.url;
+                    let cmap = new Map(Object.entries(cur.value));
+                    stsmap.set(cur.value.url, cmap)
+                }
+                cur.continue();
+            }
+            else {
+                resolve([...stsmap]);
+            }
+        }
+    }
+}

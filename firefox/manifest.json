@@ -3,7 +3,7 @@
   "default_locale": "en",
   "name": "Context RepuTracker-users reputation tracker",
   "short_name": "Context RepuTracker",
-  "version": "0.60",
+  "version": "0.61",
   "description": "Расширение для отслеживания репутации пользователей социальных сетей",
 
   "developer": {
@@ -19,7 +19,7 @@
       "id": "dmiandich@yandex.ru"
     },
     "gecko_android": {
-      "strict_min_version": "79.0"
+      "strict_min_version": "113.0"
       }
   },
   "icons": {
@@ -27,6 +27,8 @@
   },
   
   "browser_action": {
+    "browser_style": false,
+    "default_area": "navbar",
     "default_icon": {
       "48": "icons/context48.png"
     },
@@ -46,7 +48,7 @@
 
   "content_scripts": [
     {
-      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*", "*://*.livejournal.com/*", "*://*.youtube.com/*", "*://*.habr.com/*"],
+      "matches": ["*://*.cont.ws/*", "*://*.vk.com/*", "*://*.livejournal.com/*", "*://*.youtube.com/*", "*://*.habr.com/*", "file:///*"],
       "css": ["ddmenu.css"],
       "js": ["browser-polyfill.js", "mutation.js", "userinfodialog.js", "contextlib.js", "initfirst.js", "contws.js", "vkcom.js", "ljcom.js", "youtubecom.js", "habrcom.js", "content.js"]
     }

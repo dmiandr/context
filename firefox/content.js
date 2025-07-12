@@ -4,10 +4,6 @@ var gUsersCache = new Map();  // карта используемых на дан
 var config = { attributes: false, childList: true, subtree: true } // Конфигурация MutationObserver
 var gCurrnetNet = null;
 var gLinksOnPage = [] // список линков на редактируемые события на данной странице, обновляется каждый раз при mutationCallback, используется в get-cognet-events
-var gMenuClass = 'dropdownusr'; // имя класса, формирующего треугольничек меню. Меняется, если это мобильный браузер
-if(isMobile())
-    gMenuClass = 'dropdownusr_mobile';
-
 
 let mutationCallback = function(mutlst, observer) {   
     requestActualUsersStauses();
@@ -466,11 +462,11 @@ function requestActualUsersStauses() {
     stat['iscorrect'] = correct
     carr.push(stat)
     carr.push({request: "bactionstatus"})
-    //let iconstat = browser.runtime.sendMessage(carr)
+    let iconstat = browser.runtime.sendMessage(carr)
     
-    //iconstat.then(res => {
     if(ActiveZones.size == 0) return null; // оно же промис возвращать должно! Тут надо выяснить, что будет при срабатывании
     let nmarr = new Array()
+    let hdarr = new Array() // в этот массив помещаются заглавные события, если комментарии не имеют уникальных меток. На всякий случай массив - вдруг бывает, что на одной старнице может быть более одного такого блока
     for (let azitm of ActiveZones.keys()) {
         let itmdata = {}
         v = ActiveZones.get(azitm)
@@ -478,14 +474,39 @@ function requestActualUsersStauses() {
         itmdata['url'] = v.url
         itmdata['socnet'] = v.socnet
         itmdata['urlequivs'] = v.urlequivs
+        itmdata['eventype'] = v.eventype
         nmarr.push(itmdata)
+		
+        if(Object.hasOwn(v, 'testnestedre')) {
+            let hditm = Object.assign({}, itmdata)
+            hditm['testnestedre'] = v.testnestedre
+            hdarr.push(hditm)
+        }
     }
-    nmarr.push({request: "histatuses"})
-    let sendonstatus = browser.runtime.sendMessage(nmarr)
-    return sendonstatus.then(
-      result => { handleActualUsersStatuses(result); },
-      error => { console.log("histatuses reqest fails") });
-    //})
+    
+    if(hdarr.length > 0) {
+        hdarr.push({request: "getdependentevents"})
+        let sendgetdeps = browser.runtime.sendMessage(hdarr)
+        return sendgetdeps.then(
+            result => {
+                let resmap = new Map(result);
+                handleDependentEvents(resmap, nmarr);
+                nmarr.push({request: "histatuses"})
+                let sendonstatus = browser.runtime.sendMessage(nmarr)
+                return sendonstatus.then(
+                    histres => { handleActualUsersStatuses(histres); },
+                    error => { console.log("histatuses reqest fails") });
+            },
+            error => { console.log("getdependentevents reqest fails") }	
+        );
+    }
+    else {
+        nmarr.push({request: "histatuses"})
+        let sendonstatus = browser.runtime.sendMessage(nmarr)
+        return sendonstatus.then(
+            result => { handleActualUsersStatuses(result); },
+            error => { console.log("histatuses reqest fails") });
+    }
 }
 
 /*! \brief \~russian Вызов функции поиска активных зон для всех известных сетей, по-очереди 
@@ -552,6 +573,51 @@ function handleActualUsersStatuses(itmsmap) {
         }
     }
     colorAll();
+}
+
+function handleDependentEvents(evmap, nmarr) {
+	
+	let evtext = ""
+	let frompagetext = ""
+	let numrepl_az = 0
+	let numrepl_arr = 0
+	let nmco = 0
+	
+	let depevents = Array.from(evmap.values())
+	for( let ev of depevents ) {
+		let depuname = ev.get("username")
+		nmco = 0 // БЛЯ! Вот здесь я забыл обнулить счетчик - и столько времени это искал!!
+		for( let pgelem of nmarr ) {
+			if(pgelem.username.toLowerCase() == depuname.toLowerCase()) {
+				let descrdb = ev.get("descript")
+				if(descrdb !== "") {
+					for (let azitm of ActiveZones.keys()) { // element can't be given via nmarr, so I need to find it once more
+						v = ActiveZones.get(azitm)
+						if(v.url == pgelem['url']) {
+							let evopts = gCurrnetNet.GetEventText(azitm, pgelem.eventype);
+							
+							if(descrdb.includes(evopts.evtext)) {
+								let urldb = ev.get("url")
+								//console.log("Changed url: " + v.url + "  TO url: " + urldb);
+								v.url = urldb
+								ActiveZones.set(azitm, v)	// по идее, ActiveZones далее не используется, поэтому в ней 
+															// подменять адрес как раз не обязательно
+								if(nmarr.length > nmco)
+									nmarr[nmco].url = urldb
+								else
+									console.log("Unable to replace URL: co = " + nmco + ", array length = " + nmarr.length)
+								
+								numrepl_az += 1
+								break;
+							}
+						}
+					}
+				}
+			}
+			nmco += 1
+		}
+	}
+	return numrepl_az;
 }
 
 function gCallEvent(itm, isev, evt)
@@ -785,4 +851,52 @@ function addAllPotentialEvents() {
     }
     alert(browser.i18n.getMessage("allevents_added_message") + addedev.toString())
     return Promise.all(prs);
+}
+
+/* Идея этой функции - универсальное распознавание ссылок на события и вообще на любые ресурсы поддерживаемых соцсетей.
+ * На вход подается ссылка и массив регулярных выражений, каждое из которых соответствует одному варианту ссылки.
+ * Возвращается флаг, является ли ссылка вообще событием (возможно, кстати, там-же и профили стоит анализировать, т.е. три варианта -
+ * ).
+ * В зависимости от типа ссылки также могут возвращаться идентификатор поста и идентификатор комментария. *
+ * https://cont.ws/@mick/2996118#comment30413423
+ * https://cont.ws/@check/4444444#comment88888888
+ * Нужен регексп, который выдает совпадение для линков вида:
+ * cont.ws/@<username>
+ * cont.ws/@<username>/<XXXXXXX>
+ * cont.ws/@<username>/<XXXXXXX>/full
+ * cont.ws/@<username>/<XXXXXXX>#comments
+ * cont.ws/@<username>/<XXXXXXX>comment<XXXXXXXX>
+ * <username>.cont.ws
+ * и в отдельных переменных выдает определенный username, id поста и id комментария
+ * возможно, в других сетях потребуется отличать профиль от индивидуальной ленты - тоже возвращаемая переменная
+ */
+function blogGetUsernameByLink(ishome, href, globregexps, locregexps, isdebug) {
+    let linkcomps = [];
+    let regexps = globregexps;
+
+    if(ishome)
+        regexps = globregexps.concat(locregexps)
+
+
+        let numvars = regexps.length;
+
+    for( co = numvars -1; co >= 0; co--) { // locregexps matches in most cases, so starting with it reduces waste operations
+        let res = href.match(regexps[co], "g")
+        if(res == null)
+            continue;
+
+        if(isdebug) {
+            console.log("Match RegExp num " + co + " is: " + regexps[co]);
+            console.log(linkcomps);
+        }
+
+        if(res.length > 1)
+            linkcomps['username'] = convToLower(res[1]);
+        if(res.length > 2)
+            linkcomps['postid'] = res[2];
+        if(res.length > 3)
+            linkcomps['commid'] = res[3];
+    }
+    return linkcomps
+
 }

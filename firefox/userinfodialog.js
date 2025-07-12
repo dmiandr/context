@@ -21,6 +21,7 @@ function userInfoDialogShow(socnet, user, prmalias) {
     arr.push({request: "getstatus"});
     let sentondescript = browser.runtime.sendMessage(arr);
     sentondescript.then(result => {
+		useroverall.innerHTML = ""
         useroverall.textContent = result.description;
         if(result.hidden == true) {
             hidehim.checked = true;
@@ -201,7 +202,7 @@ function listHistory(historymap, uname, socname, prmalias)
             })
         });
         if(rowmap.title == "")
-            newelem.innerText = "(без заголовка)";
+            newelem.innerText = "< " + rowmap.descript.slice(0, 50) + " >" //browser.i18n.getMessage("empty_event_title")
         else
             newelem.innerText = rowmap.title;
 

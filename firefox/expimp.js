@@ -60,7 +60,7 @@ function setExport() {
             let mm = String(today.getMonth() + 1).padStart(2, '0')
             let yyyy = today.getFullYear()
             let numev = hist.length
-            let propname = dd+"_"+mm+"_"+yyyy+"_"+numev+"ev.jason"
+            let propname = dd+"_"+mm+"_"+yyyy+"_"+numev+"ev.json"
             let str = JSON.stringify(alldata,undefined,2)
             let blobtosave = new Blob([str], {type: "application/json", name: propname})
             saveAs(blobtosave, propname)

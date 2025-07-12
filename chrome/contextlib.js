@@ -9,6 +9,10 @@ var UserContextTypes = {
 var mothsnamesrod = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 var gTagsStat = new Map();
 
+var gMenuClass = 'dropdownusr'; // имя класса, формирующего треугольничек меню. Меняется, если это мобильный браузер
+if(isMobile())
+    gMenuClass = 'dropdownusr_mobile';
+
 if (typeof globalThis.browser === "undefined")
     browser = chrome
 
@@ -986,12 +990,18 @@ function injectDialogs() {
     
     let infohtmlreq = browser.runtime.sendMessage(fetchreqarr, fetchinfo);
     function fetchinfo(inforesult) {
-
         let sendhtmlinject = browser.runtime.sendMessage(nmarr, fetchact);
         function fetchact(result) {
             injectFragment('userinfobackground', inforesult)
             injectFragment('histbackground', result)
         }
-    
+    }
+}
+
+if (!(crypto.randomUUID instanceof Function)) {
+    crypto.randomUUID = function uuidv4() {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
     }
 }

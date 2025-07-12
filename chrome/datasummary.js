@@ -343,7 +343,7 @@ function tableSummary(result)
             showHistoryEventDlg(evt, true, true, lastevent.time, lastevent);
         });
         if(lastevent.title === "")
-            lastevent.title = browser.i18n.getMessage("empty_event_title")
+            lastevent.title = "< " + lastevent.descript.slice(0, 50) + " >" //browser.i18n.getMessage("empty_event_title")
         cellelem.innerText = lastevent.title;        
         curcell.appendChild(cellelem);
         curcell = singlrow.insertCell(3);
@@ -492,7 +492,7 @@ function listTagged(res) {
                 showHistoryEventDlg(evt, true, true, ce.time, ce);
             })
             if(ctitle === "")
-                ctitle = browser.i18n.getMessage("empty_event_title")
+                ctitle = "< " + evntslst[co].descript.slice(0, 50) + " >" //browser.i18n.getMessage("empty_event_title")
             cellelem.innerText = ctitle
             evcell.appendChild(cellelem)
             evcell = evrow.insertCell(2)

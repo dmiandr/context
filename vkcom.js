@@ -283,11 +283,11 @@ function GetVkTimestamp(item, type) {
     if(type == 2) {
         let mvinfo = getParentElementBelobgsToClass(item, 'mv_info')
         if(mvinfo == null) {
-            let comblock = getParentElementBelobgsToClass(item, 'PostHeaderInfo')
-            let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
-            let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
-            let dateblock = getChildElementBelongsToClass(linkblock, 'PostHeaderSubtitle__item')
-            let datespan = getChildElementBelongsToClass(dateblock, 'rel_date')
+            let comblock = getParentElementBelobgsToClass(item, '_post_content')
+            //let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
+            //let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
+            let dateblock = null; //getChildElementBelongsToClass(linkblock, 'PostHeaderSubtitle__item')
+            let datespan = getIndirectChildElementBelongsToClass(comblock, 'PostDateBlock__root')
             if(datespan == null) {
                 if(dateblock == null)
                     res = new Date().toLocaleString('ru-RU')
@@ -335,7 +335,7 @@ function GetVkEventText(item, type) {
             if(postblock == null)
                 postblock = getParentElementBelobgsToClass(item, '_post_content') // пост внутри ленты
                 
-            let textblock = getIndirectChildElementBelongsToClass(postblock, 'wall_post_text')
+            let textblock = getIndirectChildElementBelongsToClass(postblock, 'wall_post_text_wrapper')
             evmain = ""
             if(textblock != null) {
                 evmain = textblock.innerText
@@ -386,11 +386,13 @@ function GetVkEventUrl(item, type) {
     if(type == 2) {
         let mv = getParentElementBelobgsToClass(item, 'mv_info')
         if(mv == null) {
-            let comblock = getParentElementBelobgsToClass(item, 'PostHeaderInfo')
-            let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
-            let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
-            if(linkblock != null)
-                return linkblock.href;
+            let postid = item.getAttribute("data-post-id")
+            return "http://vk.com/wall" + postid
+            //let comblock = getParentElementBelobgsToClass(item, 'PostHeaderInfo')
+            //let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
+            //let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
+            //if(linkblock != null)
+            //    return linkblock.href;
         }
         else {
             let res = window.location.href

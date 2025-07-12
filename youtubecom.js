@@ -48,6 +48,8 @@ function ListYtActiveZones(zmap, ishome) {
                     let t = intext.split("@")
                     if(t.length = 2)
                         username = t[1]
+						
+                    username = username.toLowerCase()
                 }
             }
             let actzone = {}
@@ -78,7 +80,8 @@ function ListYtActiveZones(zmap, ishome) {
         if(attrhref.startsWith("@"))
             attrhref = attrhref.substring(1)
         
-        let username = attrhref
+        let username = decodeURIComponent(attrhref)
+        username = username.toLowerCase()
         initazone(actzone, elem, username, "youtubecom");
         actzone['isModifiable'] = true;
         actzone['eventype'] = 1
@@ -107,6 +110,71 @@ function ListYtActiveZones(zmap, ishome) {
             }
         }
     }
+	
+	if(cururl.indexOf("m.youtube.com") !== -1) {
+		let origurl = cururl.replace("m.youtube.com", "youtube.com")
+		let clearurl = UrlRemoveParameters(origurl, ["v", "lc"])
+		let baseurl = UrlRemoveParameters(origurl, ["v"])
+			
+		mvidheadelem = document.querySelector('a[class="slim-owner-icon-and-title"]')
+		if(mvidheadelem != null) {
+			let username = mvidheadelem.getAttribute("href")
+			let t = username.split("@")
+			if(t.length = 2)
+				username = t[1]
+			username = username.toLowerCase()
+			
+			let actzone = {}
+			initazone(actzone, mvidheadelem, username, "youtubecom");
+			actzone['isModifiable'] = true;
+			actzone['eventype'] = 2
+			actzone['attachMenuDomElement'] = mvidheadelem
+			actzone['attachBadge'] = mvidheadelem
+			actzone['url'] = clearurl	// replace m.youtube with www.youtube
+			let umap = MapUrlParameters(clearurl)
+			console.log("Mapped parameters: ", umap.get("v"))
+			
+			actzone['testnestedre'] = "youtube.com\/watch\?.*" + "v=" + umap.get("v") + ".*lc=" + ".*";
+			zmap.set(mvidheadelem, actzone)
+		}
+		
+		mallcomms = document.querySelectorAll('a[class="comment-icon-container"]')
+		for(let co = 0; co < mallcomms.length; co++) {
+			let actzone = {}
+			let itmh = mallcomms[co]
+			if(zmap.has(itmh))
+				continue;	// repeated fill for the same element must be avoided, as it will re-generate fake comment ID
+			let comprnt = itmh.parentElement
+			let elemsbtn = getAllChildElementsOfType(comprnt, "button")
+			let elem = itmh
+			if (elemsbtn.length == 1) 
+				elem = elemsbtn[0]
+			
+			let attrhref = itmh.getAttribute("href")
+			if(attrhref.startsWith("/"))
+				attrhref = attrhref.substring(1)
+			if(attrhref.startsWith("@"))
+				attrhref = attrhref.substring(1)
+			
+			let username = decodeURIComponent(attrhref)
+			username = username.toLowerCase()
+			initazone(actzone, itmh, username, "youtubecom");
+			actzone['isModifiable'] = true;
+			actzone['eventype'] = 1
+			actzone['attachMenuDomElement'] = elem
+			actzone['totalblock'] = comprnt
+			let uuid = crypto.randomUUID();
+			actzone['url'] = baseurl + "&lc=FAKE" + uuid
+			console.log("FAKE URL Generated")
+			actzone['captElement'] = getIndirectChildElementBelongsToClass(comprnt, 'yt-core-attributed-string')
+			actzone['attachBadge'] = actzone['captElement']
+			zmap.set(itmh, actzone)
+		}
+		
+	}
+	
+	// надо конвертировать % нотацию в нормальный utf-8 при рассмотрении юзернеймов.
+	
     return parceCorrect;
 }
 
@@ -116,16 +184,26 @@ function GetYtTimestamp(item, type) {
     let resdate = new Date()
     let tmstmp = ""
     overres['success'] = false
-    
-    if(type == 1) {
-        let headerauthorelem = getParentElementWithId(item, "header-author")
-        if(headerauthorelem != null) {
-            //let comrefelem = getIndirectChildElementBelongsToClass(headerauthorelem, "published-time-text")
-            let comrefelem = getIndirectChildElementWithId(headerauthorelem, "published-time-text") 
-            if(comrefelem != null) {
-                tmstmp = comrefelem.innerText
-                overres['success'] = true
+    let cururl = window.location.href
+
+    if(cururl.indexOf("m.youtube.com") == -1) {
+        if(type == 1) {
+            let headerauthorelem = getParentElementWithId(item, "header-author")
+            if(headerauthorelem != null) {
+                let comrefelem = getIndirectChildElementWithId(headerauthorelem, "published-time-text")
+                if(comrefelem != null) {
+                    tmstmp = comrefelem.innerText
+                    overres['success'] = true
+                }
             }
+        }
+    }
+    else {
+        if(type == 1) {
+            let comprnt = item.parentElement
+            let datelem = getIndirectChildElementBelongsToClass(comprnt, 'comment-published-time')
+            tmstmp = datelem.innerText
+            overres['success'] = true
         }
     }
     if(type == 2) {
@@ -136,7 +214,6 @@ function GetYtTimestamp(item, type) {
             overres['success'] = true
         }
     }
-
     if(tmstmp.endsWith("ago")) {
         let rres = tmstmp.match(/(\d{1,2}).*/)
         if(rres != null)
@@ -157,7 +234,7 @@ function GetYtTimestamp(item, type) {
             resdate.setFullYear(resdate.getFullYear() - minusnum)
     }
     res = resdate.toLocaleString('ru-RU');
-    
+
     overres['parcedtime'] = res
     overres['origtime'] = tmstmp
     return overres;
@@ -168,37 +245,61 @@ function GetYtEventText(item, type) {
     res['evtitle'] = ""
     res['evtext'] = ""
     res['success'] = false
-    
-    if(type == 1) {
-        let maincomelem = getParentElementWithId(item, "main")
-        if(maincomelem != null) {
-            let comblockelem = getIndirectChildElementWithId(maincomelem, "content")
-            if(comblockelem != null) {
-                let comelem = getIndirectChildElementWithId(comblockelem, "content-text")
-                if(comelem != null) {
-                    res['evtext'] = comelem.innerText
-                    res['success'] = true
+    let cururl = window.location.href
+
+    if(cururl.indexOf("m.youtube.com") == -1) {
+        if(type == 1) {
+            let maincomelem = getParentElementWithId(item, "main")
+            if(maincomelem != null) {
+                let comblockelem = getIndirectChildElementWithId(maincomelem, "content")
+                if(comblockelem != null) {
+                    let comelem = getIndirectChildElementWithId(comblockelem, "content-text")
+                    if(comelem != null) {
+                        res['evtext'] = comelem.innerText
+                        res['success'] = true
+                    }
+                }
+            }
+        }
+        if(type == 2) {
+            let vidtextelem = document.querySelector('[id=description-inline-expander]')
+            if(vidtextelem != null) {
+                res['evtext'] = vidtextelem.innerText
+                res['success'] = true
+            }
+
+            let captheadelem = document.querySelector('[id=above-the-fold]')
+            if(captheadelem != null) {
+                let semiheadelem = getIndirectChildElementWithId(captheadelem, "title")
+                if(semiheadelem != null) {
+                    let h1elems = getAllIndirectChildElementsOfType(semiheadelem, "h1")
+                    if(h1elems.length == 1) {
+                        let h1elem = h1elems[0]
+                        res['evtitle'] = h1elem.innerText
+                        res['success'] = true
+                    }
                 }
             }
         }
     }
-    if(type == 2) {
-        let vidtextelem = document.querySelector('[id=description-inline-expander]')
-        if(vidtextelem != null) {
-            res['evtext'] = vidtextelem.innerText
-            res['success'] = true
+    else {
+        if(type == 1) {
+            let comprnt = item.parentElement
+            let commbody = getIndirectChildElementBelongsToClass(comprnt, 'comment-text')
+            if(commbody != null) {
+                res['evtext'] = commbody.innerText
+                res['success'] = true
+            }
         }
-        
-        let captheadelem = document.querySelector('[id=above-the-fold]')
-        if(captheadelem != null) {
-            let semiheadelem = getIndirectChildElementWithId(captheadelem, "title")
-            if(semiheadelem != null) {
-                let h1elems = getAllIndirectChildElementsOfType(semiheadelem, "h1")
-                if(h1elems.length == 1) {
-                    let h1elem = h1elems[0]
-                    res['evtitle'] = h1elem.innerText
-                    res['success'] = true
-                }
+        if(type == 2) {
+            let vidtextelem = document.querySelector('[class=expandable-video-description-container]')
+            if(vidtextelem != null) {
+                res['evtext'] = vidtextelem.innerText
+                res['success'] = true
+            }
+            let captheadelem = document.querySelector('.slim-video-metadata-title-modern')
+            if(captheadelem != null) {
+                res['evtitle'] = captheadelem.innerText
             }
         }
     }
@@ -215,7 +316,7 @@ function GetYtUsername(item) {
     if(username.startsWith("@"))
         username = username.substring(1)
     
-    return username
+    return username.toLowerCase()
 }
 
 function GetYtRootFor(evlink) {
@@ -243,4 +344,49 @@ function GetYtUserAlias(item, type) {
         let al = item.innerText //step2.getAttribute("title")
         return al
     }
+}
+
+/*! \brief \~russian Функция преобразует ссылку, оставляя только перечисленые в списке параметры 
+/*! \brief \~english Transforming link by removing all parameters except that listed as argumant */
+function UrlRemoveParameters(url, paramstoleave) {
+    let resurl = ""
+    let twoparts = url.split("?")
+    if(twoparts.length == 1)
+        return url
+    resurl = twoparts[0]	
+    
+    let curprmname = ""
+    let curprmval = ""
+    let params = twoparts[1].split("&")
+    for(let co = 0; co < params.length; co++) {
+        let parts = params[co].split("=")
+        if(parts.length !== 2) 
+            continue;
+        if(paramstoleave.includes(parts[0])) {
+            if(!resurl.includes("?"))
+                resurl += "?"
+            else {
+                resurl += "&"
+            }
+            resurl += params[co]
+        }
+    }
+    return resurl
+}
+
+function MapUrlParameters(url) {
+    let res = new Map();
+    let twoparts = url.split("?")
+    if(twoparts.length == 1)
+        return res
+    let params = twoparts[1].split("&")
+
+    for(let co = 0; co < params.length; co++) {
+        let parts = params[co].split("=")
+        if(parts.length !== 2)
+            continue;
+        res.set(parts[0], parts[1])		
+    }
+    
+    return res;	
 }

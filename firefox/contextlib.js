@@ -8,7 +8,11 @@ var UserContextTypes = {
 };
 var mothsnamesrod = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 var gTagsStat = new Map();
-var gEvDlgListeners = false //!< \~russian флаг добавления обработчиков на элементы диалога свойств пользователя \~english flag indicates that listeners to active elements of iser info dialod already added
+//var gEvDlgListeners = false //!< \~russian флаг добавления обработчиков на элементы диалога свойств пользователя \~english flag indicates that listeners to active elements of iser info dialod already added
+
+var gMenuClass = 'dropdownusr'; // имя класса, формирующего треугольничек меню. Меняется, если это мобильный браузер
+if(isMobile())
+    gMenuClass = 'dropdownusr_mobile';
 
 /*! \brief \~russian Отображение окна описания события с данными, переданными как аргументы функции 
  * \param mouseevent событие созданное нажатием мыши
@@ -985,12 +989,18 @@ function injectDialogs() {
     
     let infohtmlreq = browser.runtime.sendMessage(fetchreqarr);
     infohtmlreq.then( inforesult => {
-
         let sendhtmlinject = browser.runtime.sendMessage(nmarr);
         sendhtmlinject.then( result => {
             injectFragment('userinfobackground', inforesult)
             injectFragment('histbackground', result)
         }, error => {console.log("Error injecting history dialog")});
-    
     })
+}
+
+if (!(crypto.randomUUID instanceof Function)) {
+    crypto.randomUUID = function uuidv4() {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    }
 }
