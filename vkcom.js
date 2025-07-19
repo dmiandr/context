@@ -283,7 +283,9 @@ function GetVkTimestamp(item, type) {
     if(type == 2) {
         let mvinfo = getParentElementBelobgsToClass(item, 'mv_info')
         if(mvinfo == null) {
-            let comblock = getParentElementBelobgsToClass(item, '_post_content')
+            let comblock = getParentElementBelobgsToClass(item, '_post_content') // внутри ленты постов
+            if(comblock == null)
+                comblock = getParentElementWithId(item, 'wk_content') // если пост открыт поверх
             //let footblock = getChildElementBelongsToClass(comblock, 'PostHeaderSubtitle')
             //let linkblock = getChildElementBelongsToClass(footblock, 'PostHeaderSubtitle__link')
             let dateblock = null; //getChildElementBelongsToClass(linkblock, 'PostHeaderSubtitle__item')
@@ -428,11 +430,11 @@ function IsNestedVk(root, candidate) {
 }
 
 function getTimeFromElement(elem) {
-    let dateregexp = /(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\sat\s/g 
+    let dateregexp = /(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/g
     let dateyearregexp = /(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(\d{4})/i 
     let ampmregexp = /(am|pm)/g
     let timeregexp = /(\d{1,2}):(\d{2})\s(am|pm)/g 
-    let agoregexp = /(\d{1,2})\s(hour\s|hours|day\s|days|month\s|months|year\s|years)/g
+    let agoregexp = /(\d{1,2})\s(sec\s|min\s|h\s|hour\s|hours|d\s|day\s|days|month\s|months|year\s|years)/g
     
     let curdate = new Date()
     let tmpl = elem.getAttributeNames()
@@ -490,24 +492,24 @@ function getTimeFromElement(elem) {
             let agocomp = agoregexp.exec(dtxt)
             if(agocomp != null) {
                 let minus = agocomp[1]
-                let units = agocomp[2]
+                let units = agocomp[2].trim()
                 resdate = curdate
-                if(units.includes("second")) {
+                if(units =="sec") {
                     resdate.setSeconds(curdate.getSeconds() - minus)
                 }
-                if(units.includes("minute")) {
+                if(units == "min") {
                     resdate.setMinutes(curdate.getMinutes() - minus)
                 }
-                if(units.includes("hour")) {
+                if(units == "hour" || units == "h") {
                     resdate.setHours(curdate.getHours() - minus)
                 }
-                if(units.includes("day")) {
+                if(units == "day" || units == "d") {
                     resdate.setDate(curdate.getDate() - minus)
                 }
-                if(units.includes("month")) {
+                if(units == "month") {
                     resdate.setMonth(curdate.getMonth() - minus)
                 }
-                if(units.includes("year")) {
+                if(units == "year") {
                     resdate.setFullYear(curdate.getFullYear() - minus)
                 }
             }
