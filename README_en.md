@@ -10,10 +10,13 @@ This extension for desktop browser (both Mozilla and Chrome based) performs trac
 - LiveJournal
 - YouTube
 - Habr (habr.com)
+- RuTube (rutube.ru)
+- aftershock.news
 
 In order to install last stable version use the following links in Chrome or Mozilla extensions catalog, depending on your browser:
 
 https://chrome.google.com/webstore/detail/context-reputation-manage/llakncffdnaoaochpifpfggempegkaoh
+
 https://addons.mozilla.org/en-US/firefox/addon/reputation_manager/
 
 It is possible to install extension from source code in developer mode. This is recommended for testing purposes only, mid-release code can be unstable. 

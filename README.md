@@ -9,10 +9,13 @@
 - Живой Журнал (livejournal.com)
 - YouTube (www.youtube.com)
 - Хабр (habr.com)
+- RuTube (rutube.ru)
+- aftershock.news
 
 Для установки крайней стабильной версии расширения используйте каталоги Chrome или Mozilla, в зависимости от используемого Вами браузера:
 
 https://chrome.google.com/webstore/detail/context-reputation-manage/llakncffdnaoaochpifpfggempegkaoh
+
 https://addons.mozilla.org/en-US/firefox/addon/reputation_manager/
 
 Также возможна установка текущего варианта расширения непосредственно из репозитария. Рекомендуется делать это только если вы занимаетесь тестированием расширения - в промежуточных вариантах, не оформленных как релиз, вероятность ошибок и разного рода неточностей значительно выше. Инструкция по установке расположена здесь:
