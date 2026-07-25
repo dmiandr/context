@@ -5,7 +5,7 @@ var config = { attributes: false, childList: true, subtree: true } // Конфи
 var gCurrnetNet = null;
 var gLinksOnPage = [] // список линков на редактируемые события на данной странице, обновляется каждый раз при mutationCallback, используется в get-cognet-events
 
-let mutationCallback = function(mutlst, observer) {   
+let mutationCallback = function(mutlst, observer) {
     requestActualUsersStauses();
 }
 
@@ -152,6 +152,11 @@ function addElemsToActiveZone(zone) {
         return;
     }
     
+    if(!zone.url && !zone.alturl) { // см Rutube парсер - там первоначально не присваивается url, только на втором шаге после открытя меню
+        console.log("Avoid adding menu for null URL event");
+        return;
+    }
+    
     if(uopt.numevents > 0 || zone.isModifiable == true) { // меню имеет смысл только если можно использовать его функции - добавлять новые или просматривать существующие события
         let astr = document.createElement('span');
         astr.className = gMenuClass//'dropdownusr';
@@ -229,6 +234,7 @@ function colorAll() {
         v = ActiveZones.get(azitm);
         let s = v.socnet
         let u = v.username
+        let elemtocolor = v.userelem
         uopts = gUsersCache.get(s+"%"+u);
         if(uopts == undefined)
             curranc = -1
@@ -236,7 +242,7 @@ function colorAll() {
             curranc = uopts.rankid
         
         if(curranc != -1)
-            colorItem(gRanksParams, azitm, curranc);
+            colorItem(gRanksParams, elemtocolor, curranc);
     }
 }
 
@@ -715,7 +721,7 @@ function fillHistoryDialogFromDb(az, mouseevent)
 }
 
 /*! \brief \~russian Модифицирует все упоминания автора на странице в связи с добавлением события. Просматривает все потенциальные события рассматриваемого автора, 
- * если обнаружено совпадение по ссылке т.е. событие добавляется к этом элементу, то проверяется что в соответсвии userelems ранее этому элементу не соответсвовало 
+ * если обнаружено совпадение по ссылке т.е. событие добавляется к этому элементу, то проверяется что в соответсвии userelems ранее этому элементу не соответсвовало
  * событий (это должно выполняться всегда), тогда для элемента, соответствующего событию, прибавляется класс 'history', отвечающий за визуальное отображения события 
  * (мигающее имя автора). Второму пункту меню изменяется название на "Изменить событие" (context_menu_change).  Также для всех элементов данного автора увеличивается на единицу счетчик 
  * событий. UPD: также добавляется/обновляется счетчик событий в виде беджа */
@@ -748,7 +754,7 @@ function addEventMark(url, socname, uname)
             if(mencont != null)
                 m0.textContent = uname + " (" + uopt.numevents + ")";
         }
-        if(convToLower(v.url) == convToLower(url))
+        if(convToLower(v.url) == convToLower(url) && url != "")
         {
             if(v.isevent == false)
             {
@@ -757,6 +763,8 @@ function addEventMark(url, socname, uname)
                     if(v.isModifiable) m1.textContent = browser.i18n.getMessage("context_menu_change") // этого не достаточно, по-хорошему надо еще изменить EventListener на click, заменив там переменню
                 }
                 v.isevent = true;
+                if(v.captElement == null) // precations - captElement must never be null
+                    continue;
                 v.captElement.classList.add('history');
             }
             ActiveZones.set(azitm, v)

@@ -288,6 +288,7 @@
     background-color: #fff;
     color: #326891;
     width: auto;
+    padding: 0px;
 }
 
 .contselector:disabled{

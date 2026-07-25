@@ -12,7 +12,7 @@ const defaultranks = [
 ];
 var rankspossible = [];
 
-let browser
+let browser = globalThis.browser
 if (typeof globalThis.browser === "undefined")
     browser = chrome
 
@@ -341,7 +341,7 @@ function setstatus_handler(msg, db, resolve) {
     let usrx = [socnet,user]
     let objset = db.transaction("users", "readwrite").objectStore("users");
     objset.openCursor().onsuccess = function(event) {
-        if(reqprms.rankid == -1 && reqprms.description == "" && reqprms.hidden == null) {
+        if(reqprms.rankid == -1 && reqprms.description == "" && reqprms.hidden == false) {
             let reqdel;
             reqdel = objset.delete(usrx);
             reqdel.onsuccess = function(event) {
@@ -446,7 +446,11 @@ function fetchhtml_handler(msg, db, resolve) {
     })
     .then(text => {
         let translated = text.replace(/__MSG_(\w+)__/g, function(match, v1) {
-            return v1 ? browser.i18n.getMessage(v1) : "";
+            if(typeof browser.i18n.getMessage === 'function')
+                return v1 ? browser.i18n.getMessage(v1) : "";
+            else
+                return v1
+
         })
         resolve(translated)
     })
@@ -919,7 +923,7 @@ function getdependentevents_handler(msg, db, resolve) {
     let evntscopy = [];
     let numusrs = msg.length;
     let stsmap = new Map();
-    
+
     for(let i = 0; i < numusrs; i++) {
         let r = msg.pop();
         evntscopy.push(r);
@@ -934,17 +938,12 @@ function getdependentevents_handler(msg, db, resolve) {
             let cur = event.target.result;
             if(cur) {
                 if(headexp.test(cur.value.url)) {
-                    //let cmap = new Map
                     let evopts = {};
                     evopts['username'] = cur.value.username.toLowerCase();
                     evopts['url'] = cur.value.url;
                     evopts['descript'] = cur.value.descript;
-                    //let cmap = new Map(evopts) //   new Map(Object.entries(cur.value));
-                    //*/
-                    //cmap.set('username', cur.value.username.toLowerCase())
-                    //cmap.set('url', cur.value.url)
-                    //cmap.set('descript', cur.value.descript)
-                    stsmap.set(cur.value.url, evopts)
+                    let cmap = new Map(Object.entries(cur.value));
+                    stsmap.set(cur.value.url, cmap)
                 }
                 cur.continue();
             }

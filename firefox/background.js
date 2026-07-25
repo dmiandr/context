@@ -335,7 +335,7 @@ function setstatus_handler(msg, db, resolve) {
     let usrx = [socnet,user]
     let objset = db.transaction("users", "readwrite").objectStore("users");
     objset.openCursor().onsuccess = function(event) {
-        if(reqprms.rankid == -1 && reqprms.description == "" && reqprms.hidden == null) {
+        if(reqprms.rankid == -1 && reqprms.description == "" && reqprms.hidden == false) {
             let reqdel;
             reqdel = objset.delete(usrx);
             reqdel.onsuccess = function(event) {
@@ -440,7 +440,10 @@ function fetchhtml_handler(msg, db, resolve) {
     })
     .then(text => {
         let translated = text.replace(/__MSG_(\w+)__/g, function(match, v1) {
-            return v1 ? browser.i18n.getMessage(v1) : "";
+            if(typeof browser.i18n.getMessage === 'function')
+                return v1 ? browser.i18n.getMessage(v1) : "";
+            else
+                return v1
         })
         resolve(translated)
     })
@@ -927,6 +930,7 @@ function getdependentevents_handler(msg, db, resolve) {
                     let evopts = {};
                     evopts['username'] = cur.value.username.toLowerCase();
                     evopts['url'] = cur.value.url;
+                    evopts['descript'] = cur.value.descript;
                     let cmap = new Map(Object.entries(cur.value));
                     stsmap.set(cur.value.url, cmap)
                 }

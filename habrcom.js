@@ -34,7 +34,7 @@ function ListHabrActiveZones(zmap, ishome) {
         for(let co = 0; co < allcomms.length; co++) {
             let actzone = {}
             let itmh = allcomms[co]
-            let prnt = getParentElementBelobgsToClass(itmh, "tm-article-snippet")
+            let prnt = getParentElementBelobgsToClass(itmh, "article-snippet")
             let titlelem = getIndirectChildElementBelongsToClass(prnt, "tm-title__link")
             let refloc =  itmh.getAttribute("href")
             let reuname = refloc.match(extrunamefromlink, "g")
@@ -42,10 +42,13 @@ function ListHabrActiveZones(zmap, ishome) {
                 username = reuname[1].toLowerCase()
             else
                 username = itmh.innerText.toLowerCase()
-            
+                
             initazone(actzone, itmh, username, "habrcom");
             actzone['isModifiable'] = false
             actzone['eventype'] = 2
+            let totblk = getParentElementBelobgsToClass(itmh, "tm-articles-list__item")
+            actzone['totalblock'] = totblk
+            
             if(titlelem != null) {
                 let evurlrel = titlelem.getAttribute("href")
                 let resurl = new URL(evurlrel, document.baseURI).href
@@ -65,7 +68,7 @@ function ListHabrActiveZones(zmap, ishome) {
     }
         
     if(utst[1] == "articles" || utst[1] == "news") {
-        let posthead = document.querySelector('.tm-article-snippet__author')
+        let posthead = document.querySelector('.tm-article-presenter__snippet')
         let headelem = getIndirectChildElementBelongsToClass(posthead, "tm-user-info__username")
         if(headelem != null) {
             let actzone = {}
@@ -111,9 +114,16 @@ function ListHabrActiveZones(zmap, ishome) {
                 hidelem = getParentElementBelobgsToClass(menuancor, "tm-comment-thread__children")
                 
             actzone['totalblock'] = hidelem
+            try {
             let linkelem = getIndirectChildElementBelongsToClass(itmprnt, "tm-comment-thread__comment-link")
+            //if(linkelem == null)
+            //    continue;
             let u = linkelem.getAttribute("href")
             actzone['url'] = new URL(u, document.baseURI).href
+            } catch (error) {
+                //console.log("HABR ERROR = ", error);
+                continue;
+            }
             
             zmap.set(itmh, actzone)
         }
@@ -146,16 +156,20 @@ function ListHabrActiveZones(zmap, ishome) {
             else
                 username = itmh.innerText.toLowerCase()
             
-            let menuancor = getParentElementBelobgsToClass(itmprnt, "tm-comment__header-inner")
+            let menuancor = getParentElementBelobgsToClass(itmprnt, "tm-comment__header")
             initazone(actzone, itmh, username, "habrcom");
             actzone['isModifiable'] = true;
             actzone['eventype'] = 1
             actzone['attachMenuDomElement'] = menuancor
-            
-            let linkelem = getIndirectChildElementBelongsToClass(itmprnt, "tm-comment-thread__comment-link")
-            let u = linkelem.getAttribute("href")
-            actzone['url'] = new URL(u, document.baseURI).href
-            
+            try {
+                let linkelem = getIndirectChildElementBelongsToClass(itmprnt, "tm-comment-thread__comment-link")
+                let u = linkelem.getAttribute("href")
+                actzone['url'] = new URL(u, document.baseURI).href
+            }
+            catch (error) {
+                continue;
+            }
+
             zmap.set(itmh, actzone)
         }
     }
@@ -179,7 +193,12 @@ function GetHabrTimestamp(item, type) {
         }
     }
     if(type == 2) {
-        let hd = getParentElementBelobgsToClass(item, "tm-article-snippet__meta")
+        let hd = getParentElementBelobgsToClass(item, "tm-article-snippet__meta") // articles
+        if(hd == null)
+            hd = getParentElementBelobgsToClass(item, "tm-post-snippet__meta") // posts
+        if(hd == null)
+            hd = getParentElementBelobgsToClass(item, "meta")   // news
+            
         let timehlem = getIndirectChildElementBelongsToClass(hd, "tm-article-datetime-published")
         if(timehlem != null) {
             let timelem = timehlem.children[0]

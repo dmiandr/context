@@ -83,6 +83,18 @@ function ListContActiveZones(zmap, ishome) {
         }
         return;
     }
+    
+    if(ishome) {
+        expandrepls = document.querySelectorAll('.comments-more-replies,.more-comments');
+        for(let co = 0; co < expandrepls.length; co++) {
+            expandrepls[co].click();
+        }
+        
+        
+        
+    }
+    
+    
     let url = convToLower(window.location.href);
     let ispub = false;
     let postuser = ""
@@ -135,6 +147,8 @@ function ListContActiveZones(zmap, ishome) {
                     actzone['isModifiable'] = true;
                     actzone['eventype'] = 2
                     let itmhead = getParentElementBelobgsToClass(itm, "post-special-header")
+                    if(itmhead == null)
+                        itmhead = getParentElementBelobgsToClass(itm, "new_post_prev")
                     if(itmhead == null) {
                         console.log("Parcing error: No class post-special-header parent element found")
                         parceCorrect = false
@@ -415,6 +429,15 @@ function ListContActiveZones(zmap, ishome) {
                     }
                 }                
             }
+        }
+        if(itm.classList.contains("feed-card__author")) {
+            actzone['eventype'] = 2
+            actzone['totalblock'] = getParentElementBelobgsToClass(itm, "feed__item")
+            let lnkelem = getIndirectChildElementBelongsToClass(actzone['totalblock'], "feed-card__article-link")
+            actzone['attachMenuDomElement'] = itm.parentElement;
+            actzone['url'] = lnkelem.getAttribute("href");
+            zmap.set(itm, actzone)
+            continue;
         }
         
         if(tres != undefined) {                 // Ссылка на пользователя вне стандартных блоков - просто в тексте поста или комментария

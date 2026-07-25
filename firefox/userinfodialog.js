@@ -201,8 +201,8 @@ function listHistory(historymap, uname, socname, prmalias)
                 }
             })
         });
-        if(rowmap.title == "")
-            newelem.innerText = "< " + rowmap.descript.slice(0, 50) + " >" //browser.i18n.getMessage("empty_event_title")
+        if(rowmap.title.trim().length === 0)
+            newelem.innerText = "< " + rowmap.descript.slice(0, 50).replace(/[\s]/g, ' ') + " >" //browser.i18n.getMessage("empty_event_title")
         else
             newelem.innerText = rowmap.title;
 

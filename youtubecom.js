@@ -207,31 +207,40 @@ function GetYtTimestamp(item, type) {
         }
     }
     if(type == 2) {
-        let datepub = document.querySelector('[itemprop=datePublished]')
+        //let datepub = document.querySelector('[itemprop=datePublished]')
+        let dateprnt = document.querySelector("#info-container")
+        let interm = getIndirectChildElementWithId(dateprnt, "info")
+        if(interm.children.length == 3)
+            datepub = interm.children[2]
+        // info-container id
         if(datepub != null) {
-            tmstmp = datepub.getAttribute("content")
-            resdate = new Date(tmstmp)
+            //tmstmp = datepub.getAttribute("content")
+            tmstmp = datepub.innerText
+            //resdate = new Date(tmstmp)
             overres['success'] = true
         }
     }
-    if(tmstmp.endsWith("ago")) {
-        let rres = tmstmp.match(/(\d{1,2}).*/)
-        if(rres != null)
-            if(rres.length > 1)
-                minusnum = Number(rres[1])
-        
-        if(tmstmp.includes("second"))
-            resdate.setSeconds(resdate.getSeconds() - minusnum)
-        if(tmstmp.includes("minute"))
-            resdate.setMinutes(resdate.getMinutes() - minusnum)
-        if(tmstmp.includes("hour"))
-            resdate.setHours(resdate.getHours() - minusnum)
-        if(tmstmp.includes("day"))
-            resdate.setUTCDate(resdate.getUTCDate() - minusnum)
-        if(tmstmp.includes("month"))
-            resdate.setMonth(resdate.getMonth() - minusnum)
-        if(tmstmp.includes("year"))
-            resdate.setFullYear(resdate.getFullYear() - minusnum)
+    
+    if(tmstmp != null) {
+        if(tmstmp.endsWith("ago")) {
+            let rres = tmstmp.match(/(\d{1,2}).*/)
+            if(rres != null)
+                if(rres.length > 1)
+                    minusnum = Number(rres[1])
+            
+            if(tmstmp.includes("second"))
+                resdate.setSeconds(resdate.getSeconds() - minusnum)
+            if(tmstmp.includes("minute"))
+                resdate.setMinutes(resdate.getMinutes() - minusnum)
+            if(tmstmp.includes("hour"))
+                resdate.setHours(resdate.getHours() - minusnum)
+            if(tmstmp.includes("day"))
+                resdate.setUTCDate(resdate.getUTCDate() - minusnum)
+            if(tmstmp.includes("month"))
+                resdate.setMonth(resdate.getMonth() - minusnum)
+            if(tmstmp.includes("year"))
+                resdate.setFullYear(resdate.getFullYear() - minusnum)
+        }
     }
     res = resdate.toLocaleString('ru-RU');
 
@@ -346,47 +355,3 @@ function GetYtUserAlias(item, type) {
     }
 }
 
-/*! \brief \~russian Функция преобразует ссылку, оставляя только перечисленые в списке параметры 
-/*! \brief \~english Transforming link by removing all parameters except that listed as argumant */
-function UrlRemoveParameters(url, paramstoleave) {
-    let resurl = ""
-    let twoparts = url.split("?")
-    if(twoparts.length == 1)
-        return url
-    resurl = twoparts[0]	
-    
-    let curprmname = ""
-    let curprmval = ""
-    let params = twoparts[1].split("&")
-    for(let co = 0; co < params.length; co++) {
-        let parts = params[co].split("=")
-        if(parts.length !== 2) 
-            continue;
-        if(paramstoleave.includes(parts[0])) {
-            if(!resurl.includes("?"))
-                resurl += "?"
-            else {
-                resurl += "&"
-            }
-            resurl += params[co]
-        }
-    }
-    return resurl
-}
-
-function MapUrlParameters(url) {
-    let res = new Map();
-    let twoparts = url.split("?")
-    if(twoparts.length == 1)
-        return res
-    let params = twoparts[1].split("&")
-
-    for(let co = 0; co < params.length; co++) {
-        let parts = params[co].split("=")
-        if(parts.length !== 2)
-            continue;
-        res.set(parts[0], parts[1])		
-    }
-    
-    return res;	
-}

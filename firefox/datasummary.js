@@ -392,6 +392,9 @@ function tableSummary(result)
             c2.title = rowmap.description
         }
         addPlainCell(row, 4, rowmap.numevents)
+        //let btnrmusr = document.createElement("button");
+        //btnrmusr.setAttribute("id", "rmuser"+next_id)
+
         usrn++
     }
 }

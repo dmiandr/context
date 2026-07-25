@@ -11,20 +11,23 @@
 Туда-же скопируйте из основной директории проекта следующие файлы:<br>
 FileSaver.js <br>
 addhistorydialog.html <br>
-contws.js <br>
+popup.html <br>
+userinfodialog.html <br>
 ddmenu.css <br>
 initfirst.js <br> 
 mutation.js <br>
 tabs.css <br>
+contws.js <br>
 vkcom.js <br>
 ljcom.js <br>
 youtubecom.js <br>
 habrcom.js <br>
-popup.html <br>
-userinfodialog.html <br>
+rutube_env.js <br>
+snettemplate.js <br>
+uparse.js <br>
+aftershock.js <br>
 
 В эту же директорию скопируйте папки icons и _locales из корня проекта.
-
 
 ### Шаг 3. 
 Создайте резервную копию Ваших данных плагина (с помощью кнопки ***Экспорт*** на закладке ***Общие*** параметров расширения).

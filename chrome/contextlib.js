@@ -302,7 +302,11 @@ function fillHistoryEventDlg(time_parced, timeorig, mode, EventParams) {
     let linkbtn = document.getElementById('eventlinkbtn')
     linkbtn.src = browser.runtime.getURL("icons/link32.png")
     linkbtn.title = EventParams.url
-    linkbtn.addEventListener("click", function(evt){evt.preventDefault(); parent.window.open(EventParams.url)});
+    //linkbtn.addEventListener("click", function(evt){evt.preventDefault(); parent.window.open(EventParams.url)});
+    linkbtn.onclick = function(evt){evt.preventDefault(); parent.window.open(EventParams.url)}
+    // первый вариант добавляет обработчики - в результате при повторном открытии диалога они накапливаются
+    // а второй вариант - заменяет предыдущий обработчик, это гораздо проще чем сохранять сслыку на него,
+    // неободимую чтобы сделать removeEventListener - а убрать обработчик, не имея точной на него ссылки нельзя
 
     let linkbtn_root = document.getElementById('headlinkbtn')
     let linkbtn_parent = document.getElementById('prevlinkbtn')
@@ -965,7 +969,7 @@ function cmpLinks(link1, link2) {
  * \param fragment вставляемый фрагмент */
 /*! \brief \~english Instrts html fragment got by fetch into page's element 
  * \param bckgrndid \~english ID of element to instert 
- * \param fragment \~russian fragment to instert */
+ * \param fragment \~english fragment to instert */
 function injectFragment(bckgrndid, fragment) {
     let backgrnd = document.getElementById(bckgrndid);
     if(backgrnd == null) {
@@ -1005,3 +1009,55 @@ if (!(crypto.randomUUID instanceof Function)) {
         );
     }
 }
+
+function MapUrlParameters(url) {
+    let res = new Map();
+    let twoparts = url.split("?")
+    if(twoparts.length == 1)
+        return res
+        let params = twoparts[1].split("&")
+
+        for(let co = 0; co < params.length; co++) {
+            let parts = params[co].split("=")
+            if(parts.length !== 2)
+                continue;
+            res.set(parts[0], parts[1])
+        }
+
+        return res;
+}
+
+/*! \brief \~russian Функция преобразует ссылку, оставляя только перечисленые в списке параметры */
+/*! \brief \~english Transforming link by removing all parameters except that listed as argumant */
+ function UrlRemoveParameters(url, paramstoleave) {
+    let resurl = ""
+    let twoparts = url.split("?")
+    if(twoparts.length == 1) {
+        if(url.includes("#"))
+            return url.split("#")[0]
+        return url
+    }
+    
+    resurl = twoparts[0]
+    let curprmname = ""
+    let curprmval = ""
+    let params = twoparts[1].split("&")
+    for(let co = 0; co < params.length; co++) {
+        let parts = params[co].split("=")
+        if(parts.length !== 2)
+            continue;
+        if(paramstoleave.includes(parts[0])) {
+            if(!resurl.includes("?"))
+                resurl += "?"
+            else {
+                resurl += "&"
+            }
+            resurl += params[co]
+        }
+    }
+    if(resurl.includes("#"))
+        return resurl.split("#")[0]
+    return resurl
+}
+
+

@@ -41,7 +41,7 @@ class MutationObserverThin {
     }
 
     thintimer() {
-        if(this.calleduringslot == true && document.hasFocus()) {
+        if(this.calleduringslot == true && document.hasFocus()) { // hasFocus не дает обрабатывать таймер на всех открытых вкладках!!
             this.callbackExt()
             this.calleduringslot == false
         }        

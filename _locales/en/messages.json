@@ -238,5 +238,9 @@
     "parent_notindicated": {
         "message":      "-- not indicated --",
         "description":  "Name for not indicater parent event"
-    }    
+    },
+    "parcerror_mandatoryabcent": {
+        "message":      "Mandatory members queryaz or username are abcent in instruction set",
+        "description":  "Instruction fault - either query for obtaining potential events element (queryaz) or username extraction procedure (username) is abcent"
+    }
 }
